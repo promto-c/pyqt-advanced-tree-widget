@@ -39,7 +39,16 @@ class TreeWidget(QtWidgets.QTreeWidget):
         self.add_items( ID_TO_DATA_DICT )
         
     def add_items(self, id_to_data_dict):
-        pass
+        # Iterate through the dictionary of items
+        for item_id, item_data in id_to_data_dict.items():
+            # Create a list of data for the tree item
+            item_data_list = [str(item_id)] + [item_data[column] for column in COLUMN_NAME_LIST[1:]]
+            
+            # Create a new QTreeWidgetItem with the item data
+            tree_item = QtWidgets.QTreeWidgetItem(item_data_list)
+            
+            # Add the tree item to the tree widget
+            self.addTopLevelItem(tree_item)
             
     def on_header_context_menu(self, pos):
         # Get the index of the column where the right click occurred
