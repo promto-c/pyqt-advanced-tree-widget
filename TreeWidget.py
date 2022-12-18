@@ -95,9 +95,11 @@ class TreeWidget(QtWidgets.QTreeWidget):
         # Create the context menu
         menu = QtWidgets.QMenu(self)
         
+        # Create the "Group by this column" action and connect it to the "group_by_column" method. Pass in the selected column as an argument.
         group_by_action = menu.addAction("Group by this column")
         group_by_action.triggered.connect(lambda: self.group_by_column(column))
         
+        # Create the "Ungroup all" action and connect it to the "ungroup_all" method.
         ungroup_all_action = menu.addAction("Ungroup all")
         ungroup_all_action.triggered.connect(self.ungroup_all)
                 
@@ -120,6 +122,7 @@ class TreeWidget(QtWidgets.QTreeWidget):
         # Hide the grouped column
         self.setColumnHidden(column, True)
 
+        # Get the label for the column that we want to group by and the label for the first column 
         group_column_label = self.headerItem().text(column)
         first_column_label = self.headerItem().text(0)
         
@@ -132,6 +135,7 @@ class TreeWidget(QtWidgets.QTreeWidget):
         # Group the data and add the tree items to the appropriate group
         groups = self.group_data(data)
 
+        # Iterate through each group and its items
         for group_name, items in groups.items():
             # Create a new QTreeWidgetItem for the group
             group_item = QtWidgets.QTreeWidgetItem(self, [group_name])
