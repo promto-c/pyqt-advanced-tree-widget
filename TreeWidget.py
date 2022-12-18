@@ -58,7 +58,9 @@ class TreeWidget(QtWidgets.QTreeWidget):
         menu = QtWidgets.QMenu(self)
         group_by_action = menu.addAction("Group by this column")
         group_by_action.triggered.connect(lambda: self.group_by_column(column))
-        
+        ungroup_all_action = menu.addAction("Ungroup all")
+        ungroup_all_action.triggered.connect(self.ungroup_all)
+                
         # Show the context menu
         menu.popup(self.header().mapToGlobal(pos))
         
@@ -110,16 +112,29 @@ class TreeWidget(QtWidgets.QTreeWidget):
             
         # Save the groups for this column
         self.groups[column] = groups
-
-    def clear_groups(self, column):
-        # Remove the tree items from the widget and delete them
-        for group_item in self.groups.get(column, {}).values():
-            for item in group_item:
-                self.removeItemWidget(item, 0)
-                del item
         
-        # Clear the groups for this column
-        self.groups[column] = {}
+    def ungroup_all(self):
+        # Show all hidden columns
+        for column in range(self.columnCount()):
+            self.setColumnHidden(column, False)
+
+        # Reset the header label
+        self.setHeaderLabel("Tree Widget")
+
+        # Iterate through all top level items (groups) in the tree widget
+        for row in range(self.topLevelItemCount()):
+            group_item = self.topLevelItem(row)
+            
+            # Iterate through all child items in the group
+            for child_row in range(group_item.childCount()):
+                child_item = group_item.child(child_row)
+                
+                # Remove the child item from the group and add it back to the top level of the tree widget
+                group_item.removeChild(child_item)
+                self.addTopLevelItem(child_item)
+                
+        # Clear the groups dictionary
+        self.groups = {}
         
     def group_data(self, data):
         # Create a dictionary to store the groups
