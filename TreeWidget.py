@@ -3,6 +3,7 @@ from typing import Dict, List
 
 from PyQt5 import QtWidgets, QtCore
 
+# Define example data
 COLUMN_NAME_LIST = ["ID", "Name", "Age", "City"]
 ID_TO_DATA_DICT = {
     1: {
@@ -28,15 +29,14 @@ class TreeWidget(QtWidgets.QTreeWidget):
         id_to_data_dict (Dict[int, Dict[str, str]]): A dictionary mapping item IDs to their data as a dictionary.
         groups (Dict[str, QtWidgets.QTreeWidgetItem]): A dictionary mapping group names to their tree widget items.
     """
-    def __init__(self, parent: QtWidgets.QWidget = None, column_name_list: List[str] = list(), id_to_data_dcit: Dict[int, Dict[str, str]] = dict() ):
+    def __init__(self, parent: QtWidgets.QWidget = None, 
+                       column_name_list: List[str] = list(), 
+                       id_to_data_dict: Dict[int, Dict[str, str]] = dict() ):
         # Call the parent class constructor
         super().__init__(parent)
         # Store the column names and data dictionary for later use
         self.column_name_list = column_name_list
-        self.id_to_data_dcit = id_to_data_dcit
-
-        # Customize the widget as desired
-        self.setHeaderLabel("Tree Widget")
+        self.id_to_data_dict = id_to_data_dict
         
         # Set up the context menu for the header
         self.header().setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -48,7 +48,7 @@ class TreeWidget(QtWidgets.QTreeWidget):
         # Set up the columns
         self.set_column_name_list(self.column_name_list)
         # Add the data to the widget
-        self.add_items(self.id_to_data_dcit)
+        self.add_items(self.id_to_data_dict)
     
     def set_column_name_list(self, column_name_list: List[str]) -> None:
         """Set the names of the columns in the tree widget.
@@ -110,12 +110,15 @@ class TreeWidget(QtWidgets.QTreeWidget):
         """
         # Ungroup all items in the tree widget
         self.ungroup_all()
-        
+
         # Hide the grouped column
         self.setColumnHidden(column, True)
+
+        group_column_label = self.headerItem().text(column)
+        first_column_label = self.headerItem().text(0)
         
         # Rename the first column
-        self.setHeaderLabel(f'{self.headerItem().text(column)} / {self.headerItem().text(0)}')
+        self.setHeaderLabel(f'{group_column_label} / {first_column_label}')
         
         # Get the data for each tree item in the column
         data = [self.topLevelItem(row).data(column, QtCore.Qt.DisplayRole) for row in range(self.topLevelItemCount())]
@@ -221,7 +224,7 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     tree_widget = TreeWidget(
         column_name_list=COLUMN_NAME_LIST,
-        id_to_data_dcit=ID_TO_DATA_DICT
+        id_to_data_dict=ID_TO_DATA_DICT
     )
     tree_widget.show()
     sys.exit(app.exec_())
