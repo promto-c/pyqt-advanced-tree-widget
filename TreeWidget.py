@@ -64,11 +64,14 @@ class TreeWidget(QtWidgets.QTreeWidget):
         
     def group_by_column(self, column):
         # Hide the grouped column
-        self.headerItem().setHeaderHidden(column, True)
+        self.setColumnHidden(column, True)
         
         # Rename the first column
-        self.headerItem().setHeaderLabel(0, f"{self.headerItem().text(column)} / {self.headerItem().text(0)}")
+        self.setHeaderLabel(f"{self.headerItem().text(column)} / {self.headerItem().text(0)}")
         
+        # Get the data for each tree item in the column
+        data = [self.topLevelItem(row).data(column, QtCore.Qt.DisplayRole) for row in range(self.topLevelItemCount())]
+    
         # Group the data and add the tree items to the appropriate group
         groups = self.group_data(data)
         for group_name, items in groups.items():
@@ -85,10 +88,10 @@ class TreeWidget(QtWidgets.QTreeWidget):
             # Remove the items from the top level of the tree widget
             for item in items:
                 self.removeItemWidget(item, 0)
-                
+            
         # Save the groups for this column
         self.groups[column] = groups
-        
+
     def clear_groups(self, column):
         # Remove the tree items from the widget and delete them
         for group_item in self.groups.get(column, {}).values():
