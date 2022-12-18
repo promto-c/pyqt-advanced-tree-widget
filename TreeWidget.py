@@ -7,18 +7,46 @@ from PyQt5 import QtWidgets, QtCore
 COLUMN_NAME_LIST = ['ID', 'Name', 'Age', 'City']
 ID_TO_DATA_DICT = {
     1: {
-        'Name': 'Alice', 
-        'Age': '30', 
+        'Name': 'Alice',
+        'Age': '30',
         'City': 'New York'},
     2: {
-        'Name': 'Bob', 
-        'Age': '25', 
+        'Name': 'Bob',
+        'Age': '25',
         'City': 'Chicago'},
     3: {
-        'Name': 'Charlie', 
-        'Age': '35', 
+        'Name': 'Charlie',
+        'Age': '35',
         'City': 'Los Angeles'},
-}
+    4: {
+        'Name': 'David',
+        'Age': '40',
+        'City': 'San Francisco'},
+    5: {
+        'Name': 'Emily',
+        'Age': '28',
+        'City': 'Boston'},
+    6: {
+        'Name': 'Frank',
+        'Age': '32',
+        'City': 'New York'},
+    7: {
+        'Name': 'Gina',
+        'Age': '27',
+        'City': 'Chicago'},
+    8: {
+        'Name': 'Henry',
+        'Age': '38',
+        'City': 'Los Angeles'},
+    9: {
+        'Name': 'Irene',
+        'Age': '29',
+        'City': 'San Francisco'},
+    10: {
+        'Name': 'Jack',
+        'Age': '33',
+        'City': 'Boston'},
+    }
 
 class TreeWidget(QtWidgets.QTreeWidget):
     ''' A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
@@ -61,6 +89,9 @@ class TreeWidget(QtWidgets.QTreeWidget):
         self.set_column_name_list(self.column_name_list)
         # Add the data to the widget
         self.add_items(self.id_to_data_dict)
+
+        # Enable sorting in the tree widget
+        self.setSortingEnabled(True)
 
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
@@ -186,6 +217,9 @@ class TreeWidget(QtWidgets.QTreeWidget):
             
         # Save the groups for this column
         self.groups[column] = groups
+
+        # Expand all items
+        self.expandAll()
 
     def ungroup_all(self) -> None:
         ''' Ungroup all the items in the tree widget.'''
