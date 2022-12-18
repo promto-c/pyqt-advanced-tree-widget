@@ -63,20 +63,29 @@ class TreeWidget(QtWidgets.QTreeWidget):
         menu.popup(self.header().mapToGlobal(pos))
         
     def group_by_column(self, column):
-        # Clear any existing groups for this column
-        self.clear_groups(column)
+        # Hide the grouped column
+        self.headerItem().setHeaderHidden(column, True)
         
-        # Get the data for each tree item in the column
-        data = [self.topLevelItem(row).data(column, QtCore.Qt.DisplayRole) for row in range(self.topLevelItemCount())]
+        # Rename the first column
+        self.headerItem().setHeaderLabel(0, f"{self.headerItem().text(column)} / {self.headerItem().text(0)}")
         
         # Group the data and add the tree items to the appropriate group
         groups = self.group_data(data)
         for group_name, items in groups.items():
+            # Create a new QTreeWidgetItem for the group
             group_item = QtWidgets.QTreeWidgetItem(self, [group_name])
+            
+            # Add the items to the group item as children
             for item in items:
                 group_item.addChild(item)
+            
+            # Add the group item to the tree widget
             self.addTopLevelItem(group_item)
             
+            # Remove the items from the top level of the tree widget
+            for item in items:
+                self.removeItemWidget(item, 0)
+                
         # Save the groups for this column
         self.groups[column] = groups
         
