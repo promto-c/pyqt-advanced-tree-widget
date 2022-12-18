@@ -94,11 +94,17 @@ class TreeWidget(QtWidgets.QTreeWidget):
         
         # Create the context menu
         menu = QtWidgets.QMenu(self)
+        
         group_by_action = menu.addAction("Group by this column")
         group_by_action.triggered.connect(lambda: self.group_by_column(column))
+        
         ungroup_all_action = menu.addAction("Ungroup all")
         ungroup_all_action.triggered.connect(self.ungroup_all)
                 
+        # Disable "Group by this column" on first column
+        if not column:
+            group_by_action.setDisabled(True)
+
         # Show the context menu
         menu.popup(self.header().mapToGlobal(pos))
         
