@@ -222,38 +222,35 @@ class TreeWidget(QtWidgets.QTreeWidget):
         self.expandAll()
 
     def ungroup_all(self) -> None:
-        ''' Ungroup all the items in the tree widget.'''
-        # Show all hidden columns
-        for column in range(self.columnCount()):
-            self.setColumnHidden(column, False)
+        ''' Ungroup all the items in the tree widget.
+        '''
+        # Return if there are no groups to ungroup
+        if not self.groups:
+            return
 
         # Reset the header label
         self.setHeaderLabel(self.column_name_list[0])
+        
+        # Show all hidden columns
+        for column in self.groups.keys():
+            self.setColumnHidden(column, False)
 
-        group_item_for_delete_list = list()
-        # Iterate through all top level items (groups) in the tree widget
-        for row in range(self.topLevelItemCount()):
-            group_item = self.topLevelItem(row)
-            if not group_item.childCount():
-                continue
+        # Get a list of all the top-level items in the tree widget
+        group_item_list = [self.topLevelItem(i) for i in range(self.topLevelItemCount())]
 
-            # Add the group item to the list of group items to be deleted
-            group_item_for_delete_list.append(group_item)
+        # Iterate through all the top-level items in the tree widget
+        for group_item in group_item_list:
 
-            # Iterate through all child items in the group
-            for child_row in range(group_item.childCount()):
-                child_item = group_item.child(child_row)
-                
-                # Remove the child item from the group and add it back to the top level of the tree widget
-                group_item.removeChild(child_item)
+            # Remove all of its children and add them as top-level items
+            while group_item.childCount():
+                child_item = group_item.takeChild(0)
                 self.addTopLevelItem(child_item)
 
-        # Delete the group items that were added to the list
-        for group_item in group_item_for_delete_list:
+            # Remove the group item from the top-level items
             self.takeTopLevelItem(self.indexOfTopLevelItem(group_item))
-                
+
         # Clear the groups dictionary
-        self.groups = {}
+        self.groups.clear()
         
     def group_data(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
         ''' Group the data into a dictionary mapping group names to lists of tree items.
