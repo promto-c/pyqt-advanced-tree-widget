@@ -1,6 +1,23 @@
 import sys
 from PyQt5 import QtWidgets, QtCore
 
+COLUMN_NAME_LIST = ["ID", "Name", "Age", "City"]
+ID_TO_DATA_DICT = {
+    1: {
+        "Name": "Alice", 
+        "Age": "30", 
+        "City": "New York"},
+    2: {
+        "Name": "Bob", 
+        "Age": "25", 
+        "City": 
+        "Chicago"},
+    3: {
+        "Name": "Charlie", 
+        "Age": "35", 
+        "City": "Los Angeles"},
+}
+
 class TreeWidget(QtWidgets.QTreeWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -14,6 +31,16 @@ class TreeWidget(QtWidgets.QTreeWidget):
         # Create a dictionary to store the groups for each column
         self.groups = {}
         
+        # Set up the columns
+        self.setColumnCount(len(COLUMN_NAME_LIST))
+        self.setHeaderLabels(COLUMN_NAME_LIST)
+                
+        # Add the data to the widget
+        self.add_items( ID_TO_DATA_DICT )
+        
+    def add_items(self, id_to_data_dict):
+        pass
+            
     def on_header_context_menu(self, pos):
         # Get the index of the column where the right click occurred
         column = self.header().logicalIndexAt(pos)
