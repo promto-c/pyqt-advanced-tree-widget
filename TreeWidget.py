@@ -67,11 +67,11 @@ class TreeWidget(QtWidgets.QTreeWidget):
         self.setColumnHidden(column, True)
         
         # Rename the first column
-        self.setHeaderLabel(f"{self.headerItem().text(column)} / {self.headerItem().text(0)}")
+        self.setHeaderLabel(f'{self.headerItem().text(column)} / {self.headerItem().text(0)}')
         
         # Get the data for each tree item in the column
         data = [self.topLevelItem(row).data(column, QtCore.Qt.DisplayRole) for row in range(self.topLevelItemCount())]
-    
+        
         # Group the data and add the tree items to the appropriate group
         groups = self.group_data(data)
         for group_name, items in groups.items():
@@ -80,10 +80,29 @@ class TreeWidget(QtWidgets.QTreeWidget):
             
             # Add the items to the group item as children
             for item in items:
+                # Save the original parent and position of the tree item
+                original_parent = item.parent()
+                original_row = original_parent.indexOfChild(item) if original_parent else self.indexOfTopLevelItem(item)
+                
+                # Save the original parent and position of the tree item
+                original_parent = item.parent()
+                original_row = original_parent.indexOfChild(item) if original_parent else self.indexOfTopLevelItem(item)
+
+                # Remove the tree item from its original parent
+                if original_parent:
+                    original_parent.takeChild(original_row)
+                else:
+                    self.takeTopLevelItem(original_row)
+
+                # Add the tree item to the group item as a child and restore its original position
                 group_item.addChild(item)
-            
-            # Add the group item to the tree widget
+                self.insertTopLevelItem(original_row, item)
+
+            # Add the group item to the tree widget and restore its original position
+            original_row = self.indexOfTopLevelItem(group_item) if group_item.parent() else None
             self.addTopLevelItem(group_item)
+            if original_row is not None:
+                self.setTopLevelItem(original_row, group_item)
             
             # Remove the items from the top level of the tree widget
             for item in items:
