@@ -19,8 +19,10 @@ ID_TO_DATA_DICT = {
 }
 
 class TreeWidget(QtWidgets.QTreeWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, column_name_list=list(), id_to_data_dcit=dict() ):
         super().__init__(parent)
+        self.column_name_list = column_name_list
+        self.id_to_data_dcit = id_to_data_dcit
         # Customize the widget as desired
         self.setHeaderLabel("Tree Widget")
         
@@ -32,12 +34,17 @@ class TreeWidget(QtWidgets.QTreeWidget):
         self.groups = {}
         
         # Set up the columns
+        self.set_columns_name(self.column_name_list)
+        # Add the data to the widget
+        self.add_items(self.id_to_data_dcit)
+    
+    def set_columns_name(self, column_name_list):
+        
         self.setColumnCount(len(COLUMN_NAME_LIST))
         self.setHeaderLabels(COLUMN_NAME_LIST)
-                
-        # Add the data to the widget
-        self.add_items( ID_TO_DATA_DICT )
-        
+
+        self.column_name_list = column_name_list
+
     def add_items(self, id_to_data_dict):
         # Iterate through the dictionary of items
         for item_id, item_data in id_to_data_dict.items():
@@ -49,6 +56,8 @@ class TreeWidget(QtWidgets.QTreeWidget):
             
             # Add the tree item to the tree widget
             self.addTopLevelItem(tree_item)
+
+        self.id_to_data_dict = id_to_data_dict
             
     def on_header_context_menu(self, pos):
         # Get the index of the column where the right click occurred
@@ -65,6 +74,8 @@ class TreeWidget(QtWidgets.QTreeWidget):
         menu.popup(self.header().mapToGlobal(pos))
         
     def group_by_column(self, column):
+
+        self.ungroup_all()
         # Hide the grouped column
         self.setColumnHidden(column, True)
         
@@ -112,18 +123,23 @@ class TreeWidget(QtWidgets.QTreeWidget):
             
         # Save the groups for this column
         self.groups[column] = groups
-        
+
     def ungroup_all(self):
         # Show all hidden columns
         for column in range(self.columnCount()):
             self.setColumnHidden(column, False)
 
         # Reset the header label
-        self.setHeaderLabel("Tree Widget")
+        self.setHeaderLabel(self.column_name_list[0])
 
+        group_item_for_delete_list = list()
         # Iterate through all top level items (groups) in the tree widget
         for row in range(self.topLevelItemCount()):
             group_item = self.topLevelItem(row)
+            if not group_item.childCount():
+                continue
+
+            group_item_for_delete_list.append(group_item)
             
             # Iterate through all child items in the group
             for child_row in range(group_item.childCount()):
@@ -132,6 +148,9 @@ class TreeWidget(QtWidgets.QTreeWidget):
                 # Remove the child item from the group and add it back to the top level of the tree widget
                 group_item.removeChild(child_item)
                 self.addTopLevelItem(child_item)
+
+        for group_item in group_item_for_delete_list:
+            self.takeTopLevelItem(self.indexOfTopLevelItem(group_item))
                 
         # Clear the groups dictionary
         self.groups = {}
@@ -157,7 +176,10 @@ class TreeWidget(QtWidgets.QTreeWidget):
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    tree_widget = TreeWidget()
+    tree_widget = TreeWidget(
+        column_name_list=COLUMN_NAME_LIST,
+        id_to_data_dcit=ID_TO_DATA_DICT
+    )
     tree_widget.show()
     sys.exit(app.exec_())
 
