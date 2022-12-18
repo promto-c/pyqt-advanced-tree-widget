@@ -4,58 +4,76 @@ from typing import Dict, List
 from PyQt5 import QtWidgets, QtCore
 
 # Define example data
-COLUMN_NAME_LIST = ["ID", "Name", "Age", "City"]
+COLUMN_NAME_LIST = ['ID', 'Name', 'Age', 'City']
 ID_TO_DATA_DICT = {
     1: {
-        "Name": "Alice", 
-        "Age": "30", 
-        "City": "New York"},
+        'Name': 'Alice', 
+        'Age': '30', 
+        'City': 'New York'},
     2: {
-        "Name": "Bob", 
-        "Age": "25", 
-        "City": 
-        "Chicago"},
+        'Name': 'Bob', 
+        'Age': '25', 
+        'City': 'Chicago'},
     3: {
-        "Name": "Charlie", 
-        "Age": "35", 
-        "City": "Los Angeles"},
+        'Name': 'Charlie', 
+        'Age': '35', 
+        'City': 'Los Angeles'},
 }
 
 class TreeWidget(QtWidgets.QTreeWidget):
-    """A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
+    ''' A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
 
     Attributes:
         column_name_list (List[str]): The list of column names to be displayed in the tree widget.
         id_to_data_dict (Dict[int, Dict[str, str]]): A dictionary mapping item IDs to their data as a dictionary.
         groups (Dict[str, QtWidgets.QTreeWidgetItem]): A dictionary mapping group names to their tree widget items.
-    """
+    '''
     def __init__(self, parent: QtWidgets.QWidget = None, 
                        column_name_list: List[str] = list(), 
                        id_to_data_dict: Dict[int, Dict[str, str]] = dict() ):
         # Call the parent class constructor
-        super().__init__(parent)
+        super(TreeWidget, self).__init__(parent)
+
         # Store the column names and data dictionary for later use
         self.column_name_list = column_name_list
         self.id_to_data_dict = id_to_data_dict
         
-        # Set up the context menu for the header
-        self.header().setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.header().customContextMenuRequested.connect(self.on_header_context_menu)
-        
+        # Set up the initial values
+        self._setup_initial_values()
+        # Set up the UI
+        self._setup_ui()
+        # Set up signal connections
+        self._setup_signal_connections()
+
+    def _setup_initial_values(self):
+        ''' Set up the initial values for the widget.
+        '''
         # Create a dictionary to store the groups for each column
         self.groups = {}
-        
+
+    def _setup_ui(self):
+        ''' Set up the UI for the widget, including creating widgets and layouts.
+        '''
+        # Set up the context menu for the header
+        self.header().setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+
         # Set up the columns
         self.set_column_name_list(self.column_name_list)
         # Add the data to the widget
         self.add_items(self.id_to_data_dict)
-    
+
+    def _setup_signal_connections(self):
+        ''' Set up signal connections between widgets and slots.
+        '''
+        # Connect signal of header
+        self.header().customContextMenuRequested.connect(self.on_header_context_menu)
+
     def set_column_name_list(self, column_name_list: List[str]) -> None:
-        """Set the names of the columns in the tree widget.
+        ''' Set the names of the columns in the tree widget.
 
         Args:
             column_name_list (List[str]): The list of column names to be set.
-        """
+        '''
         # Store the column names for later use
         self.column_name_list = column_name_list
 
@@ -64,11 +82,11 @@ class TreeWidget(QtWidgets.QTreeWidget):
         self.setHeaderLabels(self.column_name_list)
 
     def add_items(self, id_to_data_dict: Dict[int, Dict[str, str]]) -> None:
-        """Add items to the tree widget.
+        ''' Add items to the tree widget.
 
         Args:
             id_to_data_dict (Dict[int, Dict[str, str]]): A dictionary mapping item IDs to their data as a dictionary.
-        """
+        '''
         # Store the data dictionary for later use
         self.id_to_data_dict = id_to_data_dict
 
@@ -84,26 +102,26 @@ class TreeWidget(QtWidgets.QTreeWidget):
             self.addTopLevelItem(tree_item)
 
     def on_header_context_menu(self, pos: QtCore.QPoint) -> None:
-        """Show a context menu for the header of the tree widget.
+        ''' Show a context menu for the header of the tree widget.
 
         Args:
             pos (QtCore.QPoint): The position where the right click occurred.
-        """
+        '''
         # Get the index of the column where the right click occurred
         column = self.header().logicalIndexAt(pos)
         
         # Create the context menu
         menu = QtWidgets.QMenu(self)
         
-        # Create the "Group by this column" action and connect it to the "group_by_column" method. Pass in the selected column as an argument.
-        group_by_action = menu.addAction("Group by this column")
+        # Create the 'Group by this column' action and connect it to the 'group_by_column' method. Pass in the selected column as an argument.
+        group_by_action = menu.addAction('Group by this column')
         group_by_action.triggered.connect(lambda: self.group_by_column(column))
         
-        # Create the "Ungroup all" action and connect it to the "ungroup_all" method.
-        ungroup_all_action = menu.addAction("Ungroup all")
+        # Create the 'Ungroup all' action and connect it to the 'ungroup_all' method.
+        ungroup_all_action = menu.addAction('Ungroup all')
         ungroup_all_action.triggered.connect(self.ungroup_all)
                 
-        # Disable "Group by this column" on first column
+        # Disable 'Group by this column' on first column
         if not column:
             group_by_action.setDisabled(True)
 
@@ -111,11 +129,11 @@ class TreeWidget(QtWidgets.QTreeWidget):
         menu.popup(self.header().mapToGlobal(pos))
         
     def group_by_column(self, column: int) -> None:
-        """Group the items in the tree widget by the values in the specified column.
+        ''' Group the items in the tree widget by the values in the specified column.
 
         Args:
             column (int): The index of the column to group by.
-        """
+        '''
         # Ungroup all items in the tree widget
         self.ungroup_all()
 
@@ -170,7 +188,7 @@ class TreeWidget(QtWidgets.QTreeWidget):
         self.groups[column] = groups
 
     def ungroup_all(self) -> None:
-        """Ungroup all the items in the tree widget."""
+        ''' Ungroup all the items in the tree widget.'''
         # Show all hidden columns
         for column in range(self.columnCount()):
             self.setColumnHidden(column, False)
@@ -204,22 +222,22 @@ class TreeWidget(QtWidgets.QTreeWidget):
         self.groups = {}
         
     def group_data(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
-        """Group the data into a dictionary mapping group names to lists of tree items.
+        ''' Group the data into a dictionary mapping group names to lists of tree items.
 
         Args:
             data (List[str]): The data to be grouped.
 
         Returns:
             Dict[str, List[QtWidgets.QTreeWidgetItem]]: A dictionary mapping group names to lists of tree items.
-        """
+        '''
         # Create a dictionary to store the groups
         groups = {}
 
         # Group the data
         for i, item_data in enumerate(data):
-            # If the data is empty, add it to the "_others" group
+            # If the data is empty, add it to the '_others' group
             if not item_data:
-                item_data = "_others"
+                item_data = '_others'
 
             # Add the tree item to the appropriate group
             item = self.topLevelItem(i)
@@ -239,5 +257,5 @@ def main():
     tree_widget.show()
     sys.exit(app.exec_())
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
