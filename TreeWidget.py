@@ -3,6 +3,8 @@ from typing import Dict, List
 
 from PyQt5 import QtWidgets, QtCore
 
+from theme.theme import setTheme
+
 # Define example data
 COLUMN_NAME_LIST = ['ID', 'Name', 'Age', 'City']
 ID_TO_DATA_DICT = {
@@ -280,11 +282,21 @@ class TreeWidget(QtWidgets.QTreeWidget):
         return groups
 
 def main():
+    ''' Create the application and main window, and show the widget.
+    '''
+    # Create the application and the main window
     app = QtWidgets.QApplication(sys.argv)
+
+    # Set theme of QApplication to the dark theme
+    setTheme(app, 'dark')
+
+    # Create an instance of the widget and set it as the central widget
     tree_widget = TreeWidget(
         column_name_list=COLUMN_NAME_LIST,
         id_to_data_dict=ID_TO_DATA_DICT
     )
+
+    # Show the window and run the application
     tree_widget.show()
     sys.exit(app.exec_())
 
