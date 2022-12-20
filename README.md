@@ -19,8 +19,7 @@ ID_TO_DATA_DICT = {
     2: {
         "Name": "Bob", 
         "Age": "25", 
-        "City": 
-        "Chicago"},
+        "City": "Chicago"},
     3: {
         "Name": "Charlie", 
         "Age": "35", 
