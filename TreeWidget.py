@@ -1,7 +1,7 @@
 import sys
 from typing import Dict, List
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 from theme.theme import setTheme
 
@@ -126,14 +126,13 @@ class TreeWidget(QtWidgets.QTreeWidget):
         # Iterate through the dictionary of items
         for item_id, item_data in self.id_to_data_dict.items():
             # Create a list of data for the tree item
-            item_data_list = [str(item_id)] + [item_data[column] for column in self.column_name_list[1:]]
+            item_data_list = [str(item_id)] + [item_data[column] if column in item_data.keys() 
+                                                                 else str() 
+                                                                 for column in self.column_name_list[1:]]
             
-            # Create a new QTreeWidgetItem with the item data
-            tree_item = QtWidgets.QTreeWidgetItem(item_data_list)
+            # Create a new QTreeWidgetItem with the item data, and add to the self tree widget
+            tree_item = QtWidgets.QTreeWidgetItem(self, item_data_list)
             
-            # Add the tree item to the tree widget
-            self.addTopLevelItem(tree_item)
-
     def on_header_context_menu(self, pos: QtCore.QPoint) -> None:
         ''' Show a context menu for the header of the tree widget.
 
