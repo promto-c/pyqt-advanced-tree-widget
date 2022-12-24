@@ -209,8 +209,8 @@ class TreeWidget(QtWidgets.QTreeWidget):
             # Add the group item to the tree widget and restore its original position
             original_row = self.indexOfTopLevelItem(group_item) if group_item.parent() else None
             self.addTopLevelItem(group_item)
-            if original_row is not None:
-                self.setTopLevelItem(original_row, group_item)
+            if isinstance(original_row, int):
+                self.insertTopLevelItem(original_row, group_item)
             
             # Remove the items from the top level of the tree widget
             for item in items:
@@ -243,9 +243,8 @@ class TreeWidget(QtWidgets.QTreeWidget):
         for group_item in group_item_list:
 
             # Remove all of its children and add them as top-level items
-            while group_item.childCount():
-                child_item = group_item.takeChild(0)
-                self.addTopLevelItem(child_item)
+            child_items = group_item.takeChildren()
+            self.addTopLevelItems(child_items)
 
             # Remove the group item from the top-level items
             self.takeTopLevelItem(self.indexOfTopLevelItem(group_item))
