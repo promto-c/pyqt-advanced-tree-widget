@@ -133,6 +133,7 @@ class TreeWidget(QtWidgets.QTreeWidget):
             # Create a new QTreeWidgetItem with the item data, and add to the self tree widget
             tree_item = QtWidgets.QTreeWidgetItem(self, item_data_list)
         
+        # Resize all columns to fit their contents
         self.resize_to_content()
 
     def on_header_context_menu(self, pos: QtCore.QPoint) -> None:
@@ -224,11 +225,16 @@ class TreeWidget(QtWidgets.QTreeWidget):
         # Expand all items
         self.expandAll()
 
+        # Resize all columns to fit their contents
         self.resize_to_content()
         
-    def resize_to_content(self):
-        for column_index in range(self.columnCount()):
-            self.resizeColumnToContents(column_index)
+    def resize_to_content(self) -> None:
+        ''' Resize all columns in the object to fit their contents.
+        '''
+        # Iterate through all columns
+        for column_index in range(self.columnCount()):  
+            # Resize the column to fit its contents
+            self.resizeColumnToContents(column_index) 
 
     def ungroup_all(self) -> None:
         ''' Ungroup all the items in the tree widget.
@@ -260,6 +266,7 @@ class TreeWidget(QtWidgets.QTreeWidget):
         # Clear the groups dictionary
         self.groups.clear()
 
+        # Resize all columns to fit their contents
         self.resize_to_content()
         
     def group_data(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
