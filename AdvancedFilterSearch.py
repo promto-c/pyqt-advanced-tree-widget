@@ -141,6 +141,9 @@ def main():
     widget = AdvancedFilterSearch(tree_widget)
     window.setCentralWidget(widget)
 
+    # Add the tree widget to the layout of the widget
+    widget.layout().addWidget(tree_widget)
+
     # Show the window and run the application
     window.show()
     sys.exit(app.exec_())
