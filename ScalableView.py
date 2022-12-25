@@ -51,6 +51,37 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Set the vertical scroll bar policy to always off
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 
+    def _setup_signal_connections(self):
+        ''' Set up signal connections between widgets and slots.
+        '''
+        # Connect the wheel event signal to the scaling slot
+        self.viewport().installEventFilter(self)
+        self.viewport().wheelEvent = self.wheelEvent
+
+    def setScale(self, zoom_level: float=1.0) -> None:
+        ''' Set scale of the view to specified zoom level.
+        '''
+        # Clamp the zoom level between the min and max zoom levels
+        zoom_level = max(self.min_zoom_level, min(zoom_level, self.max_zoom_level))
+
+        # Set the new zoom level
+        self.setTransform( QtGui.QTransform().scale( zoom_level, zoom_level ) )
+        # Update current zoom level
+        self.current_zoom_level = zoom_level
+
+        # Update the size of the widget to fit the view window
+        self.resizeEvent(None)
+
+    def resetScale(self) -> None:
+        ''' Reset scaling of the view to default zoom level (1.0 or no zoom).
+        '''
+        # Reset the scaling of the view
+        self.resetTransform()
+        # Reset the current zoom level to 1.0 (no zoom)
+        self.current_zoom_level = 1.0
+        
+        # Update the size of the widget to fit the view window
+        self.resizeEvent(None)
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         ''' Handle resize events to resize the widget to the full size of the view, reserved for scaling.
         '''
@@ -68,13 +99,6 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Set the size of the widget to the size of the view
         graphic_item.setGeometry(rect)
 
-    def _setup_signal_connections(self):
-        ''' Set up signal connections between widgets and slots.
-        '''
-        # Connect the wheel event signal to the scaling slot
-        self.viewport().installEventFilter(self)
-        self.viewport().wheelEvent = self.wheelEvent
-
     def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
         ''' Handle wheel events to allow the user to scale the contents of the view.
         '''
@@ -89,17 +113,8 @@ class ScalableView(QtWidgets.QGraphicsView):
 
             # Calculate the new zoom level
             new_zoom_level = self.current_zoom_level * scale_factor
-            # Clamp the zoom level between the min and max zoom levels
-            new_zoom_level = max(self.min_zoom_level, min(new_zoom_level, self.max_zoom_level))
-
-            # Set the new zoom level
-            self.setTransform( QtGui.QTransform().scale( new_zoom_level, new_zoom_level ) )
-
-            # Update current zoom level
-            self.current_zoom_level = new_zoom_level
-
-            # Update the size of the widget to fit the view window
-            self.resizeEvent(None)
+            # Set scale of the view to new zoom level.
+            self.setScale(new_zoom_level)
 
         # If the Ctrl key is not pressed, pass the event on to the parent class
         else:
@@ -111,7 +126,8 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Check if the F key is pressed
         if event.key() == QtCore.Qt.Key_F:
             # Reset the scaling of the view
-            self.resetTransform()
+            self.resetScale()
+
         # If the F key is not pressed, pass the event on to the parent class
         else:
             super(ScalableView, self).keyPressEvent(event)

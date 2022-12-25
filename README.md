@@ -74,7 +74,7 @@ The ScalableView class has the following features:
 
 The ability to scale the contents of the view using the mouse wheel while pressing the Ctrl key.
 Minimum and maximum zoom levels that can be set to limit the amount of scaling.
-The ability to reset the zoom level to the default value (1.0 or no zoom) by double-clicking the mouse wheel.
+The ability to reset the zoom level to the default value (1.0 or no zoom) by pressing "F".
 ___
 
 ## Requirements
