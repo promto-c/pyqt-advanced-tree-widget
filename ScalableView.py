@@ -27,6 +27,9 @@ class ScalableView(QtWidgets.QGraphicsView):
         self.scene().addWidget(tree_widget)
         # Set the default scaling
         self.scale(1, 1)
+        # Set the minimum and maximum scale values
+        self.min_scale = 0.5
+        self.max_scale = 4.0
 
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
@@ -52,11 +55,32 @@ class ScalableView(QtWidgets.QGraphicsView):
         if event.modifiers() == QtCore.Qt.ControlModifier:
             # Calculate the scaling factor based on the wheel delta
             scale_factor = 1 + (event.angleDelta().y() / 120) / 10
-            # Scale the view
-            self.scale(scale_factor, scale_factor)
+            # Get the current scaling of the view
+            current_scale = self.transform().m11()
+            # Check if the scaling is outside the allowed range
+            if current_scale * scale_factor < self.min_scale:
+                # Set the scaling to the minimum allowed value
+                self.scale(self.min_scale / current_scale, self.min_scale / current_scale)
+            elif current_scale * scale_factor > self.max_scale:
+                # Set the scaling to the maximum allowed value
+                self.scale(self.max_scale / current_scale, self.max_scale / current_scale)
+            else:
+                # Scale the view
+                self.scale(scale_factor, scale_factor)
         # If the Ctrl key is not pressed, pass the event on to the parent class
         else:
             super(ScalableView, self).wheelEvent(event)
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
+        ''' Handle key press events to allow the user to reset the scaling of the view.
+        '''
+        # Check if the F key is pressed
+        if event.key() == QtCore.Qt.Key_F:
+            # Reset the scaling of the view
+            self.resetTransform()
+        # If the F key is not pressed, pass the event on to the parent class
+        else:
+            super(ScalableView, self).keyPressEvent(event)
 
 def main():
     # Create the Qt application
