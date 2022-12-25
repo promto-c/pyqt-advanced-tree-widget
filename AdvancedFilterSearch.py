@@ -1,12 +1,14 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
+
 # Load the .ui file using the uic module
 ui_file = "ui/AdvancedFilterSearch.ui"
 form_class, base_class = uic.loadUiType(ui_file)
 
 class AdvancedFilterSearch(base_class, form_class):
-    def __init__(self, tree_widget, parent=None):
+    def __init__(self, tree_widget: QtWidgets.QTreeWidget, parent=None):
         ''' Initialize the widget and set up the UI, signal connections, and icon.
             Args:
                 tree_widget (QtWidgets.QTreeWidget): The tree widget to be filtered.
@@ -36,8 +38,14 @@ class AdvancedFilterSearch(base_class, form_class):
         # Set up the UI for the widget
         self.setupUi(self)
 
+        # Get a reference to the header item
+        headerItem = self.tree_widget.headerItem()
+
+        # Get the list of column names
+        self.column_names = [headerItem.text(i) for i in range(headerItem.columnCount())]
+
         # Set up combo boxes
-        self.columnComboBox.addItems(self.tree_widget.column_names())
+        self.columnComboBox.addItems(self.column_names)
         self.conditionComboBox.addItems(['contains', 'starts with', 'ends with', 'exact match'])
 
         # Set up list widget
@@ -77,7 +85,7 @@ class AdvancedFilterSearch(base_class, form_class):
                 condition = parts[1]
                 keyword = parts[2]
                 # Get the value of the item in the specified column
-                value = item.text(self.tree_widget.column_names().index(column))
+                value = item.text(self.column_names.index(column))
                 # Check if the value matches the condition and keyword
                 if condition == 'contains':
                     if keyword not in value:
@@ -120,6 +128,9 @@ def main():
     # Create the application and the main window
     app = QtWidgets.QApplication(sys.argv)
     window = QtWidgets.QMainWindow()
+
+    # Create the tree widget with example data
+    tree_widget = GroupableTreeWidget(column_name_list=COLUMN_NAME_LIST, id_to_data_dict=ID_TO_DATA_DICT)
 
     # Create an instance of the widget and set it as the central widget
     widget = AdvancedFilterSearch(tree_widget)
