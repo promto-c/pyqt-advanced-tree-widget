@@ -67,8 +67,13 @@ class AdvancedFilterSearch(base_class, form_class):
         column = self.columnComboBox.currentText()
         condition = self.conditionComboBox.currentText()
         keyword = self.keywordLineEdit.text()
+
         # Add the filter criteria to the list
-        self.filter_criteria.append(f'{column} {condition} "{keyword}"')
+        self.filter_criteria.append(f'{column} {condition} {keyword}')
+
+        # Update the list widget
+        self.filterListWidget.clear()
+        self.filterListWidget.addItems(self.filter_criteria)
 
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
