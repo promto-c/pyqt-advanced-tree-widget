@@ -81,20 +81,25 @@ class ScalableView(QtWidgets.QGraphicsView):
             # Calculate the scaling factor based on the wheel delta
             scale_factor = 1 + (scroll_delta / 120) / 10
             # Get the current scaling of the view
-            current_zoom_level = self.transform().m11()
-            # Check if the scaling is outside the allowed range
-            if current_zoom_level * scale_factor < self.min_zoom_level:
-                # Set the scaling to the minimum allowed value
-                self.scale(self.min_zoom_level / current_zoom_level, self.min_zoom_level / current_zoom_level)
-            elif current_zoom_level * scale_factor > self.max_zoom_level:
-                # Set the scaling to the maximum allowed value
-                self.scale(self.max_zoom_level / current_zoom_level, self.max_zoom_level / current_zoom_level)
-            else:
-                # Scale the view
-                self.scale(scale_factor, scale_factor)
+            self.current_zoom_level = self.transform().m11()
+
+            # Calculate the new zoom level
+            new_zoom_level = self.current_zoom_level * scale_factor
+            # Clamp the zoom level between the min and max zoom levels
+            new_zoom_level = max(self.min_zoom_level, min(new_zoom_level, self.max_zoom_level))
+
+            # Set the new zoom level
+            self.setTransform( QtGui.QTransform().scale( new_zoom_level, new_zoom_level ) )
+
+            # Update current zoom level
+            self.current_zoom_level = new_zoom_level
+            
+            # Update the size of the widget to fit the view window
+            self.resizeEvent(None)
+
         # If the Ctrl key is not pressed, pass the event on to the parent class
         else:
-            super(ScalableView, self).wheelEvent(event)
+            self.widget.wheelEvent(event)
 
     def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
         ''' Handle key press events to allow the user to reset the scaling of the view.
