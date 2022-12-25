@@ -6,6 +6,14 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
 class ScalableView(QtWidgets.QGraphicsView):
+    ''' A QGraphicsView subclass that allows the user to scale the contents of the view using the mouse wheel and keyboard.
+
+    Attributes:
+        widget (QtWidgets.QWidget): The widget to be displayed in the view.
+        min_zoom_level (float): The minimum zoom level allowed for the view.
+        max_zoom_level (float): The maximum zoom level allowed for the view.
+        current_zoom_level (float): The current zoom level of the view.
+    '''
     def __init__(self, parent: Optional[QtWidgets.QWidget] = None, 
                        widget: Optional[QtWidgets.QWidget] = None):
         # Call the parent class constructor
@@ -58,7 +66,7 @@ class ScalableView(QtWidgets.QGraphicsView):
         self.viewport().installEventFilter(self)
         self.viewport().wheelEvent = self.wheelEvent
 
-    def setScale(self, zoom_level: float=1.0) -> None:
+    def setScale(self, zoom_level: float = 1.0) -> None:
         ''' Set scale of the view to specified zoom level.
         '''
         # Clamp the zoom level between the min and max zoom levels
