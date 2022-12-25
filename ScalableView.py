@@ -3,32 +3,27 @@ from typing import Optional
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-from TreeWidget import TreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
+from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
 class ScalableView(QtWidgets.QGraphicsView):
     def __init__(self, parent: Optional[QtWidgets.QWidget] = None, 
-                       tree_widget: Optional[QtWidgets.QTreeWidget] = None):
+                       widget: Optional[QtWidgets.QWidget] = None):
         # Call the parent class constructor
         super(ScalableView, self).__init__(parent)
 
+        # Store argument(s)
+        self.widget = widget
+
         # Set up the initial values
-        self._setup_initial_values(tree_widget)
+        self._setup_initial_values()
         # Set up the UI
         self._setup_ui()
         # Set up signal connections
         self._setup_signal_connections()
 
-    def _setup_initial_values(self, tree_widget: Optional[QtWidgets.QTreeWidget]):
+    def _setup_initial_values(self):
         ''' Set up the initial values for the widget.
         '''
-        # Set the scene
-        self.setScene(QtWidgets.QGraphicsScene(self))
-        # Set the tree widget as the central widget of the scene
-        self.scene().addWidget(tree_widget)
-        # Set the default scaling
-        self.scale(1, 1)
-        # Set the alignment of the widget to the top left corner
-        self.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
         # Set the minimum and maximum scale values
         self.min_zoom_level = 0.5
         self.max_zoom_level = 4.0
@@ -36,6 +31,15 @@ class ScalableView(QtWidgets.QGraphicsView):
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
         '''
+        # Set the scene
+        self.setScene(QtWidgets.QGraphicsScene(self))
+        # Set the tree widget as the central widget of the scene
+        self.scene().addWidget(self.widget)
+        # Set the default scaling
+        self.scale(1, 1)
+        # Set the alignment of the widget to the top left corner
+        self.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
+
         # Set the viewport update mode to full viewport update to ensure that the entire view is updated when scaling
         self.setViewportUpdateMode(QtWidgets.QGraphicsView.FullViewportUpdate)
         # Set the drag mode to scroll hand to allow the user to pan the view by dragging with the mouse
@@ -43,12 +47,8 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Set the rendering hints to smooth pixels to improve the quality of the rendering
         self.setRenderHints(QtGui.QPainter.SmoothPixmapTransform)
 
-        # Get the widget containing the tree widget
-        tree_widget_item = self.scene().itemAt(0, 0, QtGui.QTransform())
-        # Get the tree widget
-        tree_widget = tree_widget_item.widget()
         # Set the size policy of the tree widget to expanding in both directions
-        tree_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         # Set the horizontal scroll bar policy to always off
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         # Set the vertical scroll bar policy to always off
@@ -59,12 +59,10 @@ class ScalableView(QtWidgets.QGraphicsView):
         '''
         # Get the size of the view
         view_size = self.size()
-        # Get the widget containing the tree widget
-        tree_widget_item = self.scene().itemAt(0, 0, QtGui.QTransform())
         # Create a QRectF object with the size of the view
-        rect = QtCore.QRectF(0, 0, view_size.width(), view_size.height())
+        rect = QtCore.QRect(0, 0, view_size.width(), view_size.height())
         # Set the size of the tree widget to the size of the view
-        tree_widget_item.setGeometry(rect)
+        self.widget.setGeometry(rect)
 
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
@@ -83,14 +81,14 @@ class ScalableView(QtWidgets.QGraphicsView):
             # Calculate the scaling factor based on the wheel delta
             scale_factor = 1 + (scroll_delta / 120) / 10
             # Get the current scaling of the view
-            current_scale = self.transform().m11()
+            current_zoom_level = self.transform().m11()
             # Check if the scaling is outside the allowed range
-            if current_scale * scale_factor < self.min_zoom_level:
+            if current_zoom_level * scale_factor < self.min_zoom_level:
                 # Set the scaling to the minimum allowed value
-                self.scale(self.min_zoom_level / current_scale, self.min_zoom_level / current_scale)
-            elif current_scale * scale_factor > self.max_zoom_level:
+                self.scale(self.min_zoom_level / current_zoom_level, self.min_zoom_level / current_zoom_level)
+            elif current_zoom_level * scale_factor > self.max_zoom_level:
                 # Set the scaling to the maximum allowed value
-                self.scale(self.max_zoom_level / current_scale, self.max_zoom_level / current_scale)
+                self.scale(self.max_zoom_level / current_zoom_level, self.max_zoom_level / current_zoom_level)
             else:
                 # Scale the view
                 self.scale(scale_factor, scale_factor)
@@ -114,14 +112,14 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
 
     # Create the tree widget with example data
-    tree_widget = TreeWidget(column_name_list=COLUMN_NAME_LIST, id_to_data_dict=ID_TO_DATA_DICT)
+    tree_widget = GroupableTreeWidget(column_name_list=COLUMN_NAME_LIST, id_to_data_dict=ID_TO_DATA_DICT)
 
     # Create the scalable view and set the tree widget as its central widget
-    view = ScalableView(tree_widget=tree_widget)
+    scalable_tree_widget_view = ScalableView(widget=tree_widget)
 
     # Set the size of the view and show it
-    view.resize(800, 600)
-    view.show()
+    scalable_tree_widget_view.resize(800, 600)
+    scalable_tree_widget_view.show()
 
     # Run the application loop
     sys.exit(app.exec_())
