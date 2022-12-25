@@ -27,9 +27,11 @@ class ScalableView(QtWidgets.QGraphicsView):
         self.scene().addWidget(tree_widget)
         # Set the default scaling
         self.scale(1, 1)
+        # Set the alignment of the widget to the top left corner
+        self.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
         # Set the minimum and maximum scale values
-        self.min_scale = 0.5
-        self.max_scale = 4.0
+        self.min_zoom_level = 0.5
+        self.max_zoom_level = 4.0
 
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
@@ -40,6 +42,29 @@ class ScalableView(QtWidgets.QGraphicsView):
         self.setDragMode(QtWidgets.QGraphicsView.ScrollHandDrag)
         # Set the rendering hints to smooth pixels to improve the quality of the rendering
         self.setRenderHints(QtGui.QPainter.SmoothPixmapTransform)
+
+        # Get the widget containing the tree widget
+        tree_widget_item = self.scene().itemAt(0, 0, QtGui.QTransform())
+        # Get the tree widget
+        tree_widget = tree_widget_item.widget()
+        # Set the size policy of the tree widget to expanding in both directions
+        tree_widget.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        # Set the horizontal scroll bar policy to always off
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        # Set the vertical scroll bar policy to always off
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+
+    def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
+        ''' Handle resize events to resize the tree widget to the full size of the view.
+        '''
+        # Get the size of the view
+        view_size = self.size()
+        # Get the widget containing the tree widget
+        tree_widget_item = self.scene().itemAt(0, 0, QtGui.QTransform())
+        # Create a QRectF object with the size of the view
+        rect = QtCore.QRectF(0, 0, view_size.width(), view_size.height())
+        # Set the size of the tree widget to the size of the view
+        tree_widget_item.setGeometry(rect)
 
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
@@ -53,17 +78,19 @@ class ScalableView(QtWidgets.QGraphicsView):
         '''
         # Check if the Ctrl key is pressed
         if event.modifiers() == QtCore.Qt.ControlModifier:
+            # Get the scroll delta
+            scroll_delta = event.angleDelta().y()
             # Calculate the scaling factor based on the wheel delta
-            scale_factor = 1 + (event.angleDelta().y() / 120) / 10
+            scale_factor = 1 + (scroll_delta / 120) / 10
             # Get the current scaling of the view
             current_scale = self.transform().m11()
             # Check if the scaling is outside the allowed range
-            if current_scale * scale_factor < self.min_scale:
+            if current_scale * scale_factor < self.min_zoom_level:
                 # Set the scaling to the minimum allowed value
-                self.scale(self.min_scale / current_scale, self.min_scale / current_scale)
-            elif current_scale * scale_factor > self.max_scale:
+                self.scale(self.min_zoom_level / current_scale, self.min_zoom_level / current_scale)
+            elif current_scale * scale_factor > self.max_zoom_level:
                 # Set the scaling to the maximum allowed value
-                self.scale(self.max_scale / current_scale, self.max_scale / current_scale)
+                self.scale(self.max_zoom_level / current_scale, self.max_zoom_level / current_scale)
             else:
                 # Scale the view
                 self.scale(scale_factor, scale_factor)
