@@ -35,10 +35,11 @@ class MyWidget(base_class, form_class):
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
         '''
+        # Set up the UI for the widget
+        self.setupUi(self)
+        
         # Create widgets and layouts here
         pass
-        # Set the layout for the widget
-        # self.setLayout(layout)
 
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
