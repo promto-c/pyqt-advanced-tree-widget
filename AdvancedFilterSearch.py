@@ -51,6 +51,7 @@ class AdvancedFilterSearch(base_class, form_class):
         ''' Set up the initial values for the widget.
         '''
         self.filter_criteria = []
+        self.case_sensitive = False  # Set the initial value to False
 
     def _setup_type_hints(self):
         ''' Set up type hints for the widgets in the .ui file.
@@ -64,6 +65,7 @@ class AdvancedFilterSearch(base_class, form_class):
         self.applyFiltersButton: QtWidgets.QPushButton
         self.removeFilterButton: QtWidgets.QPushButton
         self.clearFiltersButton: QtWidgets.QPushButton
+        self.caseSensitiveCheckBox: QtWidgets.QCheckBox
 
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
@@ -92,6 +94,14 @@ class AdvancedFilterSearch(base_class, form_class):
         self.applyFiltersButton.clicked.connect(self.apply_filters)
         self.removeFilterButton.clicked.connect(self.remove_filter)
         self.clearFiltersButton.clicked.connect(self.clear_filters)
+        self.caseSensitiveCheckBox.stateChanged.connect(self.update_case_sensitive)
+
+    def update_case_sensitive(self, state: int):
+        ''' Update the case_sensitive member variable when the checkbox state changes.
+            Args:
+                state (int): The state of the checkbox (0 for unchecked, 2 for checked).
+        '''
+        self.case_sensitive = state == 2
 
     def add_filter(self):
         ''' Slot for the "Add Filter" button.
@@ -122,8 +132,15 @@ class AdvancedFilterSearch(base_class, form_class):
                 column = parts[0]
                 condition = parts[1]
                 keyword = parts[2]
+
                 # Get the value of the item in the specified column
                 value = item.text(self.column_names.index(column))
+
+                # If the search is not case sensitive, convert the keyword and value to lowercase
+                if not self.case_sensitive:
+                    keyword = keyword.lower()
+                    value = value.lower()
+
                 # Check if the value matches the condition and keyword
                 matches_criteria = self.CONDITION_TO_FUNCTION_DICT[condition](value, keyword)
                 if not matches_criteria:
