@@ -2,6 +2,12 @@ import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 class MyWidget(QtWidgets.QWidget):
+    ''' A PyQt5 widget that performs some task.
+
+    Attributes:
+        some_arg (Any): An argument that will be used in the widget.
+        some_value (int): A value used in the widget.
+    '''
     def __init__(self, parent=None, some_arg=None):
         ''' Initialize the widget and set up the UI, signal connections, and icon.
             Args:
