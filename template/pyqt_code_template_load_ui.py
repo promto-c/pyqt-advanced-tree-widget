@@ -6,6 +6,12 @@ ui_file = "path/to/your/ui/file.ui"
 form_class, base_class = uic.loadUiType(ui_file)
 
 class MyWidget(base_class, form_class):
+    ''' A PyQt5 widget with a user interface created from a .ui file.
+    
+    Attributes:
+        some_arg (Any): An argument that will be used in the widget.
+        some_value (int): A value that will be used in the widget.
+    '''
     def __init__(self, parent=None, some_arg=None):
         ''' Initialize the widget and set up the UI, signal connections, and icon.
             Args:
