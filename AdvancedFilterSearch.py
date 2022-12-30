@@ -10,6 +10,13 @@ ui_file = "ui/AdvancedFilterSearch.ui"
 form_class, base_class = uic.loadUiType(ui_file)
 
 class AdvancedFilterSearch(base_class, form_class):
+    ''' A PyQt5 widget that allows the user to apply advanced filters to a tree widget.
+
+    Attributes:
+        tree_widget (QtWidgets.QTreeWidget): The tree widget to be filtered.
+        column_names (List[str]): The list of column names for the tree widget.
+        filter_criteria (List[str]): The list of filter criteria applied to the tree widget.
+    '''
     def __init__(self, tree_widget: QtWidgets.QTreeWidget, parent=None):
         ''' Initialize the widget and set up the UI, signal connections, and icon.
             Args:
@@ -63,7 +70,7 @@ class AdvancedFilterSearch(base_class, form_class):
 
         # Set up combo boxes
         self.columnComboBox.addItems(self.column_names)
-        self.conditionComboBox.addItems(['contains', 'starts with', 'ends with', 'exact match'])
+        self.conditionComboBox.addItems(['contains', 'starts_with', 'ends_with', 'exac_match'])
 
         # Set up list widget
         self.filterListWidget.addItems(self.filter_criteria)
@@ -95,11 +102,19 @@ class AdvancedFilterSearch(base_class, form_class):
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
         '''
+        # Define a dictionary of functions for each condition
+        condition_functions = {
+            'contains': lambda value, keyword: keyword in value,
+            'starts_with': lambda value, keyword: value.startswith(keyword),
+            'ends_with': lambda value, keyword: value.endswith(keyword),
+            'exac_match': lambda value, keyword: value == keyword
+        }
+
         # Filter the tree widget based on the given criteria
         for row in range(self.tree_widget.topLevelItemCount()):
             item = self.tree_widget.topLevelItem(row)
             # Check if the item matches all of the filter criteria
-            matches_criteria = True
+            matches_criteria = True  # Assign a default value to matches_criteria
             for criteria in self.filter_criteria:
                 # Split the criteria into column, condition, and keyword
                 parts = criteria.split()
@@ -109,18 +124,9 @@ class AdvancedFilterSearch(base_class, form_class):
                 # Get the value of the item in the specified column
                 value = item.text(self.column_names.index(column))
                 # Check if the value matches the condition and keyword
-                if condition == 'contains':
-                    if keyword not in value:
-                        matches_criteria = False
-                elif condition == 'starts with':
-                    if not value.startswith(keyword):
-                        matches_criteria = False
-                elif condition == 'ends with':
-                    if not value.endswith(keyword):
-                        matches_criteria = False
-                elif condition == 'exact match':
-                    if value != keyword:
-                        matches_criteria = False
+                matches_criteria = condition_functions[condition](value, keyword)
+                if not matches_criteria:
+                    break
             # Set the visibility of the item based on whether it matches the criteria
             item.setHidden(not matches_criteria)
 
