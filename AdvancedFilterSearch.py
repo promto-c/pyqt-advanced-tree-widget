@@ -24,6 +24,8 @@ class AdvancedFilterSearch(base_class, form_class):
 
         # Set up the initial values
         self._setup_initial_values()
+        # Set up type hints for the widgets
+        self._setup_type_hints()
         # Set up the UI
         self._setup_ui()
         # Set up signal connections
@@ -33,6 +35,19 @@ class AdvancedFilterSearch(base_class, form_class):
         ''' Set up the initial values for the widget.
         '''
         self.filter_criteria = []
+
+    def _setup_type_hints(self):
+        ''' Set up type hints for the widgets in the .ui file.
+        '''
+        # Set up type hints for the widgets
+        self.columnComboBox: QtWidgets.QComboBox
+        self.conditionComboBox: QtWidgets.QComboBox
+        self.keywordLineEdit: QtWidgets.QLineEdit
+        self.addFilterButton: QtWidgets.QPushButton
+        self.filterListWidget: QtWidgets.QListWidget
+        self.applyFiltersButton: QtWidgets.QPushButton
+        self.removeFilterButton: QtWidgets.QPushButton
+        self.clearFiltersButton: QtWidgets.QPushButton
 
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
