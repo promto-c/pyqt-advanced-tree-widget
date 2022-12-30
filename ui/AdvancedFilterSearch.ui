@@ -1,0 +1,68 @@
+<ui version="4.0">
+ <class>AdvancedFilterSearch</class>
+ <widget class="QWidget" name="AdvancedFilterSearch">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>300</width>
+    <height>100</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Advanced Filter Search</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QComboBox" name="columnComboBox"/>
+     </item>
+     <item>
+      <widget class="QComboBox" name="conditionComboBox"/>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="keywordLineEdit"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="addFilterButton">
+       <property name="text">
+        <string>Add Filter</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QListWidget" name="filterListWidget"/>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QPushButton" name="applyFiltersButton">
+       <property name="text">
+        <string>Apply Filters</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="removeFilterButton">
+       <property name="text">
+        <string>Remove Filter</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="clearFiltersButton">
+       <property name="text">
+        <string>Clear Filters</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

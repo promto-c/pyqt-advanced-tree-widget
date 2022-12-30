@@ -10,7 +10,6 @@ STYLE_SHEET_PATH_DICT = {
 def setTheme(app, theme: str='default') -> None:
     ''' This function use to set theme for "QApplication", support for "PySide2" and "PyQt5"
     '''
-
     # Get the name of the library that the app object belongs to
     lib_name = app.__module__.split('.')[0]
 

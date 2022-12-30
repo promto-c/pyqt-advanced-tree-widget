@@ -3,6 +3,8 @@ from typing import Optional
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
+from theme.theme import setTheme
+
 from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
 class ScalableView(QtWidgets.QGraphicsView):
@@ -101,8 +103,8 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Create a QRectF object with the size of the view reserved for scaling
         rect = QtCore.QRectF(
             0, 0, 
-            view_size.width() / self.current_zoom_level, 
-            view_size.height() / self.current_zoom_level)
+            view_size.width() / self.current_zoom_level-2, 
+            view_size.height() / self.current_zoom_level-2)
 
         # Set the size of the widget to the size of the view
         graphic_item.setGeometry(rect)
@@ -143,6 +145,9 @@ class ScalableView(QtWidgets.QGraphicsView):
 def main():
     # Create the Qt application
     app = QtWidgets.QApplication(sys.argv)
+
+    # Set theme of QApplication to the dark theme
+    setTheme(app, 'dark')
 
     # Create the tree widget with example data
     tree_widget = GroupableTreeWidget(column_name_list=COLUMN_NAME_LIST, id_to_data_dict=ID_TO_DATA_DICT)
