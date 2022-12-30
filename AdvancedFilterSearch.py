@@ -17,6 +17,15 @@ class AdvancedFilterSearch(base_class, form_class):
         column_names (List[str]): The list of column names for the tree widget.
         filter_criteria (List[str]): The list of filter criteria applied to the tree widget.
     '''
+
+    # Define a dictionary of functions for each condition
+    CONDITION_TO_FUNCTION_DICT = {
+        'contains': lambda value, keyword: keyword in value,
+        'starts_with': lambda value, keyword: value.startswith(keyword),
+        'ends_with': lambda value, keyword: value.endswith(keyword),
+        'exact_match': lambda value, keyword: value == keyword,
+    }
+
     def __init__(self, tree_widget: QtWidgets.QTreeWidget, parent=None):
         ''' Initialize the widget and set up the UI, signal connections, and icon.
             Args:
@@ -70,7 +79,7 @@ class AdvancedFilterSearch(base_class, form_class):
 
         # Set up combo boxes
         self.columnComboBox.addItems(self.column_names)
-        self.conditionComboBox.addItems(['contains', 'starts_with', 'ends_with', 'exac_match'])
+        self.conditionComboBox.addItems(self.CONDITION_TO_FUNCTION_DICT.keys())
 
         # Set up list widget
         self.filterListWidget.addItems(self.filter_criteria)
@@ -102,14 +111,6 @@ class AdvancedFilterSearch(base_class, form_class):
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
         '''
-        # Define a dictionary of functions for each condition
-        condition_functions = {
-            'contains': lambda value, keyword: keyword in value,
-            'starts_with': lambda value, keyword: value.startswith(keyword),
-            'ends_with': lambda value, keyword: value.endswith(keyword),
-            'exac_match': lambda value, keyword: value == keyword
-        }
-
         # Filter the tree widget based on the given criteria
         for row in range(self.tree_widget.topLevelItemCount()):
             item = self.tree_widget.topLevelItem(row)
@@ -124,7 +125,7 @@ class AdvancedFilterSearch(base_class, form_class):
                 # Get the value of the item in the specified column
                 value = item.text(self.column_names.index(column))
                 # Check if the value matches the condition and keyword
-                matches_criteria = condition_functions[condition](value, keyword)
+                matches_criteria = self.CONDITION_TO_FUNCTION_DICT[condition](value, keyword)
                 if not matches_criteria:
                     break
             # Set the visibility of the item based on whether it matches the criteria
