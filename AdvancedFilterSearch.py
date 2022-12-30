@@ -61,7 +61,7 @@ class AdvancedFilterSearch(base_class, form_class):
         self.conditionComboBox: QtWidgets.QComboBox
         self.keywordLineEdit: QtWidgets.QLineEdit
         self.addFilterButton: QtWidgets.QPushButton
-        self.filterListWidget: QtWidgets.QListWidget
+        self.filterTreeWidget: QtWidgets.QTreeWidget
         self.applyFiltersButton: QtWidgets.QPushButton
         self.removeFilterButton: QtWidgets.QPushButton
         self.clearFiltersButton: QtWidgets.QPushButton
@@ -83,8 +83,8 @@ class AdvancedFilterSearch(base_class, form_class):
         self.columnComboBox.addItems(self.column_names)
         self.conditionComboBox.addItems(self.CONDITION_TO_FUNCTION_DICT.keys())
 
-        # Set up list widget
-        self.filterListWidget.addItems(self.filter_criteria)
+        # Set up filter tree widget header columns
+        self.filterTreeWidget.setHeaderLabels(['Column', 'Condition', 'Keyword'])
 
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
@@ -95,6 +95,7 @@ class AdvancedFilterSearch(base_class, form_class):
         self.removeFilterButton.clicked.connect(self.remove_filter)
         self.clearFiltersButton.clicked.connect(self.clear_filters)
         self.caseSensitiveCheckBox.stateChanged.connect(self.update_case_sensitive)
+        self.keywordLineEdit.returnPressed.connect(self.add_filter)
 
     def update_case_sensitive(self, state: int):
         ''' Update the case_sensitive member variable when the checkbox state changes.
@@ -111,12 +112,19 @@ class AdvancedFilterSearch(base_class, form_class):
         condition = self.conditionComboBox.currentText()
         keyword = self.keywordLineEdit.text()
 
-        # Add the filter criteria to the list
-        self.filter_criteria.append(f'{column} {condition} {keyword}')
+        if not keyword:
+            return
 
-        # Update the list widget
-        self.filterListWidget.clear()
-        self.filterListWidget.addItems(self.filter_criteria)
+        self.keywordLineEdit.clear()
+
+        if [column, condition, keyword] in self.filter_criteria:
+            return
+
+        # Add the filter criteria to the list
+        self.filter_criteria.append([column, condition, keyword])
+
+        filter_tree_item = QtWidgets.QTreeWidgetItem(self.filterTreeWidget, [column, condition, keyword])
+        filter_tree_item.data_list = [column, condition, keyword]
 
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
@@ -124,14 +132,12 @@ class AdvancedFilterSearch(base_class, form_class):
         # Filter the tree widget based on the given criteria
         for row in range(self.tree_widget.topLevelItemCount()):
             item = self.tree_widget.topLevelItem(row)
+
+            # Assign a default value to matches_criteria
+            matches_criteria = True  
+
             # Check if the item matches all of the filter criteria
-            matches_criteria = True  # Assign a default value to matches_criteria
-            for criteria in self.filter_criteria:
-                # Split the criteria into column, condition, and keyword
-                parts = criteria.split()
-                column = parts[0]
-                condition = parts[1]
-                keyword = parts[2]
+            for column, condition, keyword in self.filter_criteria:
 
                 # Get the value of the item in the specified column
                 value = item.text(self.column_names.index(column))
@@ -145,6 +151,7 @@ class AdvancedFilterSearch(base_class, form_class):
                 matches_criteria = self.CONDITION_TO_FUNCTION_DICT[condition](value, keyword)
                 if not matches_criteria:
                     break
+
             # Set the visibility of the item based on whether it matches the criteria
             item.setHidden(not matches_criteria)
 
@@ -152,21 +159,22 @@ class AdvancedFilterSearch(base_class, form_class):
         ''' Slot for the "Remove Filter" button.
         '''
         # Get the selected item in the list widget
-        selected_items = self.filterListWidget.selectedItems()
+        selected_items = self.filterTreeWidget.selectedItems()
         if selected_items:
             # Remove the selected filter criteria from the list
-            self.filter_criteria.remove(selected_items[0].text())
-            # Update the list widget
-            self.filterListWidget.clear()
-            self.filterListWidget.addItems(self.filter_criteria)
+            self.filter_criteria.remove(selected_items[0].data_list)
+            # Remove the selected item at index 0
+            item = self.filterTreeWidget.takeTopLevelItem(self.filterTreeWidget.indexOfTopLevelItem(selected_items[0]))
+            # Delete the item object. This will remove the item from memory and break any references to it.
+            del item
 
     def clear_filters(self):
         ''' Slot for the "Clear Filters" button.
         '''
         # Clear the list of filter criteria
         self.filter_criteria.clear()
-        # Update the list widget
-        self.filterListWidget.clear()
+        # Clear the tree widget
+        self.filterTreeWidget.clear()
 
 def main():
     ''' Create the application and main window, and show the widget.

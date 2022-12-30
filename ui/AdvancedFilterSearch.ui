@@ -31,10 +31,17 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QCheckBox" name="caseSensitiveCheckBox">
+       <property name="text">
+        <string>Case Sensitive</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
-    <widget class="QListWidget" name="filterListWidget"/>
+    <widget class="QTreeWidget" name="filterTreeWidget"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
