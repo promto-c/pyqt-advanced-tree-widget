@@ -105,25 +105,31 @@ class AdvancedFilterSearch(base_class, form_class):
         self.case_sensitive = state == 2
 
     def add_filter(self):
-        ''' Slot for the "Add Filter" button.
+        ''' Add a filter to the tree widget. Called when the "Add Filter" button is clicked 
+            or when the Enter key is pressed in the keywordLineEdit widget.
         '''
         # Get the selected column, condition, and keyword
         column = self.columnComboBox.currentText()
         condition = self.conditionComboBox.currentText()
         keyword = self.keywordLineEdit.text()
 
+        # Return if the keyword is empty
         if not keyword:
             return
 
+        # Clear the keywordLineEdit widget
         self.keywordLineEdit.clear()
 
+        # Return if the filter criteria (column, condition, keyword) is already in the filter_criteria list
         if [column, condition, keyword] in self.filter_criteria:
             return
 
         # Add the filter criteria to the list
         self.filter_criteria.append([column, condition, keyword])
 
+        # Create a new tree widget item with the column, condition, and keyword
         filter_tree_item = QtWidgets.QTreeWidgetItem(self.filterTreeWidget, [column, condition, keyword])
+        # Store the filter criteria in a data_list attribute of the tree widget item
         filter_tree_item.data_list = [column, condition, keyword]
 
     def apply_filters(self):
