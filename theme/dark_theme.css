@@ -388,7 +388,7 @@ QComboBox::drop-down:button {
 }
 
 QComboBox::down-arrow {
-    image: url(theme/icon/go-down.svg);
+    image: url(theme/icons/drop-down.svg);
     width: 12px;
     height: 12px;
 }
@@ -510,7 +510,7 @@ QDateEdit::drop-down:button {
 }
 
 QDateEdit::down-arrow {
-    image: url(theme/icon/go_down.svg);
+    image: url(theme/icons/drop-down.svg);
     width: 12px;
     height: 12px;
 }
