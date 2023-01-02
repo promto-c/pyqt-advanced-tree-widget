@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>AdvancedFilterSearch</class>
  <widget class="QWidget" name="AdvancedFilterSearch">
@@ -25,23 +26,29 @@
       <widget class="QLineEdit" name="keywordLineEdit"/>
      </item>
      <item>
-      <widget class="QPushButton" name="addFilterButton">
-       <property name="text">
-        <string>Add Filter</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QCheckBox" name="caseSensitiveCheckBox">
        <property name="text">
         <string>Case Sensitive</string>
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="addFilterButton">
+       <property name="text">
+        <string>Add Filter</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
-    <widget class="QTreeWidget" name="filterTreeWidget"/>
+    <widget class="QTreeWidget" name="filterTreeWidget">
+     <column>
+      <property name="text">
+       <string notr="true">1</string>
+      </property>
+     </column>
+    </widget>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
