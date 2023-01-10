@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>300</width>
-    <height>100</height>
+    <width>404</width>
+    <height>151</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -49,31 +49,6 @@
       </property>
      </column>
     </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QPushButton" name="applyFiltersButton">
-       <property name="text">
-        <string>Apply Filters</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="removeFilterButton">
-       <property name="text">
-        <string>Remove Filter</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="clearFiltersButton">
-       <property name="text">
-        <string>Clear Filters</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>
