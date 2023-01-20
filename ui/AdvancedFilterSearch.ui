@@ -26,13 +26,6 @@
       <widget class="QLineEdit" name="keywordLineEdit"/>
      </item>
      <item>
-      <widget class="QCheckBox" name="caseSensitiveCheckBox">
-       <property name="text">
-        <string>Case Sensitive</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <widget class="QPushButton" name="addFilterButton">
        <property name="text">
         <string>Add Filter</string>
@@ -43,6 +36,21 @@
    </item>
    <item>
     <widget class="QTreeWidget" name="filterTreeWidget">
+     <property name="rootIsDecorated">
+      <bool>false</bool>
+     </property>
+     <property name="itemsExpandable">
+      <bool>false</bool>
+     </property>
+     <property name="allColumnsShowFocus">
+      <bool>true</bool>
+     </property>
+     <attribute name="headerMinimumSectionSize">
+      <number>32</number>
+     </attribute>
+     <attribute name="headerStretchLastSection">
+      <bool>false</bool>
+     </attribute>
      <column>
       <property name="text">
        <string notr="true">1</string>

@@ -1,7 +1,9 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-
+from PyQt5.QtSvg import QSvgRenderer
 from theme.theme import setTheme
+
+from TablerQIcon import TablerQIcon
 
 from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
@@ -51,7 +53,8 @@ class AdvancedFilterSearch(base_class, form_class):
         ''' Set up the initial values for the widget.
         '''
         self.filter_criteria_list = list()
-        self.case_sensitive = False  # Set the initial value to False
+        self.is_case_sensitive = False
+        self.tabler_qicon = TablerQIcon()
 
     def _setup_type_hints(self):
         ''' Set up type hints for the widgets in the .ui file.
@@ -80,28 +83,39 @@ class AdvancedFilterSearch(base_class, form_class):
         self.columnComboBox.addItems(self.column_names)
         self.conditionComboBox.addItems(self.CONDITION_TO_FUNCTION_DICT.keys())
 
+        self.setup_filter_tree_widget()
+
+        self.add_action_on_keyword_line_edit()
+        
+    def add_action_on_keyword_line_edit(self):
+        self.matchCaseAction = self.keywordLineEdit.addAction(self.tabler_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
+        self.matchCaseAction.setCheckable(True)
+
+        self.keywordLineEdit.setClearButtonEnabled(True)
+    
+    def _setup_signal_connections(self):
+        ''' Set up signal connections between widgets and slots.
+        '''
+        # Connect signals to slots
+        self.addFilterButton.clicked.connect(self.add_filter)
+        self.keywordLineEdit.returnPressed.connect(self.add_filter)
+        self.matchCaseAction.triggered.connect(self.update_case_sensitive)
+
+    def setup_filter_tree_widget(self):
+
         # Set up filter tree widget header columns
         self.filterTreeWidget.setHeaderLabels(['Column', 'Condition', 'Keyword', ''])
 
         self.filterTreeWidget.setMinimumWidth(32)
         self.filterTreeWidget.setColumnWidth(3, 32)
         
-        self.filterTreeWidget.header().setStretchLastSection(False)
         self.filterTreeWidget.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.filterTreeWidget.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
         self.filterTreeWidget.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
 
-        self.add_clear_button()
+        self.add_clear_button_on_header()
 
-    def _setup_signal_connections(self):
-        ''' Set up signal connections between widgets and slots.
-        '''
-        # Connect signals to slots
-        self.addFilterButton.clicked.connect(self.add_filter)
-        self.caseSensitiveCheckBox.stateChanged.connect(self.update_case_sensitive)
-        self.keywordLineEdit.returnPressed.connect(self.add_filter)
-
-    def add_clear_button(self):
+    def add_clear_button_on_header(self):
         # Add a clear filters button to the header
         header = self.filterTreeWidget.header()
         viewport = header.viewport()
@@ -115,15 +129,15 @@ class AdvancedFilterSearch(base_class, form_class):
 
         clear_button = QtWidgets.QPushButton('X')
         clear_button.clicked.connect(self.clear_filters)
-        clear_button.setMinimumSize(QtCore.QSize(32, 16777215))
+        clear_button.setMinimumSize(QtCore.QSize(27, 16777215))
         layout.addWidget(clear_button)
 
-    def update_case_sensitive(self, state: int):
-        ''' Update the case_sensitive member variable when the checkbox state changes.
+    def update_case_sensitive(self, state: bool):
+        ''' Update the is_case_sensitive member variable when the match case action state changes.
             Args:
-                state (int): The state of the checkbox (0 for unchecked, 2 for checked).
+                state (bool): The state of match case action.
         '''
-        self.case_sensitive = state == 2
+        self.is_case_sensitive = state
 
     def add_filter(self):
         ''' Add a filter to the tree widget. Called when the "Add Filter" button is clicked 
@@ -161,6 +175,11 @@ class AdvancedFilterSearch(base_class, form_class):
 
         self.apply_filters()
 
+    def add_remove_item_button(self, tree_item):
+        remove_button = QtWidgets.QPushButton('X')
+        remove_button.clicked.connect(lambda: self.remove_filter(tree_item))
+        self.filterTreeWidget.setItemWidget(tree_item, 3, remove_button)
+
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
         '''
@@ -178,7 +197,7 @@ class AdvancedFilterSearch(base_class, form_class):
                 value = item.text(self.column_names.index(column))
 
                 # If the search is not case sensitive, convert the keyword and value to lowercase
-                if not self.case_sensitive:
+                if not self.is_case_sensitive:
                     keyword = keyword.lower()
                     value = value.lower()
 
