@@ -54,7 +54,8 @@ class AdvancedFilterSearch(base_class, form_class):
         '''
         self.filter_criteria_list = list()
         self.is_case_sensitive = False
-        self.tabler_qicon = TablerQIcon()
+        self.tabler_action_qicon = TablerQIcon()
+        self.tabler_button_qicon = TablerQIcon(color='#aaaaaa')
 
     def _setup_type_hints(self):
         ''' Set up type hints for the widgets in the .ui file.
@@ -86,12 +87,15 @@ class AdvancedFilterSearch(base_class, form_class):
         self.setup_filter_tree_widget()
 
         self.add_action_on_keyword_line_edit()
+
+        self.addFilterButton.setIcon( self.tabler_button_qicon.filter )
+        self.addFilterButton.setIcon( self.tabler_button_qicon.filter_add )
         
     def add_action_on_keyword_line_edit(self):
-        self.matchCaseAction = self.keywordLineEdit.addAction(self.tabler_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
+        self.matchCaseAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
         self.matchCaseAction.setCheckable(True)
 
-        self.keywordLineEdit.setClearButtonEnabled(True)
+        self.negateAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.zoom_cancel, QtWidgets.QLineEdit.TrailingPosition)
     
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
@@ -127,7 +131,8 @@ class AdvancedFilterSearch(base_class, form_class):
         horizontal_spacer = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
         layout.addItem(horizontal_spacer)
 
-        clear_button = QtWidgets.QPushButton('X')
+        clear_button = QtWidgets.QPushButton(self.tabler_button_qicon.clear_all, '', self)
+        clear_button.setToolTip('Clear all filter')
         clear_button.clicked.connect(self.clear_filters)
         clear_button.setMinimumSize(QtCore.QSize(27, 16777215))
         layout.addWidget(clear_button)
@@ -169,14 +174,13 @@ class AdvancedFilterSearch(base_class, form_class):
         # Store the filter criteria in a data_list attribute of the tree widget item
         filter_tree_item.data_list = filter_criteria
 
-        remove_button = QtWidgets.QPushButton('X')
-        remove_button.clicked.connect(lambda: self.remove_filter(filter_tree_item))
-        self.filterTreeWidget.setItemWidget(filter_tree_item, 3, remove_button)
+        self.add_remove_item_button(filter_tree_item)
 
         self.apply_filters()
 
     def add_remove_item_button(self, tree_item):
-        remove_button = QtWidgets.QPushButton('X')
+        remove_button = QtWidgets.QPushButton(self.tabler_button_qicon.trash, '', self)
+        remove_button.setToolTip('Remove this filter item')
         remove_button.clicked.connect(lambda: self.remove_filter(tree_item))
         self.filterTreeWidget.setItemWidget(tree_item, 3, remove_button)
 

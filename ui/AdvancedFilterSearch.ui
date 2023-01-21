@@ -27,6 +27,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="addFilterButton">
+       <property name="toolTip">
+        <string>Add filter</string>
+       </property>
        <property name="text">
         <string>Add Filter</string>
        </property>
