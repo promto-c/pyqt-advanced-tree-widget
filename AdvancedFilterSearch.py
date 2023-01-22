@@ -52,10 +52,15 @@ class AdvancedFilterSearch(base_class, form_class):
     def _setup_initial_values(self):
         ''' Set up the initial values for the widget.
         '''
+        # self.palette = QtGui.QPalette()
+        app = QtWidgets.QApplication.instance()
+        palette = app.palette()
+        icon_color = palette.color(QtGui.QPalette.ToolTipText)
+
         self.filter_criteria_list = list()
         self.is_case_sensitive = False
-        self.tabler_action_qicon = TablerQIcon()
-        self.tabler_button_qicon = TablerQIcon(color='#aaaaaa')
+        self.tabler_action_qicon = TablerQIcon(icon_color)
+        self.tabler_button_qicon = TablerQIcon(icon_color)
 
     def _setup_type_hints(self):
         ''' Set up type hints for the widgets in the .ui file.
@@ -89,7 +94,7 @@ class AdvancedFilterSearch(base_class, form_class):
         self.add_action_on_keyword_line_edit()
 
         self.addFilterButton.setIcon( self.tabler_button_qicon.filter )
-        self.addFilterButton.setIcon( self.tabler_button_qicon.filter_add )
+        # self.addFilterButton.setIcon( self.tabler_button_qicon.filter_add )
         
     def add_action_on_keyword_line_edit(self):
         self.matchCaseAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)

@@ -11,8 +11,11 @@ class TablerQIcon:
     Attributes:
         _icon_name_to_path_dict (dict): A dictionary containing the icon name as key and the icon path as value.
     '''
+    palette = QtGui.QPalette()
+    
+    color = palette.color(QtGui.QPalette.Text)
 
-    def __init__(self, color='gray', size=24, view_box_size=24, stroke_width=2 ):
+    def __init__(self, color: QtGui.QColor=color, size=24, view_box_size=24, stroke_width=2, opacity=1.0 ):
         ''' Initialize the widget and load the icons from the tabler-icons/icons directory.
         '''
 
@@ -20,6 +23,7 @@ class TablerQIcon:
         self._size = size
         self._view_box_size = view_box_size
         self._stroke_width = stroke_width
+        self._opacity = opacity
 
         self._icon_name_to_path_dict = self.get_icon_name_to_path_dict()
 
@@ -44,23 +48,25 @@ class TablerQIcon:
         # parse the SVG file as XML
         svg = ElementTree.fromstring(svg_str)
         svg.set('stroke-width', str(self._stroke_width))
-        svg.set('stroke', self._color)
+        svg.set('opacity', str(self._opacity))
         svg_bytes = ElementTree.tostring(svg)
 
         renderer = QtSvg.QSvgRenderer(svg_bytes)
         renderer.setViewBox( QtCore.QRectF(0, 0, self._view_box_size, self._view_box_size) )
 
         pixmap = QtGui.QPixmap(self._size, self._size)
-        pixmap.fill(QtGui.QColor(0, 0, 0, 0))
-
+        pixmap.fill(QtCore.Qt.transparent)
         
-        # Render the SVG on the QPixmap object
-        renderer.render(QtGui.QPainter(pixmap))
- 
-        # Create a QIcon object from the QPixmap
-        icon = QtGui.QIcon(pixmap)
+        painter = QtGui.QPainter(pixmap)
+        renderer.render(painter)
+        
+        painter.setCompositionMode(QtGui.QPainter.CompositionMode_SourceIn)
+        painter.fillRect(pixmap.rect(), self._color )
+        # svg_renderer
+        painter.end()
 
-        return icon
+        icon = QtGui.QIcon(pixmap)
+        return(icon)
     
     @classmethod
     def get_icon_name_to_path_dict(cls):
