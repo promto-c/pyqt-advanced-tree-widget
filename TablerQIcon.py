@@ -48,7 +48,6 @@ class TablerQIcon:
         # parse the SVG file as XML
         svg = ElementTree.fromstring(svg_str)
         svg.set('stroke-width', str(self._stroke_width))
-        svg.set('opacity', str(self._opacity))
         svg_bytes = ElementTree.tostring(svg)
 
         renderer = QtSvg.QSvgRenderer(svg_bytes)
@@ -60,9 +59,11 @@ class TablerQIcon:
         painter = QtGui.QPainter(pixmap)
         renderer.render(painter)
         
+        painter.setOpacity(self._opacity)
         painter.setCompositionMode(QtGui.QPainter.CompositionMode_SourceIn)
+        
         painter.fillRect(pixmap.rect(), self._color )
-        # svg_renderer
+        
         painter.end()
 
         icon = QtGui.QIcon(pixmap)

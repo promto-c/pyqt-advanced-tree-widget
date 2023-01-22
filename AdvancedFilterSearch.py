@@ -59,8 +59,8 @@ class AdvancedFilterSearch(base_class, form_class):
 
         self.filter_criteria_list = list()
         self.is_case_sensitive = False
-        self.tabler_action_qicon = TablerQIcon(icon_color)
-        self.tabler_button_qicon = TablerQIcon(icon_color)
+        self.tabler_action_qicon = TablerQIcon(color=icon_color, opacity=0.6)
+        self.tabler_button_qicon = TablerQIcon(color=icon_color)
 
     def _setup_type_hints(self):
         ''' Set up type hints for the widgets in the .ui file.
