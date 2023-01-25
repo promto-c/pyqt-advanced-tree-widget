@@ -11,14 +11,13 @@ class TablerQIcon:
     Attributes:
         _icon_name_to_path_dict (dict): A dictionary containing the icon name as key and the icon path as value.
     '''
-    palette = QtGui.QPalette()
+    _palette = QtGui.QPalette()
     
-    color = palette.color(QtGui.QPalette.Text)
+    _default_color = _palette.color(QtGui.QPalette.Text)
 
-    def __init__(self, color: QtGui.QColor=color, size=24, view_box_size=24, stroke_width=2, opacity=1.0 ):
+    def __init__(self, color: QtGui.QColor=_default_color, size=24, view_box_size=24, stroke_width=2, opacity=1.0 ):
         ''' Initialize the widget and load the icons from the tabler-icons/icons directory.
         '''
-
         self._color = color
         self._size = size
         self._view_box_size = view_box_size
