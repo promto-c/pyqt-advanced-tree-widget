@@ -58,8 +58,6 @@ class AdvancedFilterSearch(base_class, form_class):
         icon_color = palette.color(QtGui.QPalette.Text)
 
         self.filter_criteria_list = list()
-        self.is_case_sensitive = False
-        self.is_negate = False
         self.tabler_action_qicon = TablerQIcon(color=icon_color, opacity=0.6)
         self.tabler_action_checked_qicon = TablerQIcon(color=icon_color)
         self.tabler_button_qicon = TablerQIcon(color=icon_color)
@@ -72,7 +70,6 @@ class AdvancedFilterSearch(base_class, form_class):
         self.conditionComboBox: QtWidgets.QComboBox
         self.keywordLineEdit: QtWidgets.QLineEdit
         self.addFilterButton: QtWidgets.QPushButton
-        # self.addFilterButton.
         self.filterTreeWidget: QtWidgets.QTreeWidget
         self.caseSensitiveCheckBox: QtWidgets.QCheckBox
 
@@ -105,10 +102,6 @@ class AdvancedFilterSearch(base_class, form_class):
 
         self.negateAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
         self.negateAction.setCheckable(True)
-
-        # self.matchCaseAction.triggered.connect(  )
-
-        # tabler_action_checked_qicon
     
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
@@ -122,10 +115,12 @@ class AdvancedFilterSearch(base_class, form_class):
     def setup_filter_tree_widget(self):
 
         # Set up filter tree widget header columns
-        self.filterTreeWidget.setHeaderLabels(['Column', 'Condition', 'Keyword', ''])
+        self.filterTreeWidget.setHeaderLabels(['Column', 'Condition', 'Keyword', '~', 'Aa',''])
 
         self.filterTreeWidget.setMinimumWidth(32)
         self.filterTreeWidget.setColumnWidth(3, 32)
+        self.filterTreeWidget.setColumnWidth(4, 32)
+        self.filterTreeWidget.setColumnWidth(5, 32)
         
         self.filterTreeWidget.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.filterTreeWidget.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
@@ -158,7 +153,6 @@ class AdvancedFilterSearch(base_class, form_class):
         '''
         tabler_qicon = self.tabler_action_checked_qicon if state else self.tabler_action_qicon
         self.matchCaseAction.setIcon( tabler_qicon.letter_case )
-        self.is_case_sensitive = state
 
     def update_negate(self, state: bool):
         ''' Update the is_negate member variable when the negate action state changes.
@@ -167,7 +161,6 @@ class AdvancedFilterSearch(base_class, form_class):
         '''
         tabler_qicon = self.tabler_action_checked_qicon if state else self.tabler_action_qicon
         self.negateAction.setIcon( tabler_qicon.a_b_off )
-        self.is_negate = state
 
     def add_filter(self):
         ''' Add a filter to the tree widget. Called when the "Add Filter" button is clicked 
@@ -177,6 +170,8 @@ class AdvancedFilterSearch(base_class, form_class):
         column = self.columnComboBox.currentText()
         condition = self.conditionComboBox.currentText()
         keyword = self.keywordLineEdit.text()
+        is_negate = '~' if self.negateAction.isChecked() else str()
+        is_case_sensitive = 'Aa' if self.matchCaseAction.isChecked() else str()
 
         # Return if the keyword is empty
         if not keyword:
@@ -185,7 +180,8 @@ class AdvancedFilterSearch(base_class, form_class):
         # Clear the keywordLineEdit widget
         self.keywordLineEdit.clear()
 
-        filter_criteria = [column, condition, keyword]
+        filter_criteria = [column, condition, keyword, is_negate, is_case_sensitive]
+        # filter_criteria = [column, condition, keyword]
 
         # Return if the filter criteria (column, condition, keyword) is already in the filter criteria list
         if filter_criteria in self.filter_criteria_list:
@@ -207,7 +203,7 @@ class AdvancedFilterSearch(base_class, form_class):
         remove_button = QtWidgets.QPushButton(self.tabler_button_qicon.trash, '', self)
         remove_button.setToolTip('Remove this filter item')
         remove_button.clicked.connect(lambda: self.remove_filter(tree_item))
-        self.filterTreeWidget.setItemWidget(tree_item, 3, remove_button)
+        self.filterTreeWidget.setItemWidget(tree_item, 5, remove_button)
 
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
@@ -220,18 +216,22 @@ class AdvancedFilterSearch(base_class, form_class):
             matches_criteria = True  
 
             # Check if the item matches all of the filter criteria
-            for column, condition, keyword in self.filter_criteria_list:
+            for column, condition, keyword, is_negate, is_case_sensitive in self.filter_criteria_list:
 
                 # Get the value of the item in the specified column
                 value = item.text(self.column_names.index(column))
 
                 # If the search is not case sensitive, convert the keyword and value to lowercase
-                if not self.is_case_sensitive:
+                if not is_case_sensitive:
                     keyword = keyword.lower()
                     value = value.lower()
 
                 # Check if the value matches the condition and keyword
                 matches_criteria = self.CONDITION_TO_FUNCTION_DICT[condition](value, keyword)
+
+                if is_negate:
+                    matches_criteria = not matches_criteria
+
                 if not matches_criteria:
                     break
 
