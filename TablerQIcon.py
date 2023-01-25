@@ -67,7 +67,7 @@ class TablerQIcon:
         painter.end()
 
         icon = QtGui.QIcon(pixmap)
-        return(icon)
+        return icon
     
     @classmethod
     def get_icon_name_to_path_dict(cls):

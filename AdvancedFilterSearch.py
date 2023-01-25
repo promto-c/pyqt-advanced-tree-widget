@@ -55,11 +55,13 @@ class AdvancedFilterSearch(base_class, form_class):
         # self.palette = QtGui.QPalette()
         app = QtWidgets.QApplication.instance()
         palette = app.palette()
-        icon_color = palette.color(QtGui.QPalette.ToolTipText)
+        icon_color = palette.color(QtGui.QPalette.Text)
 
         self.filter_criteria_list = list()
         self.is_case_sensitive = False
+        self.is_negate = False
         self.tabler_action_qicon = TablerQIcon(color=icon_color, opacity=0.6)
+        self.tabler_action_checked_qicon = TablerQIcon(color=icon_color)
         self.tabler_button_qicon = TablerQIcon(color=icon_color)
 
     def _setup_type_hints(self):
@@ -70,6 +72,7 @@ class AdvancedFilterSearch(base_class, form_class):
         self.conditionComboBox: QtWidgets.QComboBox
         self.keywordLineEdit: QtWidgets.QLineEdit
         self.addFilterButton: QtWidgets.QPushButton
+        # self.addFilterButton.
         self.filterTreeWidget: QtWidgets.QTreeWidget
         self.caseSensitiveCheckBox: QtWidgets.QCheckBox
 
@@ -100,7 +103,12 @@ class AdvancedFilterSearch(base_class, form_class):
         self.matchCaseAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
         self.matchCaseAction.setCheckable(True)
 
-        self.negateAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.zoom_cancel, QtWidgets.QLineEdit.TrailingPosition)
+        self.negateAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
+        self.negateAction.setCheckable(True)
+
+        # self.matchCaseAction.triggered.connect(  )
+
+        # tabler_action_checked_qicon
     
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
@@ -109,6 +117,7 @@ class AdvancedFilterSearch(base_class, form_class):
         self.addFilterButton.clicked.connect(self.add_filter)
         self.keywordLineEdit.returnPressed.connect(self.add_filter)
         self.matchCaseAction.triggered.connect(self.update_case_sensitive)
+        self.negateAction.triggered.connect(self.update_negate)
 
     def setup_filter_tree_widget(self):
 
@@ -147,7 +156,18 @@ class AdvancedFilterSearch(base_class, form_class):
             Args:
                 state (bool): The state of match case action.
         '''
+        tabler_qicon = self.tabler_action_checked_qicon if state else self.tabler_action_qicon
+        self.matchCaseAction.setIcon( tabler_qicon.letter_case )
         self.is_case_sensitive = state
+
+    def update_negate(self, state: bool):
+        ''' Update the is_negate member variable when the negate action state changes.
+            Args:
+                state (bool): The state of negate action.
+        '''
+        tabler_qicon = self.tabler_action_checked_qicon if state else self.tabler_action_qicon
+        self.negateAction.setIcon( tabler_qicon.a_b_off )
+        self.is_negate = state
 
     def add_filter(self):
         ''' Add a filter to the tree widget. Called when the "Add Filter" button is clicked 
