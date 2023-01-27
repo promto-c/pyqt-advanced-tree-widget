@@ -39,6 +39,9 @@
    </item>
    <item>
     <widget class="QTreeWidget" name="filterTreeWidget">
+     <property name="selectionMode">
+      <enum>QAbstractItemView::NoSelection</enum>
+     </property>
      <property name="rootIsDecorated">
       <bool>false</bool>
      </property>
@@ -48,6 +51,9 @@
      <property name="allColumnsShowFocus">
       <bool>true</bool>
      </property>
+     <attribute name="headerDefaultSectionSize">
+      <number>32</number>
+     </attribute>
      <attribute name="headerMinimumSectionSize">
       <number>32</number>
      </attribute>

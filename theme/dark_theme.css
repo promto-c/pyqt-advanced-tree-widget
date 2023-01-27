@@ -193,6 +193,12 @@ QPushButton:disabled {
     color: rgb(144, 144, 144);
 }
 
+QPushButton:checked {
+    background-color: rgb(39, 39, 39);
+    border: 2px solid rgb(125, 134, 138);
+    color: rgb(144, 144, 144);
+}
+
 QToolButton {
     border-radius: 5px;
     background-color: transparent;

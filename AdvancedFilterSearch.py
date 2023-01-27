@@ -115,16 +115,14 @@ class AdvancedFilterSearch(base_class, form_class):
     def setup_filter_tree_widget(self):
 
         # Set up filter tree widget header columns
-        self.filterTreeWidget.setHeaderLabels(['Column', 'Condition', 'Keyword', '~', 'Aa',''])
+        self.filterTreeWidget.setHeaderLabels(['Column', 'Condition', 'Keyword', 'Negate', 'Aa',''])
 
-        self.filterTreeWidget.setMinimumWidth(32)
-        self.filterTreeWidget.setColumnWidth(3, 32)
-        self.filterTreeWidget.setColumnWidth(4, 32)
-        self.filterTreeWidget.setColumnWidth(5, 32)
-        
         self.filterTreeWidget.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
         self.filterTreeWidget.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
         self.filterTreeWidget.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
+        self.filterTreeWidget.header().setSectionResizeMode(3, QtWidgets.QHeaderView.Fixed)
+        self.filterTreeWidget.header().setSectionResizeMode(4, QtWidgets.QHeaderView.Fixed)
+        self.filterTreeWidget.header().setSectionResizeMode(5, QtWidgets.QHeaderView.Fixed)
 
         self.add_clear_button_on_header()
 
@@ -170,8 +168,8 @@ class AdvancedFilterSearch(base_class, form_class):
         column = self.columnComboBox.currentText()
         condition = self.conditionComboBox.currentText()
         keyword = self.keywordLineEdit.text()
-        is_negate = '~' if self.negateAction.isChecked() else str()
-        is_case_sensitive = 'Aa' if self.matchCaseAction.isChecked() else str()
+        is_negate = self.negateAction.isChecked()
+        is_case_sensitive = self.matchCaseAction.isChecked()
 
         # Return if the keyword is empty
         if not keyword:
@@ -181,9 +179,8 @@ class AdvancedFilterSearch(base_class, form_class):
         self.keywordLineEdit.clear()
 
         filter_criteria = [column, condition, keyword, is_negate, is_case_sensitive]
-        # filter_criteria = [column, condition, keyword]
 
-        # Return if the filter criteria (column, condition, keyword) is already in the filter criteria list
+        # Return if the filter criteria (column, is_negate, condition, keyword, is_case_sensitive) is already in the filter criteria list
         if filter_criteria in self.filter_criteria_list:
             return
 
@@ -191,9 +188,23 @@ class AdvancedFilterSearch(base_class, form_class):
         self.filter_criteria_list.append(filter_criteria)
 
         # Create a new tree widget item with the column, condition, and keyword
-        filter_tree_item = QtWidgets.QTreeWidgetItem(self.filterTreeWidget, filter_criteria)
+        filter_tree_item = QtWidgets.QTreeWidgetItem(self.filterTreeWidget, map(str, filter_criteria))
         # Store the filter criteria in a data_list attribute of the tree widget item
         filter_tree_item.data_list = filter_criteria
+
+        negate_button = QtWidgets.QPushButton(self.tabler_action_qicon.a_b_off, '', self.filterTreeWidget)
+        negate_button.setCheckable(True)
+        negate_button.setChecked(is_negate)
+        negate_button.setDisabled(True)
+
+        match_case_button = QtWidgets.QPushButton(self.tabler_action_qicon.letter_case, '', self.filterTreeWidget)
+        match_case_button.setCheckable(True)
+        match_case_button.setChecked(is_case_sensitive)
+        match_case_button.setDisabled(True)
+
+        # self.filterTreeWidget.setIte
+        self.filterTreeWidget.setItemWidget(filter_tree_item, 3, negate_button)
+        self.filterTreeWidget.setItemWidget(filter_tree_item, 4, match_case_button)
 
         self.add_remove_item_button(filter_tree_item)
 
