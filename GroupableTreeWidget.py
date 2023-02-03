@@ -134,7 +134,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             tree_item = QtWidgets.QTreeWidgetItem(self, item_data_list)
         
         # Resize all columns to fit their contents
-        self.resize_to_content()
+        self.resize_to_contents()
 
     def on_header_context_menu(self, pos: QtCore.QPoint) -> None:
         ''' Show a context menu for the header of the tree widget.
@@ -155,6 +155,11 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Create the 'Ungroup all' action and connect it to the 'ungroup_all' method.
         ungroup_all_action = menu.addAction('Ungroup all')
         ungroup_all_action.triggered.connect(self.ungroup_all)
+
+        menu.addSeparator()
+        # 
+        fit_column_in_view_action = menu.addAction('Fit in View')
+        fit_column_in_view_action.triggered.connect(self.fit_column_in_view)
                 
         # Disable 'Group by this column' on first column
         if not column:
@@ -226,9 +231,25 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.expandAll()
 
         # Resize all columns to fit their contents
-        self.resize_to_content()
+        self.resize_to_contents()
         
-    def resize_to_content(self) -> None:
+    def fit_column_in_view(self):
+        expect_column_width = self.size().width()
+        scroll_bar_width = self.verticalScrollBar().width()
+        expect_column_width -= scroll_bar_width
+        column_width_sum = 0
+
+        for column in range(self.columnCount()):
+            column_width = self.columnWidth(column)
+            column_width_sum += column_width
+
+        width_ratio = column_width_sum/expect_column_width
+
+        for column in range(self.columnCount()):
+            column_width = self.columnWidth(column)
+            self.setColumnWidth(column, int(column_width/width_ratio))
+
+    def resize_to_contents(self) -> None:
         ''' Resize all columns in the object to fit their contents.
         '''
         # Iterate through all columns
@@ -267,7 +288,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.groups.clear()
 
         # Resize all columns to fit their contents
-        self.resize_to_content()
+        self.resize_to_contents()
         
     def group_data(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
         ''' Group the data into a dictionary mapping group names to lists of tree items.
