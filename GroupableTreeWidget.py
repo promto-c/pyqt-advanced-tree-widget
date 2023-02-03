@@ -1,5 +1,5 @@
 import sys
-from typing import Dict, List
+from typing import Any, Dict, List, Union
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
@@ -49,6 +49,48 @@ ID_TO_DATA_DICT = {
         'Age': 33,
         'City': 'Boston'},
     }
+
+class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
+
+    def __init__(self, parent: QtWidgets.QTreeWidget = None, item_data: Union[ Dict[str, Any], List[str] ] = None, item_id: int = None):
+
+        if isinstance(item_data, list):
+            item_data_list = item_data
+
+        if isinstance(item_data, dict):
+            header_item = parent.headerItem()
+            column_names = [header_item.text(i) for i in range(header_item.columnCount())]
+
+            # Create a list of data for the tree item
+            item_data_list = [item_id] + [item_data[column] if column in item_data.keys()
+                                                                 else str() 
+                                                                 for column in column_names[1:]]
+            
+        super(TreeWidgetItem, self).__init__(parent, map(str, item_data_list))
+
+        self.set_user_role_data(item_data_list)
+
+    def set_user_role_data(self, item_data_list):
+        for column_index, value in enumerate(item_data_list):
+            self.setData(column_index, QtCore.Qt.UserRole, value)
+            
+    def __lt__(self, other_item: QtWidgets.QTreeWidgetItem):
+        column = self.treeWidget().sortColumn()
+
+        data_a = self.data(column, QtCore.Qt.UserRole)
+        data_b = other_item.data(column, QtCore.Qt.UserRole)
+
+        if not data_a and not data_b:
+            return self.text(column) < other_item.text(column)
+        elif not data_a:
+            return 1
+        elif not data_b:
+            return -1
+
+        try:
+            return data_a < data_b
+        except TypeError:
+            return (str(data_a) < str(data_b))
 
 class GroupableTreeWidget(QtWidgets.QTreeWidget):
     ''' A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
@@ -125,14 +167,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         # Iterate through the dictionary of items
         for item_id, item_data in self.id_to_data_dict.items():
-            # Create a list of data for the tree item
-            item_data_list = [str(item_id)] + [item_data[column] if column in item_data.keys()
-                                                                 else str() 
-                                                                 for column in self.column_name_list[1:]]
+            # Create a new custom QTreeWidgetItem for sorting by type of the item data, and add to the self tree widget
+            tree_item = TreeWidgetItem(self, item_data=item_data, item_id=item_id)
 
-            # Create a new QTreeWidgetItem with the item data, and add to the self tree widget
-            tree_item = QtWidgets.QTreeWidgetItem(self, map(str, item_data_list))
-        
         # Resize all columns to fit their contents
         self.resize_to_contents()
 
@@ -196,7 +233,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Iterate through each group and its items
         for group_name, items in groups.items():
             # Create a new QTreeWidgetItem for the group
-            group_item = QtWidgets.QTreeWidgetItem(self, [group_name])
+            group_item = TreeWidgetItem(self, [group_name])
             
             # Add the items to the group item as children
             for item in items:
@@ -233,7 +270,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Resize all columns to fit their contents
         self.resize_to_contents()
         
-    def fit_column_in_view(self):
+    def fit_column_in_view(self) -> None:
         expect_column_width = self.size().width()
         scroll_bar_width = self.verticalScrollBar().width()
         expect_column_width -= scroll_bar_width
