@@ -10,43 +10,43 @@ COLUMN_NAME_LIST = ['ID', 'Name', 'Age', 'City']
 ID_TO_DATA_DICT = {
     1: {
         'Name': 'Alice',
-        'Age': '30',
+        'Age': 30,
         'City': 'New York'},
     2: {
         'Name': 'Bob',
-        'Age': '25',
+        'Age': 25,
         'City': 'Chicago'},
     3: {
         'Name': 'Charlie',
-        'Age': '35',
+        'Age': 35,
         'City': 'Los Angeles'},
     4: {
         'Name': 'David',
-        'Age': '40',
+        'Age': 40,
         'City': 'San Francisco'},
     5: {
         'Name': 'Emily',
-        'Age': '28',
+        'Age': 28,
         'City': 'Boston'},
     6: {
         'Name': 'Frank',
-        'Age': '32',
+        'Age': 32,
         'City': 'New York'},
     7: {
         'Name': 'Gina',
-        'Age': '27',
+        'Age': 27,
         'City': 'Chicago'},
     8: {
         'Name': 'Henry',
-        'Age': '38',
+        'Age': 38,
         'City': 'Los Angeles'},
     9: {
         'Name': 'Irene',
-        'Age': '29',
+        'Age': 29,
         'City': 'San Francisco'},
     10: {
         'Name': 'Jack',
-        'Age': '33',
+        'Age': 33,
         'City': 'Boston'},
     }
 
@@ -126,12 +126,12 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Iterate through the dictionary of items
         for item_id, item_data in self.id_to_data_dict.items():
             # Create a list of data for the tree item
-            item_data_list = [str(item_id)] + [item_data[column] if column in item_data.keys() 
+            item_data_list = [str(item_id)] + [item_data[column] if column in item_data.keys()
                                                                  else str() 
                                                                  for column in self.column_name_list[1:]]
-            
+
             # Create a new QTreeWidgetItem with the item data, and add to the self tree widget
-            tree_item = QtWidgets.QTreeWidgetItem(self, item_data_list)
+            tree_item = QtWidgets.QTreeWidgetItem(self, map(str, item_data_list))
         
         # Resize all columns to fit their contents
         self.resize_to_contents()
