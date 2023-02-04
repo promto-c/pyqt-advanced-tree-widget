@@ -137,6 +137,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Enable sorting in the tree widget
         self.setSortingEnabled(True)
 
+        self.setUniformRowHeights(True)
+
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
         '''

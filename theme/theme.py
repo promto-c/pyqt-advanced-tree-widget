@@ -34,7 +34,7 @@ def setTheme(app, theme: str='default') -> None:
         palette.setColor(QtGui.QPalette.ButtonText, QtGui.QColor(210, 210, 210))
         palette.setColor(QtGui.QPalette.BrightText, QtGui.QColor(246, 0, 0))
         palette.setColor(QtGui.QPalette.Link, QtGui.QColor(42, 130, 218))
-        palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(110, 120, 125))
+        palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(110, 120, 125, 127))
         # Apply the dark palette to the application
         app.setPalette(palette)
 

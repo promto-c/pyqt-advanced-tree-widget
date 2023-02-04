@@ -11,6 +11,40 @@ from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DAT
 ui_file = "ui/AdvancedFilterSearch.ui"
 form_class, base_class = uic.loadUiType(ui_file)
 
+class ColorScaleItemDelegate(QtWidgets.QItemDelegate):
+    def __init__(self, parent=None):
+        super(ColorScaleItemDelegate, self).__init__(parent)
+
+    def paint(self, painter, option, index):
+        # Get the data for the item
+        value = index.data(QtCore.Qt.UserRole)
+
+        # NOTE: test
+        # Set the background color based on the item's value
+        if int(value) > 29:
+            background_color = QtGui.QColor(255, 0, 0)
+        else:
+            background_color = QtGui.QColor(0, 255, 0)
+        # Draw the background
+        painter.fillRect(option.rect, background_color)
+
+        # Draw the text
+        painter.drawText(option.rect, QtCore.Qt.AlignCenter, str(value))
+
+    # def sizeHint(self, option, index):
+    #     return QtCore.QSize(50, 50)
+
+class HighlightItemDelegate(QtWidgets.QItemDelegate):
+    def paint(self, painter, option, index):
+        option.backgroundBrush.setColor(QtGui.QColor(165, 165, 144, 128))
+        option.backgroundBrush.setStyle(QtCore.Qt.SolidPattern)
+        painter.fillRect(option.rect, option.backgroundBrush)
+
+        pen = QtGui.QPen(QtGui.QColor(165, 165, 144, 255), 2, QtCore.Qt.SolidLine)
+        painter.setPen(pen)
+        painter.drawRect(option.rect)
+        super().paint(painter, option, index)
+
 class AdvancedFilterSearch(base_class, form_class):
     ''' A PyQt5 widget that allows the user to apply advanced filters to a tree widget.
 
@@ -62,6 +96,8 @@ class AdvancedFilterSearch(base_class, form_class):
         self.tabler_action_checked_qicon = TablerQIcon(color=icon_color)
         self.tabler_button_qicon = TablerQIcon(color=icon_color)
 
+        self.hightlight_item_delegate = HighlightItemDelegate()
+
     def _setup_type_hints(self):
         ''' Set up type hints for the widgets in the .ui file.
         '''
@@ -71,7 +107,6 @@ class AdvancedFilterSearch(base_class, form_class):
         self.keywordLineEdit: QtWidgets.QLineEdit
         self.addFilterButton: QtWidgets.QPushButton
         self.filterTreeWidget: QtWidgets.QTreeWidget
-        self.caseSensitiveCheckBox: QtWidgets.QCheckBox
 
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
@@ -94,13 +129,58 @@ class AdvancedFilterSearch(base_class, form_class):
         self.add_action_on_keyword_line_edit()
 
         self.addFilterButton.setIcon( self.tabler_button_qicon.filter )
-        # self.addFilterButton.setIcon( self.tabler_button_qicon.filter_add )
+
+    def hightlight_item(self, tree_item: QtWidgets.QTreeWidgetItem):
+
+        item_index = self.tree_widget.indexFromItem(tree_item).row()
+
+        self.tree_widget.setItemDelegateForRow(item_index, self.hightlight_item_delegate)
         
+    def reset_highlight_all_items(self):
+
+        for row in range(self.tree_widget.topLevelItemCount()):
+            self.tree_widget.setItemDelegateForRow(row, None)
+            
+    def hightlight_search(self):
+        self.reset_highlight_all_items()
+
+        # Get the selected column, condition, and keyword
+        column = self.columnComboBox.currentText()
+        condition = self.conditionComboBox.currentText()
+        keyword = self.keywordLineEdit.text()
+        is_negate = self.negateAction.isChecked()
+        is_case_sensitive = self.matchCaseAction.isChecked()
+
+        if not keyword:
+            return
+        
+        # Filter the tree widget based on the given criteria
+        for row in range(self.tree_widget.topLevelItemCount()):
+            item = self.tree_widget.topLevelItem(row)
+
+            # Get the value of the item in the specified column
+            value = item.text(self.column_names.index(column))
+
+            # If the search is not case sensitive, convert the keyword and value to lowercase
+            if not is_case_sensitive:
+                keyword = keyword.lower()
+                value = value.lower()
+
+            # Check if the value matches the condition and keyword
+            matches_criteria = self.CONDITION_TO_FUNCTION_DICT[condition](value, keyword)
+
+            matches_criteria = not matches_criteria if is_negate else matches_criteria
+
+            if matches_criteria:
+                self.hightlight_item(item)
+
     def add_action_on_keyword_line_edit(self):
         self.matchCaseAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
+        self.matchCaseAction.setToolTip('Match case')
         self.matchCaseAction.setCheckable(True)
 
         self.negateAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
+        self.negateAction.setToolTip('Match negate')
         self.negateAction.setCheckable(True)
     
     def _setup_signal_connections(self):
@@ -112,8 +192,13 @@ class AdvancedFilterSearch(base_class, form_class):
         self.matchCaseAction.triggered.connect(self.update_case_sensitive)
         self.negateAction.triggered.connect(self.update_negate)
 
-    def setup_filter_tree_widget(self):
+        self.keywordLineEdit.textChanged.connect(self.hightlight_search)
+        self.columnComboBox.activated.connect(self.hightlight_search)
+        self.conditionComboBox.activated.connect(self.hightlight_search)
+        self.matchCaseAction.triggered.connect(self.hightlight_search)
+        self.negateAction.triggered.connect(self.hightlight_search)
 
+    def setup_filter_tree_widget(self):
         # Set up filter tree widget header columns
         self.filterTreeWidget.setHeaderLabels(['Column', 'Condition', 'Keyword', 'Negate', 'Aa',''])
 
