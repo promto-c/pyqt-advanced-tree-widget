@@ -319,8 +319,7 @@ class AdvancedFilterSearch(base_class, form_class):
                 # Check if the value matches the condition and keyword
                 matches_criteria = self.CONDITION_TO_FUNCTION_DICT[condition](value, keyword)
 
-                if is_negate:
-                    matches_criteria = not matches_criteria
+                matches_criteria = not matches_criteria if is_negate else matches_criteria
 
                 if not matches_criteria:
                     break
@@ -331,7 +330,6 @@ class AdvancedFilterSearch(base_class, form_class):
     def remove_filter(self, filter_tree_item):
         ''' Slot for the "Remove Filter" button.
         '''
-
         # Remove the selected filter criteria from the list
         self.filter_criteria_list.remove(filter_tree_item.data_list)
         # Remove the selected item at index 0
