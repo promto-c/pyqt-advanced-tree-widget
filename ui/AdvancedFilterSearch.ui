@@ -17,16 +17,16 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QComboBox" name="columnComboBox"/>
+      <widget class="QComboBox" name="column_combo_box"/>
      </item>
      <item>
-      <widget class="QComboBox" name="conditionComboBox"/>
+      <widget class="QComboBox" name="condition_combo_box"/>
      </item>
      <item>
-      <widget class="QLineEdit" name="keywordLineEdit"/>
+      <widget class="QLineEdit" name="keyword_line_edit"/>
      </item>
      <item>
-      <widget class="QPushButton" name="addFilterButton">
+      <widget class="QPushButton" name="add_filter_button">
        <property name="toolTip">
         <string>Add filter</string>
        </property>
@@ -38,7 +38,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QTreeWidget" name="filterTreeWidget">
+    <widget class="QTreeWidget" name="filter_tree_widget">
      <property name="selectionMode">
       <enum>QAbstractItemView::NoSelection</enum>
      </property>

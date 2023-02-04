@@ -53,7 +53,13 @@ class AdvancedFilterSearch(base_class, form_class):
         column_names (List[str]): The list of column names for the tree widget.
         filter_criteria_list (List[str]): The list of filter criteria applied to the tree widget.
     '''
-
+    # Set up type hints for the widgets as use in the .ui file.
+    column_combo_box: QtWidgets.QComboBox
+    condition_combo_box: QtWidgets.QComboBox
+    keyword_line_edit: QtWidgets.QLineEdit
+    add_filter_button: QtWidgets.QPushButton
+    filter_tree_widget: QtWidgets.QTreeWidget
+    
     # Define a dictionary of functions for each condition
     CONDITION_TO_FUNCTION_DICT = {
         'contains': lambda value, keyword: keyword in value,
@@ -76,8 +82,6 @@ class AdvancedFilterSearch(base_class, form_class):
 
         # Set up the initial values
         self._setup_initial_values()
-        # Set up type hints for the widgets
-        self._setup_type_hints()
         # Set up the UI
         self._setup_ui()
         # Set up signal connections
@@ -98,16 +102,6 @@ class AdvancedFilterSearch(base_class, form_class):
 
         self.hightlight_item_delegate = HighlightItemDelegate()
 
-    def _setup_type_hints(self):
-        ''' Set up type hints for the widgets in the .ui file.
-        '''
-        # Set up type hints for the widgets
-        self.columnComboBox: QtWidgets.QComboBox
-        self.conditionComboBox: QtWidgets.QComboBox
-        self.keywordLineEdit: QtWidgets.QLineEdit
-        self.addFilterButton: QtWidgets.QPushButton
-        self.filterTreeWidget: QtWidgets.QTreeWidget
-
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
         '''
@@ -121,14 +115,14 @@ class AdvancedFilterSearch(base_class, form_class):
         self.column_names = [headerItem.text(i) for i in range(headerItem.columnCount())]
 
         # Set up combo boxes
-        self.columnComboBox.addItems(self.column_names)
-        self.conditionComboBox.addItems(self.CONDITION_TO_FUNCTION_DICT.keys())
+        self.column_combo_box.addItems(self.column_names)
+        self.condition_combo_box.addItems(self.CONDITION_TO_FUNCTION_DICT.keys())
 
         self.setup_filter_tree_widget()
 
         self.add_action_on_keyword_line_edit()
 
-        self.addFilterButton.setIcon( self.tabler_button_qicon.filter )
+        self.add_filter_button.setIcon( self.tabler_button_qicon.filter )
 
     def hightlight_item(self, tree_item: QtWidgets.QTreeWidgetItem):
 
@@ -145,9 +139,9 @@ class AdvancedFilterSearch(base_class, form_class):
         self.reset_highlight_all_items()
 
         # Get the selected column, condition, and keyword
-        column = self.columnComboBox.currentText()
-        condition = self.conditionComboBox.currentText()
-        keyword = self.keywordLineEdit.text()
+        column = self.column_combo_box.currentText()
+        condition = self.condition_combo_box.currentText()
+        keyword = self.keyword_line_edit.text()
         is_negate = self.negateAction.isChecked()
         is_case_sensitive = self.matchCaseAction.isChecked()
 
@@ -175,11 +169,11 @@ class AdvancedFilterSearch(base_class, form_class):
                 self.hightlight_item(item)
 
     def add_action_on_keyword_line_edit(self):
-        self.matchCaseAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
+        self.matchCaseAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
         self.matchCaseAction.setToolTip('Match case')
         self.matchCaseAction.setCheckable(True)
 
-        self.negateAction = self.keywordLineEdit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
+        self.negateAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
         self.negateAction.setToolTip('Match negate')
         self.negateAction.setCheckable(True)
     
@@ -187,33 +181,33 @@ class AdvancedFilterSearch(base_class, form_class):
         ''' Set up signal connections between widgets and slots.
         '''
         # Connect signals to slots
-        self.addFilterButton.clicked.connect(self.add_filter)
-        self.keywordLineEdit.returnPressed.connect(self.add_filter)
+        self.add_filter_button.clicked.connect(self.add_filter)
+        self.keyword_line_edit.returnPressed.connect(self.add_filter)
         self.matchCaseAction.triggered.connect(self.update_case_sensitive)
         self.negateAction.triggered.connect(self.update_negate)
 
-        self.keywordLineEdit.textChanged.connect(self.hightlight_search)
-        self.columnComboBox.activated.connect(self.hightlight_search)
-        self.conditionComboBox.activated.connect(self.hightlight_search)
+        self.keyword_line_edit.textChanged.connect(self.hightlight_search)
+        self.column_combo_box.activated.connect(self.hightlight_search)
+        self.condition_combo_box.activated.connect(self.hightlight_search)
         self.matchCaseAction.triggered.connect(self.hightlight_search)
         self.negateAction.triggered.connect(self.hightlight_search)
 
     def setup_filter_tree_widget(self):
         # Set up filter tree widget header columns
-        self.filterTreeWidget.setHeaderLabels(['Column', 'Condition', 'Keyword', 'Negate', 'Aa',''])
+        self.filter_tree_widget.setHeaderLabels(['Column', 'Condition', 'Keyword', 'Negate', 'Aa',''])
 
-        self.filterTreeWidget.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        self.filterTreeWidget.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        self.filterTreeWidget.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
-        self.filterTreeWidget.header().setSectionResizeMode(3, QtWidgets.QHeaderView.Fixed)
-        self.filterTreeWidget.header().setSectionResizeMode(4, QtWidgets.QHeaderView.Fixed)
-        self.filterTreeWidget.header().setSectionResizeMode(5, QtWidgets.QHeaderView.Fixed)
+        self.filter_tree_widget.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
+        self.filter_tree_widget.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        self.filter_tree_widget.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
+        self.filter_tree_widget.header().setSectionResizeMode(3, QtWidgets.QHeaderView.Fixed)
+        self.filter_tree_widget.header().setSectionResizeMode(4, QtWidgets.QHeaderView.Fixed)
+        self.filter_tree_widget.header().setSectionResizeMode(5, QtWidgets.QHeaderView.Fixed)
 
         self.add_clear_button_on_header()
 
     def add_clear_button_on_header(self):
         # Add a clear filters button to the header
-        header = self.filterTreeWidget.header()
+        header = self.filter_tree_widget.header()
         viewport = header.viewport()
 
         layout = QtWidgets.QHBoxLayout()
@@ -247,12 +241,12 @@ class AdvancedFilterSearch(base_class, form_class):
 
     def add_filter(self):
         ''' Add a filter to the tree widget. Called when the "Add Filter" button is clicked 
-            or when the Enter key is pressed in the keywordLineEdit widget.
+            or when the Enter key is pressed in the keyword_line_edit widget.
         '''
         # Get the selected column, condition, and keyword
-        column = self.columnComboBox.currentText()
-        condition = self.conditionComboBox.currentText()
-        keyword = self.keywordLineEdit.text()
+        column = self.column_combo_box.currentText()
+        condition = self.condition_combo_box.currentText()
+        keyword = self.keyword_line_edit.text()
         is_negate = self.negateAction.isChecked()
         is_case_sensitive = self.matchCaseAction.isChecked()
 
@@ -260,8 +254,8 @@ class AdvancedFilterSearch(base_class, form_class):
         if not keyword:
             return
 
-        # Clear the keywordLineEdit widget
-        self.keywordLineEdit.clear()
+        # Clear the keyword_line_edit widget
+        self.keyword_line_edit.clear()
 
         filter_criteria = [column, condition, keyword, is_negate, is_case_sensitive]
 
@@ -273,23 +267,23 @@ class AdvancedFilterSearch(base_class, form_class):
         self.filter_criteria_list.append(filter_criteria)
 
         # Create a new tree widget item with the column, condition, and keyword
-        filter_tree_item = QtWidgets.QTreeWidgetItem(self.filterTreeWidget, map(str, filter_criteria))
+        filter_tree_item = QtWidgets.QTreeWidgetItem(self.filter_tree_widget, map(str, filter_criteria))
         # Store the filter criteria in a data_list attribute of the tree widget item
         filter_tree_item.data_list = filter_criteria
 
-        negate_button = QtWidgets.QPushButton(self.tabler_action_qicon.a_b_off, '', self.filterTreeWidget)
+        negate_button = QtWidgets.QPushButton(self.tabler_action_qicon.a_b_off, '', self.filter_tree_widget)
         negate_button.setCheckable(True)
         negate_button.setChecked(is_negate)
         negate_button.setDisabled(True)
 
-        match_case_button = QtWidgets.QPushButton(self.tabler_action_qicon.letter_case, '', self.filterTreeWidget)
+        match_case_button = QtWidgets.QPushButton(self.tabler_action_qicon.letter_case, '', self.filter_tree_widget)
         match_case_button.setCheckable(True)
         match_case_button.setChecked(is_case_sensitive)
         match_case_button.setDisabled(True)
 
-        # self.filterTreeWidget.setIte
-        self.filterTreeWidget.setItemWidget(filter_tree_item, 3, negate_button)
-        self.filterTreeWidget.setItemWidget(filter_tree_item, 4, match_case_button)
+        # self.filter_tree_widget.setIte
+        self.filter_tree_widget.setItemWidget(filter_tree_item, 3, negate_button)
+        self.filter_tree_widget.setItemWidget(filter_tree_item, 4, match_case_button)
 
         self.add_remove_item_button(filter_tree_item)
 
@@ -299,7 +293,7 @@ class AdvancedFilterSearch(base_class, form_class):
         remove_button = QtWidgets.QPushButton(self.tabler_button_qicon.trash, '', self)
         remove_button.setToolTip('Remove this filter item')
         remove_button.clicked.connect(lambda: self.remove_filter(tree_item))
-        self.filterTreeWidget.setItemWidget(tree_item, 5, remove_button)
+        self.filter_tree_widget.setItemWidget(tree_item, 5, remove_button)
 
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
@@ -341,7 +335,7 @@ class AdvancedFilterSearch(base_class, form_class):
         # Remove the selected filter criteria from the list
         self.filter_criteria_list.remove(filter_tree_item.data_list)
         # Remove the selected item at index 0
-        item = self.filterTreeWidget.takeTopLevelItem(self.filterTreeWidget.indexOfTopLevelItem(filter_tree_item))
+        item = self.filter_tree_widget.takeTopLevelItem(self.filter_tree_widget.indexOfTopLevelItem(filter_tree_item))
         # Delete the item object. This will remove the item from memory and break any references to it.
         del item
 
@@ -353,7 +347,7 @@ class AdvancedFilterSearch(base_class, form_class):
         # Clear the list of filter criteria
         self.filter_criteria_list.clear()
         # Clear the tree widget
-        self.filterTreeWidget.clear()
+        self.filter_tree_widget.clear()
 
         self.apply_filters()
 
@@ -372,6 +366,7 @@ def main():
 
     # Create an instance of the widget and set it as the central widget
     widget = AdvancedFilterSearch(tree_widget)
+    widget.column_combo_box.setCurrentText('Name')
     window.setCentralWidget(widget)
 
     # Add the tree widget to the layout of the widget
