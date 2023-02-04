@@ -1,6 +1,6 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
-from PyQt5.QtSvg import QSvgRenderer
+
 from theme.theme import setTheme
 
 from TablerQIcon import TablerQIcon
