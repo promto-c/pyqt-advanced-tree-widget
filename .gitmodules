@@ -4,6 +4,3 @@
 [submodule "pyqt-code-template"]
 	path = pyqt-code-template
 	url = https://github.com/promto-c/pyqt-code-template
-[submodule "pyqt-dark-theme"]
-	path = theme
-	url = https://github.com/promto-c/pyqt-dark-theme
