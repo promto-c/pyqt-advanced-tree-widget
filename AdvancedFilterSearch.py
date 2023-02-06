@@ -1,4 +1,4 @@
-import sys
+import sys, os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 from typing import List
@@ -10,7 +10,7 @@ from TablerQIcon import TablerQIcon
 from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
 # Load the .ui file using the uic module
-ui_file = "ui/AdvancedFilterSearch.ui"
+ui_file = os.path.split(__file__)[0] + "/ui/AdvancedFilterSearch.ui"
 form_class, base_class = uic.loadUiType(ui_file)
 
 class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
@@ -52,7 +52,7 @@ class AdvancedFilterSearch(base_class, form_class):
         column_names (List[str]): The list of column names for the tree widget.
         filter_criteria_list (List[str]): The list of filter criteria applied to the tree widget.
     '''
-    # Set up type hints for the widgets as use in the .ui file.
+    # Set up type hints for the widgets as used in the .ui file.
     column_combo_box: QtWidgets.QComboBox
     condition_combo_box: QtWidgets.QComboBox
     keyword_line_edit: QtWidgets.QLineEdit
@@ -164,11 +164,11 @@ class AdvancedFilterSearch(base_class, form_class):
 
     def add_action_on_keyword_line_edit(self):
         self.matchCaseAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
-        self.matchCaseAction.setToolTip('Match case')
+        self.matchCaseAction.setToolTip('Match Case')
         self.matchCaseAction.setCheckable(True)
 
         self.negateAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
-        self.negateAction.setToolTip('Match negate')
+        self.negateAction.setToolTip('Negate Match')
         self.negateAction.setCheckable(True)
     
     def _setup_signal_connections(self):

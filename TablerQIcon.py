@@ -5,7 +5,7 @@ from xml.etree import ElementTree
 
 from PyQt5 import QtGui, QtCore, QtSvg, QtWidgets
 
-TABLER_ICONS_SVG_DIRECTORY = 'tabler-icons\icons'
+TABLER_ICONS_SVG_DIRECTORY = os.path.split(__file__)[0] + '/tabler-icons/icons'
 
 class TablerQIcon:
     ''' A class that loads icons from the tabler-icons/icons directory and makes them available as attributes.
