@@ -1,6 +1,8 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
+from typing import List
+
 from theme.theme import setTheme
 
 from TablerQIcon import TablerQIcon
@@ -57,12 +59,14 @@ class AdvancedFilterSearch(base_class, form_class):
     add_filter_button: QtWidgets.QPushButton
     filter_tree_widget: QtWidgets.QTreeWidget
     
-    # Define a dictionary of functions for each condition
-    CONDITION_TO_FUNCTION_DICT = {
-        'contains': lambda value, keyword: keyword in value,
-        'starts_with': lambda value, keyword: value.startswith(keyword),
-        'ends_with': lambda value, keyword: value.endswith(keyword),
-        'exact_match': lambda value, keyword: value == keyword,
+    # Define a dictionary of match flags for each condition
+    CONDITION_TO_MATCH_FLAG_DICT = {
+        'contains': QtCore.Qt.MatchContains,
+        'starts_with': QtCore.Qt.MatchStartsWith,
+        'ends_with': QtCore.Qt.MatchEndsWith,
+        'exact_match': QtCore.Qt.MatchExactly,
+        'wild_card': QtCore.Qt.MatchWildcard,
+        'reg_exp': QtCore.Qt.MatchRegExp,
     }
 
     def __init__(self, tree_widget: QtWidgets.QTreeWidget, parent=None):
@@ -113,7 +117,7 @@ class AdvancedFilterSearch(base_class, form_class):
 
         # Set up combo boxes
         self.column_combo_box.addItems(self.column_names)
-        self.condition_combo_box.addItems(self.CONDITION_TO_FUNCTION_DICT.keys())
+        self.condition_combo_box.addItems(self.CONDITION_TO_MATCH_FLAG_DICT.keys())
 
         self.setup_filter_tree_widget()
 
@@ -121,11 +125,11 @@ class AdvancedFilterSearch(base_class, form_class):
 
         self.add_filter_button.setIcon( self.tabler_button_qicon.filter )
 
-    def hightlight_item(self, tree_item: QtWidgets.QTreeWidgetItem):
+    def hightlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
 
-        item_index = self.tree_widget.indexFromItem(tree_item).row()
-
-        self.tree_widget.setItemDelegateForRow(item_index, self.hightlight_item_delegate)
+        for tree_item in tree_items:
+            item_index = self.tree_widget.indexFromItem(tree_item).row()
+            self.tree_widget.setItemDelegateForRow(item_index, self.hightlight_item_delegate)
         
     def reset_highlight_all_items(self):
 
@@ -144,26 +148,19 @@ class AdvancedFilterSearch(base_class, form_class):
 
         if not keyword:
             return
-        
-        # Filter the tree widget based on the given criteria
-        for row in range(self.tree_widget.topLevelItemCount()):
-            item = self.tree_widget.topLevelItem(row)
 
-            # Get the value of the item in the specified column
-            value = item.text(self.column_names.index(column))
+        flags = self.CONDITION_TO_MATCH_FLAG_DICT[condition]
 
-            # If the search is not case sensitive, convert the keyword and value to lowercase
-            if not is_case_sensitive:
-                keyword = keyword.lower()
-                value = value.lower()
+        if is_case_sensitive:
+            flags |= QtCore.Qt.MatchCaseSensitive
 
-            # Check if the value matches the condition and keyword
-            matches_criteria = self.CONDITION_TO_FUNCTION_DICT[condition](value, keyword)
+        match_items = self.tree_widget.findItems(keyword, flags, self.column_names.index(column))
 
-            matches_criteria = not matches_criteria if is_negate else matches_criteria
+        if is_negate:
+            all_items = [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
+            match_items = [item for item in all_items if item not in match_items]
 
-            if matches_criteria:
-                self.hightlight_item(item)
+        self.hightlight_items(match_items)
 
     def add_action_on_keyword_line_edit(self):
         self.matchCaseAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
@@ -295,34 +292,31 @@ class AdvancedFilterSearch(base_class, form_class):
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
         '''
-        # Filter the tree widget based on the given criteria
-        for row in range(self.tree_widget.topLevelItemCount()):
-            item = self.tree_widget.topLevelItem(row)
+        all_items = [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
+        for item in all_items:
+            item.setHidden(True)
 
-            # Assign a default value to matches_criteria
-            matches_criteria = True  
+        intersect_match_items = all_items
 
-            # Check if the item matches all of the filter criteria
-            for column, condition, keyword, is_negate, is_case_sensitive in self.filter_criteria_list:
+        # Check if the item matches all of the filter criteria
+        for column, condition, keyword, is_negate, is_case_sensitive in self.filter_criteria_list:
 
-                # Get the value of the item in the specified column
-                value = item.text(self.column_names.index(column))
+            flags = self.CONDITION_TO_MATCH_FLAG_DICT[condition]
 
-                # If the search is not case sensitive, convert the keyword and value to lowercase
-                if not is_case_sensitive:
-                    keyword = keyword.lower()
-                    value = value.lower()
+            if is_case_sensitive:
+                flags |= QtCore.Qt.MatchCaseSensitive
 
-                # Check if the value matches the condition and keyword
-                matches_criteria = self.CONDITION_TO_FUNCTION_DICT[condition](value, keyword)
+            match_items = self.tree_widget.findItems(keyword, flags, self.column_names.index(column))
 
-                matches_criteria = not matches_criteria if is_negate else matches_criteria
+            if is_negate:
+                all_items = [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
+                match_items = [item for item in all_items if item not in match_items]
 
-                if not matches_criteria:
-                    break
+            intersect_match_items = [item for item in match_items if item in intersect_match_items]
 
+        for item in intersect_match_items:
             # Set the visibility of the item based on whether it matches the criteria
-            item.setHidden(not matches_criteria)
+            item.setHidden(False)
 
     def remove_filter(self, filter_tree_item):
         ''' Slot for the "Remove Filter" button.
