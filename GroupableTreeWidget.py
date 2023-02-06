@@ -120,8 +120,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
     def _setup_initial_values(self):
         ''' Set up the initial values for the widget.
         '''
-        # Create a dictionary to store the groups for each column
-        self.groups = {}
+        # 
+        self.grouped_column_name = str()
 
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
@@ -220,11 +220,11 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setColumnHidden(column, True)
 
         # Get the label for the column that we want to group by and the label for the first column 
-        group_column_label = self.headerItem().text(column)
+        self.grouped_column_name = self.headerItem().text(column)
         first_column_label = self.headerItem().text(0)
         
         # Rename the first column
-        self.setHeaderLabel(f'{group_column_label} / {first_column_label}')
+        self.setHeaderLabel(f'{self.grouped_column_name} / {first_column_label}')
         
         # Get the data for each tree item in the column
         data = [self.topLevelItem(row).data(column, QtCore.Qt.DisplayRole) for row in range(self.topLevelItemCount())]
@@ -263,9 +263,6 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             for item in items:
                 self.removeItemWidget(item, 0)
             
-        # Save the groups for this column
-        self.groups[column] = groups
-
         # Expand all items
         self.expandAll()
 
@@ -300,15 +297,15 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         ''' Ungroup all the items in the tree widget.
         '''
         # Return if there are no groups to ungroup
-        if not self.groups:
+        if not self.grouped_column_name:
             return
 
         # Reset the header label
         self.setHeaderLabel(self.column_name_list[0])
         
-        # Show all hidden columns
-        for column in self.groups.keys():
-            self.setColumnHidden(column, False)
+        # Show hidden column
+        column_index = self.column_name_list.index(self.grouped_column_name)
+        self.setColumnHidden(column_index, False)
 
         # Get a list of all the top-level items in the tree widget
         group_item_list = [self.topLevelItem(i) for i in range(self.topLevelItemCount())]
@@ -323,8 +320,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             # Remove the group item from the top-level items
             self.takeTopLevelItem(self.indexOfTopLevelItem(group_item))
 
-        # Clear the groups dictionary
-        self.groups.clear()
+        # Clear the grouped column label
+        self.grouped_column_name = str()
 
         # Resize all columns to fit their contents
         self.resize_to_contents()

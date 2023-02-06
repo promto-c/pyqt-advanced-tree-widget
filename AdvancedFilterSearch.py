@@ -148,8 +148,17 @@ class AdvancedFilterSearch(base_class, form_class):
 
         if not keyword:
             return
+        
+        match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
+
+        self.hightlight_items(match_items)
+
+    def find_match_items(self, column, condition, keyword, is_negate, is_case_sensitive) -> List[QtWidgets.QTreeWidgetItem]:
 
         flags = self.CONDITION_TO_MATCH_FLAG_DICT[condition]
+
+        # NOTE: match recursive for group
+        # if self.tree_widget.grouped_column_name and column != self.tree_widget.grouped_column_name:
 
         if is_case_sensitive:
             flags |= QtCore.Qt.MatchCaseSensitive
@@ -160,8 +169,8 @@ class AdvancedFilterSearch(base_class, form_class):
             all_items = [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
             match_items = [item for item in all_items if item not in match_items]
 
-        self.hightlight_items(match_items)
-
+        return match_items
+    
     def add_action_on_keyword_line_edit(self):
         self.matchCaseAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
         self.matchCaseAction.setToolTip('Match Case')
@@ -301,16 +310,7 @@ class AdvancedFilterSearch(base_class, form_class):
         # Check if the item matches all of the filter criteria
         for column, condition, keyword, is_negate, is_case_sensitive in self.filter_criteria_list:
 
-            flags = self.CONDITION_TO_MATCH_FLAG_DICT[condition]
-
-            if is_case_sensitive:
-                flags |= QtCore.Qt.MatchCaseSensitive
-
-            match_items = self.tree_widget.findItems(keyword, flags, self.column_names.index(column))
-
-            if is_negate:
-                all_items = [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
-                match_items = [item for item in all_items if item not in match_items]
+            match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
 
             intersect_match_items = [item for item in match_items if item in intersect_match_items]
 
