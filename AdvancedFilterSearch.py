@@ -11,7 +11,7 @@ from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DAT
 ui_file = "ui/AdvancedFilterSearch.ui"
 form_class, base_class = uic.loadUiType(ui_file)
 
-class ColorScaleItemDelegate(QtWidgets.QItemDelegate):
+class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent=None):
         super(ColorScaleItemDelegate, self).__init__(parent)
 
@@ -34,15 +34,12 @@ class ColorScaleItemDelegate(QtWidgets.QItemDelegate):
     # def sizeHint(self, option, index):
     #     return QtCore.QSize(50, 50)
 
-class HighlightItemDelegate(QtWidgets.QItemDelegate):
+class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         option.backgroundBrush.setColor(QtGui.QColor(165, 165, 144, 128))
         option.backgroundBrush.setStyle(QtCore.Qt.SolidPattern)
         painter.fillRect(option.rect, option.backgroundBrush)
 
-        pen = QtGui.QPen(QtGui.QColor(165, 165, 144, 255), 2, QtCore.Qt.SolidLine)
-        painter.setPen(pen)
-        painter.drawRect(option.rect)
         super().paint(painter, option, index)
 
 class AdvancedFilterSearch(base_class, form_class):
