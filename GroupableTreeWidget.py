@@ -52,7 +52,11 @@ ID_TO_DATA_DICT = {
 
 class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
 
-    def __init__(self, parent: QtWidgets.QTreeWidget = None, item_data: Union[ Dict[str, Any], List[str] ] = None, item_id: int = None):
+    def __init__(self, parent: QtWidgets.QTreeWidget = None, 
+                 item_data: Union[ Dict[str, Any], List[str] ] = None, 
+                 item_id: int = None):
+
+        self.id = item_id
 
         if isinstance(item_data, list):
             item_data_list = item_data

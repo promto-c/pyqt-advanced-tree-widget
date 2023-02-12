@@ -1,7 +1,7 @@
 import sys, os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
-from typing import List
+from typing import List, Tuple
 
 from theme.theme import setTheme
 
@@ -12,6 +12,12 @@ from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DAT
 # Load the .ui file using the uic module
 ui_file = os.path.split(__file__)[0] + "/ui/AdvancedFilterSearch.ui"
 form_class, base_class = uic.loadUiType(ui_file)
+
+def intersection(item_list_1, item_list_2):
+    return [item for item in item_list_1 if item in item_list_2]
+
+def extract_model_index_prop_tuple(model_index: QtCore.QModelIndex) -> Tuple[int, int, QtCore.QModelIndex, QtCore.QAbstractItemModel]:
+    return (model_index.row(), model_index.column(), model_index.parent(), model_index.model())
 
 class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent=None):
@@ -37,12 +43,26 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
     #     return QtCore.QSize(50, 50)
 
 class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
-    def paint(self, painter, option, index):
+
+    target_model_index_props: List[Tuple[int, int, QtCore.QModelIndex, QtCore.QAbstractItemModel]] = list()
+    
+    def __init__(self, parent=None):
+        super(HighlightItemDelegate, self).__init__(parent)
+    
+    def paint(self, painter, option, model_index):
+
+        model_index_prop_tuple = extract_model_index_prop_tuple(model_index)
+
+
+        if model_index_prop_tuple not in self.target_model_index_props:
+            super().paint(painter, option, model_index)
+            return
+
         option.backgroundBrush.setColor(QtGui.QColor(165, 165, 144, 128))
         option.backgroundBrush.setStyle(QtCore.Qt.SolidPattern)
         painter.fillRect(option.rect, option.backgroundBrush)
 
-        super().paint(painter, option, index)
+        super().paint(painter, option, model_index)
 
 class AdvancedFilterSearch(base_class, form_class):
     ''' A PyQt5 widget that allows the user to apply advanced filters to a tree widget.
@@ -61,12 +81,12 @@ class AdvancedFilterSearch(base_class, form_class):
     
     # Define a dictionary of match flags for each condition
     CONDITION_TO_MATCH_FLAG_DICT = {
-        'contains': QtCore.Qt.MatchContains,
-        'starts_with': QtCore.Qt.MatchStartsWith,
-        'ends_with': QtCore.Qt.MatchEndsWith,
-        'exact_match': QtCore.Qt.MatchExactly,
-        'wild_card': QtCore.Qt.MatchWildcard,
-        'reg_exp': QtCore.Qt.MatchRegExp,
+        'contains': QtCore.Qt.MatchFlag.MatchContains,
+        'starts_with': QtCore.Qt.MatchFlag.MatchStartsWith,
+        'ends_with': QtCore.Qt.MatchFlag.MatchEndsWith,
+        'exact_match': QtCore.Qt.MatchFlag.MatchExactly,
+        'wild_card': QtCore.Qt.MatchFlag.MatchWildcard,
+        'reg_exp': QtCore.Qt.MatchFlag.MatchRegExp,
     }
 
     def __init__(self, tree_widget: QtWidgets.QTreeWidget, parent=None):
@@ -125,61 +145,6 @@ class AdvancedFilterSearch(base_class, form_class):
 
         self.add_filter_button.setIcon( self.tabler_button_qicon.filter )
 
-    def hightlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
-
-        for tree_item in tree_items:
-            item_index = self.tree_widget.indexFromItem(tree_item).row()
-            self.tree_widget.setItemDelegateForRow(item_index, self.hightlight_item_delegate)
-        
-    def reset_highlight_all_items(self):
-
-        for row in range(self.tree_widget.topLevelItemCount()):
-            self.tree_widget.setItemDelegateForRow(row, None)
-            
-    def hightlight_search(self):
-        self.reset_highlight_all_items()
-
-        # Get the selected column, condition, and keyword
-        column = self.column_combo_box.currentText()
-        condition = self.condition_combo_box.currentText()
-        keyword = self.keyword_line_edit.text()
-        is_negate = self.negateAction.isChecked()
-        is_case_sensitive = self.matchCaseAction.isChecked()
-
-        if not keyword:
-            return
-        
-        match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
-
-        self.hightlight_items(match_items)
-
-    def find_match_items(self, column, condition, keyword, is_negate, is_case_sensitive) -> List[QtWidgets.QTreeWidgetItem]:
-
-        flags = self.CONDITION_TO_MATCH_FLAG_DICT[condition]
-
-        # NOTE: match recursive for group
-        # if self.tree_widget.grouped_column_name and column != self.tree_widget.grouped_column_name:
-
-        if is_case_sensitive:
-            flags |= QtCore.Qt.MatchCaseSensitive
-
-        match_items = self.tree_widget.findItems(keyword, flags, self.column_names.index(column))
-
-        if is_negate:
-            all_items = [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
-            match_items = [item for item in all_items if item not in match_items]
-
-        return match_items
-    
-    def add_action_on_keyword_line_edit(self):
-        self.matchCaseAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
-        self.matchCaseAction.setToolTip('Match Case')
-        self.matchCaseAction.setCheckable(True)
-
-        self.negateAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
-        self.negateAction.setToolTip('Negate Match')
-        self.negateAction.setCheckable(True)
-    
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
         '''
@@ -207,6 +172,113 @@ class AdvancedFilterSearch(base_class, form_class):
         self.filter_tree_widget.header().setSectionResizeMode(5, QtWidgets.QHeaderView.Fixed)
 
         self.add_clear_button_on_header()
+
+    def hightlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
+        self.hightlight_item_delegate.target_model_index_props = list()
+        for tree_item in tree_items:
+            item_index = self.tree_widget.indexFromItem(tree_item).row()
+            self.hightlight_item_delegate.target_model_index_props += self.get_model_index_props(tree_item)
+            self.tree_widget.setItemDelegateForRow(item_index, self.hightlight_item_delegate)
+
+    def get_model_index_props(self, tree_item: QtWidgets.QTreeWidgetItem) -> List[Tuple[int, int, QtCore.QModelIndex, QtCore.QAbstractItemModel]]:
+        shown_column_index_list = self.get_shown_column_index_list()
+
+        model_index_prop_tuple_list = list()
+
+        for column_index in shown_column_index_list:
+            model_index = self.tree_widget.indexFromItem(tree_item, column_index)
+            model_index_prop_tuple_list.append(extract_model_index_prop_tuple(model_index))
+
+        return model_index_prop_tuple_list
+
+    def get_shown_column_index_list(self) -> List[int]:
+        header = self.tree_widget.header()
+        column_count = header.count()
+        column_index_list = [column_index for column_index in range(column_count) if not header.isSectionHidden(column_index)]
+        return  column_index_list
+        
+    def reset_highlight_all_items(self):
+        self.hightlight_item_delegate.target_model_index_props = list()
+        all_items = self.get_all_items()
+        for tree_item in all_items:
+            item_index = self.tree_widget.indexFromItem(tree_item).row()
+            self.tree_widget.setItemDelegateForRow(item_index, None)
+
+    def get_all_items(self):
+        root = self.tree_widget.invisibleRootItem()
+        items = [root]
+        queue = [root]
+        while queue:
+            item = queue.pop(0)
+            for i in range(item.childCount()):
+                child = item.child(i)
+                items.append(child)
+                queue.append(child)
+        return items
+    
+    def get_all_items_at_child_level(self, child_level: int = 0):
+        if not child_level:
+            return [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
+
+        all_items = self.get_all_items()
+        return [item for item in all_items if self.get_child_level(item) == child_level]
+    
+    def hightlight_search(self):
+
+        # NOTE: Should be fix to call this again when grouping by column
+
+        self.reset_highlight_all_items()
+
+        # Get the selected column, condition, and keyword
+        column = self.column_combo_box.currentText()
+        condition = self.condition_combo_box.currentText()
+        keyword = self.keyword_line_edit.text()
+        is_negate = self.negateAction.isChecked()
+        is_case_sensitive = self.matchCaseAction.isChecked()
+
+        if not keyword:
+            return
+        
+        match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
+
+        self.hightlight_items(match_items)
+
+    def find_match_items(self, column, condition, keyword, is_negate, is_case_sensitive) -> List[QtWidgets.QTreeWidgetItem]:
+
+        flags = self.CONDITION_TO_MATCH_FLAG_DICT[condition]
+
+        if not self.tree_widget.grouped_column_name:
+            column_index = self.column_names.index(column)
+            child_level = 0
+        elif column == self.tree_widget.grouped_column_name:
+            column_index = 0
+            child_level = 0
+        else:
+            column_index = self.column_names.index(column)
+            child_level = 1
+            flags |= QtCore.Qt.MatchFlag.MatchRecursive
+
+        if is_case_sensitive:
+            flags |= QtCore.Qt.MatchFlag.MatchCaseSensitive
+
+        all_items_at_child_level = self.get_all_items_at_child_level(child_level)
+
+        match_items = self.tree_widget.findItems(keyword, flags, column_index)
+        match_items_at_child_level = intersection(all_items_at_child_level, match_items)
+
+        if is_negate:
+            match_items_at_child_level = [item for item in all_items_at_child_level if item not in match_items_at_child_level]
+
+        return match_items_at_child_level
+    
+    def add_action_on_keyword_line_edit(self):
+        self.matchCaseAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
+        self.matchCaseAction.setToolTip('Match Case')
+        self.matchCaseAction.setCheckable(True)
+
+        self.negateAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
+        self.negateAction.setToolTip('Negate Match')
+        self.negateAction.setCheckable(True)
 
     def add_clear_button_on_header(self):
         # Add a clear filters button to the header
@@ -242,6 +314,14 @@ class AdvancedFilterSearch(base_class, form_class):
         tabler_qicon = self.tabler_action_checked_qicon if state else self.tabler_action_qicon
         self.negateAction.setIcon( tabler_qicon.a_b_off )
 
+    @staticmethod
+    def get_child_level(item: QtWidgets.QTreeWidgetItem):
+        child_level = 0
+        while item.parent():
+            child_level += 1
+            item = item.parent()
+        return child_level
+    
     def add_filter(self):
         ''' Add a filter to the tree widget. Called when the "Add Filter" button is clicked 
             or when the Enter key is pressed in the keyword_line_edit widget.
@@ -301,7 +381,11 @@ class AdvancedFilterSearch(base_class, form_class):
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
         '''
-        all_items = [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
+
+        # NOTE: Should be fix to call this again when grouping by column
+        
+        all_items = self.get_all_items()
+
         for item in all_items:
             item.setHidden(True)
 
@@ -312,11 +396,17 @@ class AdvancedFilterSearch(base_class, form_class):
 
             match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
 
-            intersect_match_items = [item for item in match_items if item in intersect_match_items]
+            intersect_match_items = intersection(match_items, intersect_match_items)
 
         for item in intersect_match_items:
             # Set the visibility of the item based on whether it matches the criteria
             item.setHidden(False)
+
+            if item.parent():
+                item.parent().setHidden(False)
+
+            for index in range(item.childCount()):
+                item.child(index).setHidden(False)
 
     def remove_filter(self, filter_tree_item):
         ''' Slot for the "Remove Filter" button.
