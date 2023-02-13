@@ -315,30 +315,24 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         
     def fit_column_in_view(self) -> None:
         ''' Adjust the width of all columns to fit the entire view.
-
-            This method resizes all columns so that the sum of their widths equals the width of the view, 
-            minus the width of the vertical scroll bar. This allows all columns to be visible without having to scroll horizontally.
+    
+            This method resizes columns so that their sum is equal to the width of the view minus the width of the vertical scroll bar. 
+            It starts by reducing the width of the column with the largest width by 10% until all columns fit within the expected width.
         '''
-        # Calculate the expected width of the view, taking into account the width of the vertical scroll bar
-        expect_column_width = self.size().width()
-        scroll_bar_width = self.verticalScrollBar().width()
-        expect_column_width -= scroll_bar_width
-
-        # Keep track of the current sum of column widths
-        column_width_sum = 0
-
-        # Sum up the current width of each column
-        for column in range(self.columnCount()):
-            column_width = self.columnWidth(column)
-            column_width_sum += column_width
-
-        # Calculate the ratio of the current sum of column widths to the expected width of the view
-        width_ratio = column_width_sum/expect_column_width
-
-        # Resize each column so that the sum of their widths equals the expected width of the view
-        for column in range(self.columnCount()):
-            column_width = self.columnWidth(column)
-            self.setColumnWidth(column, int(column_width/width_ratio))
+        # Get the expected width of the columns (the width of the view minus the width of the scroll bar)
+        expect_column_width = self.size().width() - self.verticalScrollBar().width()
+        # Calculate the sum of the current column widths
+        column_width_sum = sum(self.columnWidth(column) for column in range(self.columnCount()))
+        
+        # Loop until all columns fit within the expected width
+        while column_width_sum > expect_column_width:
+            # Find the column with the largest width
+            largest_column = max(range(self.columnCount()), key=lambda x: self.columnWidth(x))
+            # Reduce the width of the largest column by 10%
+            new_width = max(self.columnWidth(largest_column) - expect_column_width // 10, 0)
+            self.setColumnWidth(largest_column, new_width)
+            # Update the sum of the column widths
+            column_width_sum -= self.columnWidth(largest_column) - new_width
 
     def resize_to_contents(self) -> None:
         ''' Resize all columns in the object to fit their contents.
