@@ -3,7 +3,15 @@ from typing import Dict, List
 
 from xml.etree import ElementTree
 
-from PyQt5 import QtGui, QtCore, QtSvg, QtWidgets
+from PyQt5 import QtGui, QtCore, QtWidgets
+
+# Check if PyQt5.QtSvg module is available
+try:
+    from PyQt5 import QtSvg
+except ImportError:
+    IS_QTSVG_SUPPORTED = False
+else:
+    IS_QTSVG_SUPPORTED = True
 
 TABLER_ICONS_SVG_DIRECTORY = os.path.split(__file__)[0] + '/tabler-icons'
 
@@ -57,30 +65,43 @@ class TablerQIcon:
         if not svg_icon_path:
             return QtGui.QIcon()
 
-        # Load the original SVG file
-        with open(svg_icon_path, 'r') as svg_file:
-            svg_str = svg_file.read()
+        if IS_QTSVG_SUPPORTED:
+            # Load the original SVG file
+            with open(svg_icon_path, 'r') as svg_file:
+                svg_str = svg_file.read()
 
-        # Parse the SVG file as XML
-        svg = ElementTree.fromstring(svg_str)
-        # Set the stroke width of the icon
-        svg.set('stroke-width', str(self._stroke_width))
-        svg_bytes = ElementTree.tostring(svg)
+            # Parse the SVG file as XML
+            svg = ElementTree.fromstring(svg_str)
+            # Set the stroke width of the icon
+            svg.set('stroke-width', str(self._stroke_width))
+            svg_bytes = ElementTree.tostring(svg)
 
-        # Create a renderer object to render the SVG file
-        renderer = QtSvg.QSvgRenderer(svg_bytes)
-        # Set the view box size
-        renderer.setViewBox( QtCore.QRectF(0, 0, self._view_box_size, self._view_box_size) )
+            # Create a renderer object to render the SVG file
+            renderer = QtSvg.QSvgRenderer(svg_bytes)
+            # Set the view box size
+            renderer.setViewBox( QtCore.QRectF(0, 0, self._view_box_size, self._view_box_size) )
 
-        # Create a QPixmap object to hold the rendered image
-        pixmap = QtGui.QPixmap(self._size, self._size)
-        # Fill the pixmap with transparent color
-        pixmap.fill(QtCore.Qt.transparent)
-        
-        # Create a QPainter object to draw on the QPixmap
-        painter = QtGui.QPainter(pixmap)
-        # Render the SVG file to the pixmap
-        renderer.render(painter)
+            # Create a QPixmap object to hold the rendered image
+            pixmap = QtGui.QPixmap(self._size, self._size)
+
+            # Fill the pixmap with transparent color
+            pixmap.fill(QtCore.Qt.transparent)
+            
+            # Create a QPainter object to draw on the QPixmap
+            painter = QtGui.QPainter(pixmap)
+
+            # Render the SVG file to the pixmap
+            renderer.render(painter)
+
+        else:
+            # Load the SVG file as a QPixmap
+            pixmap = QtGui.QPixmap(svg_icon_path)
+
+            # Set the size of the pixmap
+            pixmap = pixmap.scaled(self._size, self._size, QtCore.Qt.KeepAspectRatio, QtCore.Qt.SmoothTransformation)
+
+            # Create a QPainter object to draw on the QPixmap
+            painter = QtGui.QPainter(pixmap)
         
         # Set the opacity of the icon
         painter.setOpacity(self._opacity)
@@ -96,7 +117,7 @@ class TablerQIcon:
         # Create a QIcon object using the rendered image       
         icon = QtGui.QIcon(pixmap)
 
-        # return the icon
+        # Return the icon
         return icon
     
     @classmethod
