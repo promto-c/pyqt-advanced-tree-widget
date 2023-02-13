@@ -1,7 +1,7 @@
 import sys, os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 from theme.theme import setTheme
 
@@ -13,12 +13,34 @@ from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DAT
 ui_file = os.path.split(__file__)[0] + "/ui/AdvancedFilterSearch.ui"
 form_class, base_class = uic.loadUiType(ui_file)
 
-def intersection(item_list_1, item_list_2):
+def intersection(item_list_1: List[Any], item_list_2: List[Any]) -> List[Any]:
+    ''' Calculates the intersection of two lists.
+
+    Args:
+        item_list_1 (List[Any]): The first list.
+        item_list_2 (List[Any]): The second list.
+
+    Returns:
+        List[Any] : The items that exist in both lists.
+    '''
+    # Return the items that exist in both lists
     return [item for item in item_list_1 if item in item_list_2]
 
+
 def extract_model_index_prop_tuple(model_index: QtCore.QModelIndex) -> Tuple[int, int, QtCore.QModelIndex, QtCore.QAbstractItemModel]:
+    '''
+    Extracts the properties of a QModelIndex and returns a tuple of the row, column, parent, and model.
+
+    Args:
+        model_index (QtCore.QModelIndex): The QModelIndex to extract the properties from.
+
+    Returns:
+        Tuple : A tuple containing the row, column, parent, and model of the QModelIndex.
+    '''
+    # Return the row, column, parent, and model of the QModelIndex
     return (model_index.row(), model_index.column(), model_index.parent(), model_index.model())
 
+# NOTE: test
 class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent=None):
         super(ColorScaleItemDelegate, self).__init__(parent)
@@ -43,26 +65,48 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
     #     return QtCore.QSize(50, 50)
 
 class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
-
+    ''' Custom item delegate class that highlights the rows specified by the `target_model_index_props` list.
+    '''
+    # List of tuple of target model index properties (row, column, parent, model) for highlighting
     target_model_index_props: List[Tuple[int, int, QtCore.QModelIndex, QtCore.QAbstractItemModel]] = list()
     
     def __init__(self, parent=None, color: QtGui.QColor = QtGui.QColor(165, 165, 144, 128)):
+        ''' Initialize the highlight item delegate.
+        
+        Args:
+            parent (QtWidgets.QWidget, optional): The parent widget. Defaults to None.
+            color (QtGui.QColor, optional): The color to use for highlighting. Defaults to a light grayish-yellow.
+        '''
+        # Initialize the super class
         super(HighlightItemDelegate, self).__init__(parent)
+
+        # Set the color attribute
         self.color = color
     
     def paint(self, painter, option, model_index):
-
+        ''' Paint the delegate.
+        
+        Args:
+            painter (QtGui.QPainter): The painter to use for drawing.
+            option (QtWidgets.QStyleOptionViewItem): The style option to use for drawing.
+            model_index (QtCore.QModelIndex): The model index of the item to be painted.
+        '''
+        # Get the properties of the model index
         model_index_prop_tuple = extract_model_index_prop_tuple(model_index)
 
-
+        # Check if the current model index is not in the target list
         if model_index_prop_tuple not in self.target_model_index_props:
+            # If not, paint the item normally using the parent implementation
             super().paint(painter, option, model_index)
             return
 
+        # If the current model index is in the target list, set the background color and style
         option.backgroundBrush.setColor(self.color)
         option.backgroundBrush.setStyle(QtCore.Qt.SolidPattern)
+        # Fill the rect with the background brush
         painter.fillRect(option.rect, option.backgroundBrush)
 
+        # Paint the item normally using the parent implementation
         super().paint(painter, option, model_index)
 
 class AdvancedFilterSearch(base_class, form_class):
@@ -112,15 +156,22 @@ class AdvancedFilterSearch(base_class, form_class):
     def _setup_initial_values(self):
         ''' Set up the initial values for the widget.
         '''
+        # Get reference to the current application instance
         app = QtWidgets.QApplication.instance()
+        # Get the palette of the application
         palette = app.palette()
+        # Get the color of the text from the palette
         icon_color = palette.color(QtGui.QPalette.Text)
 
+        # Initialize an empty list to store the filter criteria
         self.filter_criteria_list = list()
+
+        # Initialize the QIcon objects for use in the UI with specified color and opacity
         self.tabler_action_qicon = TablerQIcon(color=icon_color, opacity=0.6)
         self.tabler_action_checked_qicon = TablerQIcon(color=icon_color)
         self.tabler_button_qicon = TablerQIcon(color=icon_color)
 
+        # Initialize the HighlightItemDelegate object to highlight items in the tree widget.
         self.hightlight_item_delegate = HighlightItemDelegate()
 
     def _setup_ui(self):
@@ -139,11 +190,14 @@ class AdvancedFilterSearch(base_class, form_class):
         self.column_combo_box.addItems(self.column_names)
         self.condition_combo_box.addItems(self.CONDITION_TO_MATCH_FLAG_DICT.keys())
 
+        # Set up the filter tree widget
         self.setup_filter_tree_widget()
-
+        
+        # Add action to keyword line edit
         self.add_action_on_keyword_line_edit()
-
-        self.add_filter_button.setIcon( self.tabler_button_qicon.filter_add )
+        
+        # Set the icon for the add filter button
+        self.add_filter_button.setIcon(self.tabler_button_qicon.filter_add)
 
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
@@ -151,9 +205,12 @@ class AdvancedFilterSearch(base_class, form_class):
         # Connect signals to slots
         self.add_filter_button.clicked.connect(self.add_filter)
         self.keyword_line_edit.returnPressed.connect(self.add_filter)
+
+        # 
         self.matchCaseAction.triggered.connect(self.update_case_sensitive)
         self.negateAction.triggered.connect(self.update_negate)
 
+        # 
         self.keyword_line_edit.textChanged.connect(self.hightlight_search)
         self.column_combo_box.activated.connect(self.hightlight_search)
         self.condition_combo_box.activated.connect(self.hightlight_search)
@@ -161,16 +218,29 @@ class AdvancedFilterSearch(base_class, form_class):
         self.negateAction.triggered.connect(self.hightlight_search)
 
     def setup_filter_tree_widget(self):
+        ''' Set up the filter tree widget, including header columns and adding a clear button to the header.
+
+        The labels are:
+            "Column"    : The name of the column used for filtering.
+            "Condition" : The condition for filtering (e.g. "Contains", "Starts with", etc.).
+            "Keyword"   : The keyword used for filtering.
+            "Negate"    : A flag indicating whether to negate the filter condition (i.e. filter out items that match the condition).
+            "Aa"        : A button to set the case sensitivity of the filter condition.
+            ""          : An empty string, used as a placeholder.
+        '''
+        # List of header labels for the filter tree widget
+        header_labels = ['Column', 'Condition', 'Keyword', 'Negate', 'Aa','']
+
         # Set up filter tree widget header columns
-        self.filter_tree_widget.setHeaderLabels(['Column', 'Condition', 'Keyword', 'Negate', 'Aa',''])
+        self.filter_tree_widget.setHeaderLabels(header_labels)
 
-        self.filter_tree_widget.header().setSectionResizeMode(0, QtWidgets.QHeaderView.Stretch)
-        self.filter_tree_widget.header().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
-        self.filter_tree_widget.header().setSectionResizeMode(2, QtWidgets.QHeaderView.Stretch)
-        self.filter_tree_widget.header().setSectionResizeMode(3, QtWidgets.QHeaderView.Fixed)
-        self.filter_tree_widget.header().setSectionResizeMode(4, QtWidgets.QHeaderView.Fixed)
-        self.filter_tree_widget.header().setSectionResizeMode(5, QtWidgets.QHeaderView.Fixed)
+        # Resize header sections, with the first three (Column, Condition, Keyword) stretched and the rest fixed
+        header = self.filter_tree_widget.header()
+        for column_index, _ in enumerate(header_labels):
+            stretch = column_index in (0, 1, 2) # stretch the first three columns (Column, Condition, Keyword)
+            header.setSectionResizeMode(column_index, QtWidgets.QHeaderView.Stretch if stretch else QtWidgets.QHeaderView.Fixed)
 
+        # Add clear button on header
         self.add_clear_button_on_header()
 
     def hightlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
