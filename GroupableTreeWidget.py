@@ -51,18 +51,34 @@ ID_TO_DATA_DICT = {
     }
 
 class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
+    ''' A custom `QTreeWidgetItem` that can handle different data formats and store additional data in the user role.
+
+    Attributes:
+        id (int): The ID of the item.
+    '''
 
     def __init__(self, parent: QtWidgets.QTreeWidget = None, 
-                 item_data: Union[ Dict[str, Any], List[str] ] = None, 
+                 item_data: Union[Dict[str, Any], List[str]] = None, 
                  item_id: int = None):
-
+        ''' Initialize the `TreeWidgetItem` with the given parent and item data.
+        
+        Args:
+            parent (QtWidgets.QTreeWidget, optional): The parent `QTreeWidget`. Defaults to `None`.
+            item_data (Union[Dict[str, Any], List[str]], optional): The data for the item. Can be a list of strings or a dictionary with keys matching the headers of the parent `QTreeWidget`. Defaults to `None`.
+            item_id (int, optional): The ID of the item. Defaults to `None`.
+        '''
+        # Set the item's ID
         self.id = item_id
 
+        # If the data for the item is in list form
         if isinstance(item_data, list):
             item_data_list = item_data
 
+        # If the data for the item is in dictionary form
         if isinstance(item_data, dict):
+            # Get the header item from the parent tree widget
             header_item = parent.headerItem()
+            # Get the column names from the header item
             column_names = [header_item.text(i) for i in range(header_item.columnCount())]
 
             # Create a list of data for the tree item
@@ -70,30 +86,54 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
                                                                  else str() 
                                                                  for column in column_names[1:]]
             
+        # Call the superclass's constructor to set the item's data
         super(TreeWidgetItem, self).__init__(parent, map(str, item_data_list))
 
+        # Set the UserRole data for the item.
         self.set_user_role_data(item_data_list)
 
-    def set_user_role_data(self, item_data_list):
+    def set_user_role_data(self, item_data_list: List[Any]):
+        ''' Set the UserRole data for the item.
+
+        Args:
+            item_data_list (List[Any]): The list of data to set as the item's data.
+        '''
+        # Iterate through each column in the item
         for column_index, value in enumerate(item_data_list):
+            # Set the value for the column in the UserRole data
             self.setData(column_index, QtCore.Qt.UserRole, value)
             
-    def __lt__(self, other_item: QtWidgets.QTreeWidgetItem):
+    def __lt__(self, other_item: QtWidgets.QTreeWidgetItem) -> bool:
+        ''' Sort the items in the tree widget based on their data.
+
+        Args:
+            other_item (QtWidgets.QTreeWidgetItem): The item to compare with.
+
+        Returns:
+            bool: Whether this item is less than the other item.
+        '''
+        # Get the column that is currently being sorted
         column = self.treeWidget().sortColumn()
 
+        # Get the UserRole data for the column for both this item and the other item
         data_a = self.data(column, QtCore.Qt.UserRole)
         data_b = other_item.data(column, QtCore.Qt.UserRole)
 
+        # If both UserRole data are None, compare their texts
         if not data_a and not data_b:
             return self.text(column) < other_item.text(column)
+        # If this item's UserRole data is None, it is considered greater
         elif not data_a:
-            return 1
+            return True
+        # If the other item's UserRole data is None, this item is considered greater
         elif not data_b:
-            return -1
+            return False
 
         try:
+            # Try to compare the UserRole data directly
             return data_a < data_b
         except TypeError:
+            # If the comparison fails, compare their string representations
             return (str(data_a) < str(data_b))
 
 class GroupableTreeWidget(QtWidgets.QTreeWidget):
@@ -124,7 +164,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
     def _setup_initial_values(self):
         ''' Set up the initial values for the widget.
         '''
-        # 
+        # Store the current grouped column name
         self.grouped_column_name = str()
 
     def _setup_ui(self):
@@ -141,6 +181,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Enable sorting in the tree widget
         self.setSortingEnabled(True)
 
+        # Enable uniform row heights
         self.setUniformRowHeights(True)
 
     def _setup_signal_connections(self):
@@ -182,6 +223,14 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
     def on_header_context_menu(self, pos: QtCore.QPoint) -> None:
         ''' Show a context menu for the header of the tree widget.
 
+        Context Menu:
+            +-------------------------------+
+            | Group by this column          |
+            | Ungroup all                   |
+            | ----------------------------- |
+            | Fit in View                   |
+            +-------------------------------+
+
         Args:
             pos (QtCore.QPoint): The position where the right click occurred.
         '''
@@ -199,8 +248,10 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         ungroup_all_action = menu.addAction('Ungroup all')
         ungroup_all_action.triggered.connect(self.ungroup_all)
 
+        # Add a separator
         menu.addSeparator()
-        # 
+        
+        # Add the 'Fit in View' action and connect it to the 'fit_column_in_view' method.
         fit_column_in_view_action = menu.addAction('Fit in View')
         fit_column_in_view_action.triggered.connect(self.fit_column_in_view)
                 
@@ -255,17 +306,6 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
                 # Add the tree item to the group item as a child and restore its original position
                 group_item.addChild(item)
-                self.insertTopLevelItem(original_row, item)
-
-            # Add the group item to the tree widget and restore its original position
-            original_row = self.indexOfTopLevelItem(group_item) if group_item.parent() else None
-            self.addTopLevelItem(group_item)
-            if isinstance(original_row, int):
-                self.insertTopLevelItem(original_row, group_item)
-            
-            # Remove the items from the top level of the tree widget
-            for item in items:
-                self.removeItemWidget(item, 0)
             
         # Expand all items
         self.expandAll()
@@ -274,17 +314,28 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.resize_to_contents()
         
     def fit_column_in_view(self) -> None:
+        ''' Adjust the width of all columns to fit the entire view.
+
+            This method resizes all columns so that the sum of their widths equals the width of the view, 
+            minus the width of the vertical scroll bar. This allows all columns to be visible without having to scroll horizontally.
+        '''
+        # Calculate the expected width of the view, taking into account the width of the vertical scroll bar
         expect_column_width = self.size().width()
         scroll_bar_width = self.verticalScrollBar().width()
         expect_column_width -= scroll_bar_width
+
+        # Keep track of the current sum of column widths
         column_width_sum = 0
 
+        # Sum up the current width of each column
         for column in range(self.columnCount()):
             column_width = self.columnWidth(column)
             column_width_sum += column_width
 
+        # Calculate the ratio of the current sum of column widths to the expected width of the view
         width_ratio = column_width_sum/expect_column_width
 
+        # Resize each column so that the sum of their widths equals the expected width of the view
         for column in range(self.columnCount()):
             column_width = self.columnWidth(column)
             self.setColumnWidth(column, int(column_width/width_ratio))
