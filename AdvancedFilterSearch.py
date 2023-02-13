@@ -46,8 +46,9 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
 
     target_model_index_props: List[Tuple[int, int, QtCore.QModelIndex, QtCore.QAbstractItemModel]] = list()
     
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, color: QtGui.QColor = QtGui.QColor(165, 165, 144, 128)):
         super(HighlightItemDelegate, self).__init__(parent)
+        self.color = color
     
     def paint(self, painter, option, model_index):
 
@@ -58,7 +59,7 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
             super().paint(painter, option, model_index)
             return
 
-        option.backgroundBrush.setColor(QtGui.QColor(165, 165, 144, 128))
+        option.backgroundBrush.setColor(self.color)
         option.backgroundBrush.setStyle(QtCore.Qt.SolidPattern)
         painter.fillRect(option.rect, option.backgroundBrush)
 
@@ -111,7 +112,6 @@ class AdvancedFilterSearch(base_class, form_class):
     def _setup_initial_values(self):
         ''' Set up the initial values for the widget.
         '''
-        # self.palette = QtGui.QPalette()
         app = QtWidgets.QApplication.instance()
         palette = app.palette()
         icon_color = palette.color(QtGui.QPalette.Text)
@@ -133,7 +133,7 @@ class AdvancedFilterSearch(base_class, form_class):
         headerItem = self.tree_widget.headerItem()
 
         # Get the list of column names
-        self.column_names = [headerItem.text(i) for i in range(headerItem.columnCount())]
+        self.column_names = [headerItem.text(column_index) for column_index in range(headerItem.columnCount())]
 
         # Set up combo boxes
         self.column_combo_box.addItems(self.column_names)
@@ -143,7 +143,7 @@ class AdvancedFilterSearch(base_class, form_class):
 
         self.add_action_on_keyword_line_edit()
 
-        self.add_filter_button.setIcon( self.tabler_button_qicon.filter )
+        self.add_filter_button.setIcon( self.tabler_button_qicon.filter_add )
 
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.

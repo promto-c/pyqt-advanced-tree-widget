@@ -1,6 +1,6 @@
-[submodule "tabler-icons"]
-	path = tabler-icons
-	url = https://github.com/tabler/tabler-icons.git
+# [submodule "tabler-icons"]
+# 	path = tabler-icons
+# 	url = https://github.com/tabler/tabler-icons.git
 [submodule "pyqt-code-template"]
 	path = pyqt-code-template
 	url = https://github.com/promto-c/pyqt-code-template

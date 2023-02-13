@@ -5,10 +5,10 @@ from xml.etree import ElementTree
 
 from PyQt5 import QtGui, QtCore, QtSvg, QtWidgets
 
-TABLER_ICONS_SVG_DIRECTORY = os.path.split(__file__)[0] + '/tabler-icons/icons'
+TABLER_ICONS_SVG_DIRECTORY = os.path.split(__file__)[0] + '/tabler-icons'
 
 class TablerQIcon:
-    ''' A class that loads icons from the tabler-icons/icons directory and makes them available as attributes.
+    ''' A class that loads icons from the tabler-icons directory and makes them available as attributes.
 
     Attributes:
         _icon_name_to_path_dict (dict): A dictionary containing the icon name as key and the icon path as value.
@@ -24,7 +24,7 @@ class TablerQIcon:
     _default_color = _palette.color(QtGui.QPalette.Text)
 
     def __init__(self, color: QtGui.QColor=_default_color, size: int=24, view_box_size: int=24, stroke_width: int=2, opacity: float=1.0 ):
-        ''' Initialize the widget and load the icons from the tabler-icons/icons directory.
+        ''' Initialize the widget and load the icons from the tabler-icons directory.
             Args:
                 color (QtGui.QColor): color of the icon
                 size (int): size of the icon 
