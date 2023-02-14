@@ -317,7 +317,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Resize all columns to fit their contents
         self.resize_to_contents()
 
-        #
+        # Emit signal for grouped by column with column name
         self.grouped_by_column.emit(self.grouped_column_name)
         
     def fit_column_in_view(self) -> None:
@@ -382,7 +382,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Resize all columns to fit their contents
         self.resize_to_contents()
 
-        #
+        # Emit signal for ungrouped all
         self.ungrouped_all.emit()
         
     def group_data(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:

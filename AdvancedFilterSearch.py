@@ -207,18 +207,18 @@ class AdvancedFilterSearch(base_class, form_class):
         self.add_filter_button.clicked.connect(self.add_filter)
         self.keyword_line_edit.returnPressed.connect(self.add_filter)
 
-        # 
-        self.matchCaseAction.triggered.connect(self.update_case_sensitive)
-        self.negateAction.triggered.connect(self.update_negate)
+        # Connect match actions to slots
+        self.match_case_action.triggered.connect(self.update_case_sensitive)
+        self.negate_action.triggered.connect(self.update_negate)
 
-        # 
+        # Connect match options to slots
         self.keyword_line_edit.textChanged.connect(self.hightlight_search)
         self.column_combo_box.activated.connect(self.hightlight_search)
         self.condition_combo_box.activated.connect(self.hightlight_search)
-        self.matchCaseAction.triggered.connect(self.hightlight_search)
-        self.negateAction.triggered.connect(self.hightlight_search)
+        self.match_case_action.triggered.connect(self.hightlight_search)
+        self.negate_action.triggered.connect(self.hightlight_search)
 
-        #
+        # Connect grouping signals to slots
         self.tree_widget.grouped_by_column.connect(self.hightlight_search)
         self.tree_widget.grouped_by_column.connect(self.apply_filters)
         self.tree_widget.ungrouped_all.connect(self.hightlight_search)
@@ -253,45 +253,47 @@ class AdvancedFilterSearch(base_class, form_class):
         self.add_clear_button_on_header()
 
     def add_action_on_keyword_line_edit(self):
+        ''' Add two actions to the keyword line edit widget: match case and negate match.
         '''
-        '''
-        #
-        self.matchCaseAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
-        self.matchCaseAction.setToolTip('Match Case')
-        self.matchCaseAction.setCheckable(True)
+        # Add the match case action to the keyword line edit widget
+        self.match_case_action = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
+        # Set the tool tip to "Match Case"
+        self.match_case_action.setToolTip('Match Case')
+        # Set the action to be checkable
+        self.match_case_action.setCheckable(True)
 
-        #
-        self.negateAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
-        self.negateAction.setToolTip('Negate Match')
-        self.negateAction.setCheckable(True)
+        # Add the negate match action to the keyword line edit widget
+        self.negate_action = self.keyword_line_edit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
+        # Set the tool tip to "Negate Match"
+        self.negate_action.setToolTip('Negate Match')
+        # Set the action to be checkable
+        self.negate_action.setCheckable(True)
 
     def add_clear_button_on_header(self):
-        '''
+        ''' Add a clear filters button to the header of the filter tree widget.
         '''
         # Add a clear filters button to the header
         header = self.filter_tree_widget.header()
         viewport = header.viewport()
 
-        #
+        # Create a horizontal layout for the viewport
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(2, 2, 2, 2)
 
-        #
-        viewport.setLayout( layout )
+        # Set the layout for the viewport
+        viewport.setLayout(layout)
 
-        #
+        # Add a horizontal spacer to the layout
         horizontal_spacer = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
-
-        #
         layout.addItem(horizontal_spacer)
 
-        #
+        # Create a clear buttons
         clear_button = QtWidgets.QPushButton(self.tabler_button_qicon.clear_all, '', self)
-        clear_button.setToolTip('Clear all filter')
+        clear_button.setToolTip('Clear all filters')
         clear_button.clicked.connect(self.clear_filters)
-        clear_button.setMinimumSize(QtCore.QSize(27, 16777215))
+        clear_button.setFixedSize(27, 16777215)
 
-        #
+        # Add a clear button to the layout
         layout.addWidget(clear_button)
 
     def hightlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
@@ -424,26 +426,26 @@ class AdvancedFilterSearch(base_class, form_class):
         return [item for item in all_items if self.get_child_level(item) == child_level]
     
     def hightlight_search(self):
+        ''' Highlight the items in the tree widget that match the search criteria.
         '''
-        '''
-        #
+        # Reset the highlight for all items
         self.reset_highlight_all_items()
 
         # Get the selected column, condition, and keyword
         column = self.column_combo_box.currentText()
         condition = self.condition_combo_box.currentText()
         keyword = self.keyword_line_edit.text()
-        is_negate = self.negateAction.isChecked()
-        is_case_sensitive = self.matchCaseAction.isChecked()
+        is_negate = self.negate_action.isChecked()
+        is_case_sensitive = self.match_case_action.isChecked()
 
-        #
+        # Return if the keyword is empty
         if not keyword:
             return
         
-        #
+        # Find the items that match the search criteria
         match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
 
-        #
+        # Highlight the matched items
         self.hightlight_items(match_items)
 
     def find_match_items(self, column, condition, keyword, is_negate, is_case_sensitive) -> List[QtWidgets.QTreeWidgetItem]:
@@ -502,31 +504,40 @@ class AdvancedFilterSearch(base_class, form_class):
             Args:
                 state (bool): The state of match case action.
         '''
+        # Update the tabler_qicon based on the state of the match case action
         tabler_qicon = self.tabler_action_checked_qicon if state else self.tabler_action_qicon
-        self.matchCaseAction.setIcon( tabler_qicon.letter_case )
+        self.match_case_action.setIcon( tabler_qicon.letter_case )
 
     def update_negate(self, state: bool):
         ''' Update the is_negate member variable when the negate action state changes.
             Args:
                 state (bool): The state of negate action.
         '''
+        # Update the tabler_qicon based on the state of the negate action
         tabler_qicon = self.tabler_action_checked_qicon if state else self.tabler_action_qicon
-        self.negateAction.setIcon( tabler_qicon.a_b_off )
+        self.negate_action.setIcon( tabler_qicon.a_b_off )
 
     @staticmethod
-    def get_child_level(item: QtWidgets.QTreeWidgetItem):
+    def get_child_level(item: QtWidgets.QTreeWidgetItem) -> int:
+        ''' Get the child level of a given QTreeWidgetItem
+
+        Args:
+            item (QtWidgets.QTreeWidgetItem): The QTreeWidgetItem to get the child level of
+
+        Returns:
+            int: The child level of the given QTreeWidgetItem
         '''
-        '''
-        #
+        # Initialize child level
         child_level = 0
 
-        #
+        # Iterate through the parent items to determine the child level
         while item.parent():
-            #
+            # Increment child level for each parent
             child_level += 1
+            # Update item to be its parent
             item = item.parent()
 
-        #
+        # Return the final child level
         return child_level
     
     def add_filter(self):
@@ -537,8 +548,8 @@ class AdvancedFilterSearch(base_class, form_class):
         column = self.column_combo_box.currentText()
         condition = self.condition_combo_box.currentText()
         keyword = self.keyword_line_edit.text()
-        is_negate = self.negateAction.isChecked()
-        is_case_sensitive = self.matchCaseAction.isChecked()
+        is_negate = self.negate_action.isChecked()
+        is_case_sensitive = self.match_case_action.isChecked()
 
         # Return if the keyword is empty
         if not keyword:
@@ -547,7 +558,7 @@ class AdvancedFilterSearch(base_class, form_class):
         # Clear the keyword_line_edit widget
         self.keyword_line_edit.clear()
 
-        #
+        # Store the filter criteria in a list
         filter_criteria = [column, condition, keyword, is_negate, is_case_sensitive]
 
         # Return if the filter criteria (column, is_negate, condition, keyword, is_case_sensitive) is already in the filter criteria list
@@ -562,40 +573,50 @@ class AdvancedFilterSearch(base_class, form_class):
         # Store the filter criteria in a data_list attribute of the tree widget item
         filter_tree_item.data_list = filter_criteria
 
-        #
+        # Add the "Negate", "Match Case" and "Remove" buttons to the tree widget item
         self.add_negate_button(filter_tree_item, check_state=is_negate)
-        self.add_negate_button(filter_tree_item, check_state=is_case_sensitive)
+        self.add_match_case_button(filter_tree_item, check_state=is_case_sensitive)
         self.add_remove_item_button(filter_tree_item)
 
-        #
+        # Apply the filters
         self.apply_filters()
 
-    def add_negate_button(self, tree_item: QtWidgets.QTreeWidgetItem, check_state: bool = bool()):
+    def add_negate_button(self, tree_item: QtWidgets.QTreeWidgetItem, check_state: bool = False):
+        ''' Add a negate button to the specified tree widget item.
+    
+        Args:
+            tree_item (QtWidgets.QTreeWidgetItem): The tree widget item to add the negate button to.
+            check_state (bool, optional): The initial check state of the button. Defaults to False.
         '''
-        '''
-        #
+        # Create a negate button
         negate_button = QtWidgets.QPushButton(self.tabler_action_qicon.a_b_off, '', self.filter_tree_widget)
-        #
+
+        # Set the button as checkable and its initial check state
         negate_button.setCheckable(True)
         negate_button.setChecked(check_state)
-        #
+        # Disable the button so it cannot be interacted with
         negate_button.setDisabled(True)
 
-        #
+        # Add the negate button to the specified tree item in the filter tree widget
         self.filter_tree_widget.setItemWidget(tree_item, 3, negate_button)
 
-    def add_match_case_button(self, tree_item: QtWidgets.QTreeWidgetItem, check_state: bool = bool()):
+    def add_match_case_button(self, tree_item: QtWidgets.QTreeWidgetItem, check_state: bool = False):
+        ''' Add a match case button to the specified tree widget item.
+    
+        Args:
+            tree_item (QtWidgets.QTreeWidgetItem): The tree widget item to add the match case button to.
+            check_state (bool, optional): The initial check state of the button. Defaults to False.
         '''
-        '''
-        #
+        # Create a match case button
         match_case_button = QtWidgets.QPushButton(self.tabler_action_qicon.letter_case, '', self.filter_tree_widget)
-        #
+
+        # Set the button as checkable and its initial check state
         match_case_button.setCheckable(True)
         match_case_button.setChecked(check_state)
-        #
+        # Disable the button so it cannot be interacted with
         match_case_button.setDisabled(True)
-        
-        #
+
+        # Add the match case button to the specified tree item in the filter tree widget
         self.filter_tree_widget.setItemWidget(tree_item, 4, match_case_button)
         
     def add_remove_item_button(self, tree_item: QtWidgets.QTreeWidgetItem):
@@ -617,40 +638,45 @@ class AdvancedFilterSearch(base_class, form_class):
         self.filter_tree_widget.setItemWidget(tree_item, 5, remove_button)
 
     def apply_filters(self):
-        ''' Slot for the "Apply Filters" button.
+        ''' Apply the filters specified by the user to the tree widget.
         '''
-        #
+        # Get a list of all items in the tree widget
         all_items = self.get_all_items()
 
-        #
+        # Hide all items
         for item in all_items:
             item.setHidden(True)
 
-        #
+        # Initial the intersection items list as all items
         intersect_match_items = all_items
 
-        # Check if the item matches all of the filter criteria
+        # Iterate through each filter criteria in the list, then intersect the match items for each filter criteria
         for column, condition, keyword, is_negate, is_case_sensitive in self.filter_criteria_list:
-            #
+            # Get the items that match the filter criteria
             match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
 
-            #
+            # Update the intersected match items list
             intersect_match_items = intersection(match_items, intersect_match_items)
 
-        #
-        for item in intersect_match_items:
-            # Set the visibility of the item based on whether it matches the criteria
+        # Show the items that match all filter criteria and their parent and children
+        self.show_matching_items(intersect_match_items)
+        
+    def show_matching_items(self, match_items: List[QtWidgets.QTreeWidgetItem]):
+        ''' Show the items and their parent and children.
+        '''
+        # Show the items that match all filter criteria
+        for item in match_items:
             item.setHidden(False)
 
-            #
+            # Show the parent of the item if it exists
             if item.parent():
                 item.parent().setHidden(False)
 
-            #
+            # Show all children of the item
             for index in range(item.childCount()):
                 item.child(index).setHidden(False)
 
-    def remove_filter(self, filter_tree_item):
+    def remove_filter(self, filter_tree_item: QtWidgets.QTreeWidgetItem):
         ''' Slot for the "Remove Filter" button.
         '''
         # Remove the selected filter criteria from the list
@@ -660,7 +686,7 @@ class AdvancedFilterSearch(base_class, form_class):
         # Delete the item object. This will remove the item from memory and break any references to it.
         del item
 
-        #
+        # Apply the filters
         self.apply_filters()
 
     def clear_filters(self):
@@ -671,7 +697,7 @@ class AdvancedFilterSearch(base_class, form_class):
         # Clear the tree widget
         self.filter_tree_widget.clear()
 
-        # 
+        # Apply the filters
         self.apply_filters()
 
 def main():
