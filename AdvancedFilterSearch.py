@@ -8,6 +8,7 @@ from theme.theme import setTheme
 from TablerQIcon import TablerQIcon
 
 from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
+from ScalableView import ScalableView
 
 # Load the .ui file using the uic module
 ui_file = os.path.split(__file__)[0] + "/ui/AdvancedFilterSearch.ui"
@@ -717,9 +718,12 @@ def main():
     widget = AdvancedFilterSearch(tree_widget)
     widget.column_combo_box.setCurrentText('Name')
     window.setCentralWidget(widget)
+    
+    # Create the scalable view and set the tree widget as its central widget
+    scalable_tree_widget_view = ScalableView(widget=tree_widget)
 
     # Add the tree widget to the layout of the widget
-    widget.layout().addWidget(tree_widget)
+    widget.layout().addWidget(scalable_tree_widget_view)
 
     # Show the window and run the application
     window.show()
