@@ -103,6 +103,7 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
         # If the current model index is in the target list, set the background color and style
         option.backgroundBrush.setColor(self.color)
         option.backgroundBrush.setStyle(QtCore.Qt.SolidPattern)
+
         # Fill the rect with the background brush
         painter.fillRect(option.rect, option.backgroundBrush)
 
@@ -234,8 +235,10 @@ class AdvancedFilterSearch(base_class, form_class):
         # Set up filter tree widget header columns
         self.filter_tree_widget.setHeaderLabels(header_labels)
 
-        # Resize header sections, with the first three (Column, Condition, Keyword) stretched and the rest fixed
+        # Get the header of the filter tree widget
         header = self.filter_tree_widget.header()
+
+        # Resize header sections, with the first three (Column, Condition, Keyword) stretched and the rest fixed
         for column_index, _ in enumerate(header_labels):
             stretch = column_index in (0, 1, 2) # stretch the first three columns (Column, Condition, Keyword)
             header.setSectionResizeMode(column_index, QtWidgets.QHeaderView.Stretch if stretch else QtWidgets.QHeaderView.Fixed)
@@ -244,30 +247,45 @@ class AdvancedFilterSearch(base_class, form_class):
         self.add_clear_button_on_header()
 
     def add_action_on_keyword_line_edit(self):
+        '''
+        '''
+        #
         self.matchCaseAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
         self.matchCaseAction.setToolTip('Match Case')
         self.matchCaseAction.setCheckable(True)
 
+        #
         self.negateAction = self.keyword_line_edit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
         self.negateAction.setToolTip('Negate Match')
         self.negateAction.setCheckable(True)
 
     def add_clear_button_on_header(self):
+        '''
+        '''
         # Add a clear filters button to the header
         header = self.filter_tree_widget.header()
         viewport = header.viewport()
 
+        #
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(2, 2, 2, 2)
+
+        #
         viewport.setLayout( layout )
 
+        #
         horizontal_spacer = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+
+        #
         layout.addItem(horizontal_spacer)
 
+        #
         clear_button = QtWidgets.QPushButton(self.tabler_button_qicon.clear_all, '', self)
         clear_button.setToolTip('Clear all filter')
         clear_button.clicked.connect(self.clear_filters)
         clear_button.setMinimumSize(QtCore.QSize(27, 16777215))
+
+        #
         layout.addWidget(clear_button)
 
     def hightlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
@@ -322,7 +340,7 @@ class AdvancedFilterSearch(base_class, form_class):
         ''' Returns a list of indices for the columns that are shown (i.e., not hidden) in the tree widget.
 
         Returns:
-            A list of integers, where each integer is the index of a shown column in the tree widget.
+            List[int]: A list of integers, where each integer is the index of a shown column in the tree widget.
         '''
         # Get the header of the tree widget
         header = self.tree_widget.header()
@@ -330,6 +348,7 @@ class AdvancedFilterSearch(base_class, form_class):
         # Generate a list of the indices of the columns that are not hidden
         column_index_list = [column_index for column_index in range(header.count()) if not header.isSectionHidden(column_index)]
 
+        # Return the list of the index of a shown column in the tree widget.
         return column_index_list
         
     def reset_highlight_all_items(self):
@@ -399,9 +418,12 @@ class AdvancedFilterSearch(base_class, form_class):
         return [item for item in all_items if self.get_child_level(item) == child_level]
     
     def hightlight_search(self):
+        '''
+        '''
 
         # NOTE: Should be fix to call this again when grouping by column
 
+        #
         self.reset_highlight_all_items()
 
         # Get the selected column, condition, and keyword
@@ -411,11 +433,14 @@ class AdvancedFilterSearch(base_class, form_class):
         is_negate = self.negateAction.isChecked()
         is_case_sensitive = self.matchCaseAction.isChecked()
 
+        #
         if not keyword:
             return
         
+        #
         match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
 
+        #
         self.hightlight_items(match_items)
 
     def find_match_items(self, column, condition, keyword, is_negate, is_case_sensitive) -> List[QtWidgets.QTreeWidgetItem]:
@@ -487,10 +512,18 @@ class AdvancedFilterSearch(base_class, form_class):
 
     @staticmethod
     def get_child_level(item: QtWidgets.QTreeWidgetItem):
+        '''
+        '''
+        #
         child_level = 0
+
+        #
         while item.parent():
+            #
             child_level += 1
             item = item.parent()
+
+        #
         return child_level
     
     def add_filter(self):
@@ -546,7 +579,7 @@ class AdvancedFilterSearch(base_class, form_class):
         negate_button.setDisabled(True)
 
         #
-        self.filter_tree_widget.setItemWidget(tree_item, 3, negate_button)s
+        self.filter_tree_widget.setItemWidget(tree_item, 3, negate_button)
 
     def add_match_case_button(self, tree_item: QtWidgets.QTreeWidgetItem, check_state: bool = bool()):
         '''
@@ -586,27 +619,38 @@ class AdvancedFilterSearch(base_class, form_class):
 
         # NOTE: Should be fix to call this again when grouping by column
         
+        #
+        if not self.filter_criteria_list:
+            return
+        
+        #
         all_items = self.get_all_items()
 
+        #
         for item in all_items:
             item.setHidden(True)
 
+        #
         intersect_match_items = all_items
 
         # Check if the item matches all of the filter criteria
         for column, condition, keyword, is_negate, is_case_sensitive in self.filter_criteria_list:
-
+            #
             match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
 
+            #
             intersect_match_items = intersection(match_items, intersect_match_items)
 
+        #
         for item in intersect_match_items:
             # Set the visibility of the item based on whether it matches the criteria
             item.setHidden(False)
 
+            #
             if item.parent():
                 item.parent().setHidden(False)
 
+            #
             for index in range(item.childCount()):
                 item.child(index).setHidden(False)
 
@@ -620,6 +664,7 @@ class AdvancedFilterSearch(base_class, form_class):
         # Delete the item object. This will remove the item from memory and break any references to it.
         del item
 
+        #
         self.apply_filters()
 
     def clear_filters(self):
@@ -630,6 +675,7 @@ class AdvancedFilterSearch(base_class, form_class):
         # Clear the tree widget
         self.filter_tree_widget.clear()
 
+        # 
         self.apply_filters()
 
 def main():
