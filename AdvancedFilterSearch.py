@@ -270,24 +270,6 @@ class AdvancedFilterSearch(base_class, form_class):
         clear_button.setMinimumSize(QtCore.QSize(27, 16777215))
         layout.addWidget(clear_button)
 
-    def add_remove_item_button(self, tree_item: QtWidgets.QTreeWidgetItem):
-        ''' Add a remove button to the given tree item.
-
-        Args:
-            tree_item (QtWidgets.QTreeWidgetItem): The tree item to add the button to.
-        '''
-        # Create a push button for removing the filter item
-        remove_button = QtWidgets.QPushButton(self.tabler_button_qicon.trash, '', self)
-        
-        # Set the tool tip for the remove button
-        remove_button.setToolTip('Remove this filter item')
-        
-        # Connect the remove button to the remove_filter function
-        remove_button.clicked.connect(lambda: self.remove_filter(tree_item))
-        
-        # Add the remove button as a widget to the specified column (5th column) of the filter tree widget
-        self.filter_tree_widget.setItemWidget(tree_item, 5, remove_button)
-
     def hightlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
         ''' Highlight the specified `tree_items` in the tree widget.
         '''
@@ -529,6 +511,7 @@ class AdvancedFilterSearch(base_class, form_class):
         # Clear the keyword_line_edit widget
         self.keyword_line_edit.clear()
 
+        #
         filter_criteria = [column, condition, keyword, is_negate, is_case_sensitive]
 
         # Return if the filter criteria (column, is_negate, condition, keyword, is_case_sensitive) is already in the filter criteria list
@@ -543,23 +526,59 @@ class AdvancedFilterSearch(base_class, form_class):
         # Store the filter criteria in a data_list attribute of the tree widget item
         filter_tree_item.data_list = filter_criteria
 
-        negate_button = QtWidgets.QPushButton(self.tabler_action_qicon.a_b_off, '', self.filter_tree_widget)
-        negate_button.setCheckable(True)
-        negate_button.setChecked(is_negate)
-        negate_button.setDisabled(True)
-
-        match_case_button = QtWidgets.QPushButton(self.tabler_action_qicon.letter_case, '', self.filter_tree_widget)
-        match_case_button.setCheckable(True)
-        match_case_button.setChecked(is_case_sensitive)
-        match_case_button.setDisabled(True)
-
-        # self.filter_tree_widget.setIte
-        self.filter_tree_widget.setItemWidget(filter_tree_item, 3, negate_button)
-        self.filter_tree_widget.setItemWidget(filter_tree_item, 4, match_case_button)
-
+        #
+        self.add_negate_button(filter_tree_item, check_state=is_negate)
+        self.add_negate_button(filter_tree_item, check_state=is_case_sensitive)
         self.add_remove_item_button(filter_tree_item)
 
+        #
         self.apply_filters()
+
+    def add_negate_button(self, tree_item: QtWidgets.QTreeWidgetItem, check_state: bool = bool()):
+        '''
+        '''
+        #
+        negate_button = QtWidgets.QPushButton(self.tabler_action_qicon.a_b_off, '', self.filter_tree_widget)
+        #
+        negate_button.setCheckable(True)
+        negate_button.setChecked(check_state)
+        #
+        negate_button.setDisabled(True)
+
+        #
+        self.filter_tree_widget.setItemWidget(tree_item, 3, negate_button)s
+
+    def add_match_case_button(self, tree_item: QtWidgets.QTreeWidgetItem, check_state: bool = bool()):
+        '''
+        '''
+        #
+        match_case_button = QtWidgets.QPushButton(self.tabler_action_qicon.letter_case, '', self.filter_tree_widget)
+        #
+        match_case_button.setCheckable(True)
+        match_case_button.setChecked(check_state)
+        #
+        match_case_button.setDisabled(True)
+        
+        #
+        self.filter_tree_widget.setItemWidget(tree_item, 4, match_case_button)
+        
+    def add_remove_item_button(self, tree_item: QtWidgets.QTreeWidgetItem):
+        ''' Add a remove button to the given tree item.
+
+        Args:
+            tree_item (QtWidgets.QTreeWidgetItem): The tree item to add the button to.
+        '''
+        # Create a push button for removing the filter item
+        remove_button = QtWidgets.QPushButton(self.tabler_button_qicon.trash, '', self)
+        
+        # Set the tool tip for the remove button
+        remove_button.setToolTip('Remove this filter item')
+        
+        # Connect the remove button to the remove_filter function
+        remove_button.clicked.connect(lambda: self.remove_filter(tree_item))
+        
+        # Add the remove button as a widget to the specified column (5th column) of the filter tree widget
+        self.filter_tree_widget.setItemWidget(tree_item, 5, remove_button)
 
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
