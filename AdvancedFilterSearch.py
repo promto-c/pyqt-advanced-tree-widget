@@ -218,6 +218,12 @@ class AdvancedFilterSearch(base_class, form_class):
         self.matchCaseAction.triggered.connect(self.hightlight_search)
         self.negateAction.triggered.connect(self.hightlight_search)
 
+        #
+        self.tree_widget.grouped_by_column.connect(self.hightlight_search)
+        self.tree_widget.grouped_by_column.connect(self.apply_filters)
+        self.tree_widget.ungrouped_all.connect(self.hightlight_search)
+        self.tree_widget.ungrouped_all.connect(self.apply_filters)
+
     def setup_filter_tree_widget(self):
         ''' Set up the filter tree widget, including header columns and adding a clear button to the header.
 
@@ -420,9 +426,6 @@ class AdvancedFilterSearch(base_class, form_class):
     def hightlight_search(self):
         '''
         '''
-
-        # NOTE: Should be fix to call this again when grouping by column
-
         #
         self.reset_highlight_all_items()
 
@@ -616,13 +619,6 @@ class AdvancedFilterSearch(base_class, form_class):
     def apply_filters(self):
         ''' Slot for the "Apply Filters" button.
         '''
-
-        # NOTE: Should be fix to call this again when grouping by column
-        
-        #
-        if not self.filter_criteria_list:
-            return
-        
         #
         all_items = self.get_all_items()
 

@@ -144,6 +144,10 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         id_to_data_dict (Dict[int, Dict[str, str]]): A dictionary mapping item IDs to their data as a dictionary.
         groups (Dict[str, QtWidgets.QTreeWidgetItem]): A dictionary mapping group names to their tree widget items.
     '''
+    #
+    ungrouped_all = QtCore.pyqtSignal()
+    grouped_by_column = QtCore.pyqtSignal(str)
+
     def __init__(self, parent: QtWidgets.QWidget = None, 
                        column_name_list: List[str] = list(), 
                        id_to_data_dict: Dict[int, Dict[str, str]] = dict() ):
@@ -312,6 +316,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         # Resize all columns to fit their contents
         self.resize_to_contents()
+
+        #
+        self.grouped_by_column.emit(self.grouped_column_name)
         
     def fit_column_in_view(self) -> None:
         ''' Adjust the width of all columns to fit the entire view.
@@ -374,6 +381,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         # Resize all columns to fit their contents
         self.resize_to_contents()
+
+        #
+        self.ungrouped_all.emit()
         
     def group_data(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
         ''' Group the data into a dictionary mapping group names to lists of tree items.
