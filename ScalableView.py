@@ -138,10 +138,6 @@ class ScalableView(QtWidgets.QGraphicsView):
             # Reset the scaling of the view
             self.resetScale()
 
-        # If the F key is not pressed, pass the event on to the parent class
-        else:
-            super(ScalableView, self).keyPressEvent(event)
-
 def main():
     # Create the Qt application
     app = QtWidgets.QApplication(sys.argv)
