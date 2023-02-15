@@ -429,6 +429,8 @@ def main():
 
     # Show the window and run the application
     tree_widget.show()
+
+    # Run the application
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
