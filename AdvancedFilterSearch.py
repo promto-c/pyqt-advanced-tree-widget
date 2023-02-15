@@ -701,6 +701,9 @@ class AdvancedFilterSearch(base_class, form_class):
         # Apply the filters
         self.apply_filters()
 
+    def set_column_filter(self, column_name: str):
+        self.column_combo_box.setCurrentText(column_name)
+
 def main():
     ''' Create the application and main window, and show the widget.
     '''
@@ -716,7 +719,7 @@ def main():
 
     # Create an instance of the widget and set it as the central widget
     widget = AdvancedFilterSearch(tree_widget)
-    widget.column_combo_box.setCurrentText('Name')
+    widget.set_column_filter('Name')
     window.setCentralWidget(widget)
     
     # Create the scalable view and set the tree widget as its central widget
@@ -725,7 +728,7 @@ def main():
     # Add the tree widget to the layout of the widget
     widget.layout().addWidget(scalable_tree_widget_view)
 
-    # Show the window and run the application
+    # Show the window
     window.show()
 
     # Run the application
