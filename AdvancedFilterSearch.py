@@ -124,6 +124,7 @@ class AdvancedFilterSearch(base_class, form_class):
     condition_combo_box: QtWidgets.QComboBox
     keyword_line_edit: QtWidgets.QLineEdit
     add_filter_button: QtWidgets.QPushButton
+    show_filter_button: QtWidgets.QPushButton
     filter_tree_widget: QtWidgets.QTreeWidget
     
     # Define a dictionary of match flags for each condition
@@ -135,6 +136,9 @@ class AdvancedFilterSearch(base_class, form_class):
         'wild_card': QtCore.Qt.MatchFlag.MatchWildcard,
         'reg_exp': QtCore.Qt.MatchFlag.MatchRegExp,
     }
+
+    # Define a signal that will be emitted when the filter count changes
+    filter_count_changed = QtCore.pyqtSignal(int)
 
     def __init__(self, tree_widget: QtWidgets.QTreeWidget, parent=None):
         ''' Initialize the widget and set up the UI, signal connections, and icon.
@@ -200,6 +204,10 @@ class AdvancedFilterSearch(base_class, form_class):
         
         # Set the icon for the add filter button
         self.add_filter_button.setIcon(self.tabler_button_qicon.filter_add)
+        self.show_filter_button.setIcon(self.tabler_button_qicon.box_multiple)
+
+        # Set the visibility of the filter tree widget based on the checked state of the show filter button
+        self.filter_tree_widget.setVisible(self.show_filter_button.isChecked())
 
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
@@ -224,6 +232,10 @@ class AdvancedFilterSearch(base_class, form_class):
         self.tree_widget.grouped_by_column.connect(self.apply_filters)
         self.tree_widget.ungrouped_all.connect(self.hightlight_search)
         self.tree_widget.ungrouped_all.connect(self.apply_filters)
+
+        # Connect filter count changed signals to slots
+        self.filter_count_changed.connect(self.update_show_filter_button)
+        self.filter_count_changed.connect(self.apply_filters)
 
     def setup_filter_tree_widget(self):
         ''' Set up the filter tree widget, including header columns and adding a clear button to the header.
@@ -579,8 +591,8 @@ class AdvancedFilterSearch(base_class, form_class):
         self.add_match_case_button(filter_tree_item, check_state=is_case_sensitive)
         self.add_remove_item_button(filter_tree_item)
 
-        # Apply the filters
-        self.apply_filters()
+        # Emit signal indicating the number of filter criteria has changed
+        self.filter_count_changed.emit(len(self.filter_criteria_list))
 
     def add_negate_button(self, tree_item: QtWidgets.QTreeWidgetItem, check_state: bool = False):
         ''' Add a negate button to the specified tree widget item.
@@ -662,6 +674,17 @@ class AdvancedFilterSearch(base_class, form_class):
         # Show the items that match all filter criteria and their parent and children
         self.show_matching_items(intersect_match_items)
         
+    def update_show_filter_button(self, filter_count: int = 0):
+        ''' Updates the text of the show filter button to reflect the number of active filters.
+
+        Args:
+            filter_count (int): The number of active filters. Defaults to 0.
+        '''
+        # Convert the filter count to a string, or an empty string if it's zero
+        filter_count = str(filter_count) if filter_count else str()
+        # Set the text of the show filter button to the filter count
+        self.show_filter_button.setText(filter_count)
+
     def show_matching_items(self, match_items: List[QtWidgets.QTreeWidgetItem]):
         ''' Show the items and their parent and children.
         '''
@@ -687,8 +710,8 @@ class AdvancedFilterSearch(base_class, form_class):
         # Delete the item object. This will remove the item from memory and break any references to it.
         del item
 
-        # Apply the filters
-        self.apply_filters()
+        # Emit signal indicating the number of filter criteria has changed
+        self.filter_count_changed.emit(len(self.filter_criteria_list))
 
     def clear_filters(self):
         ''' Slot for the "Clear Filters" button.
@@ -698,8 +721,8 @@ class AdvancedFilterSearch(base_class, form_class):
         # Clear the tree widget
         self.filter_tree_widget.clear()
 
-        # Apply the filters
-        self.apply_filters()
+        # Emit signal indicating the number of filter criteria has changed (now 0)
+        self.filter_count_changed.emit(len(self.filter_criteria_list))
 
     def set_column_filter(self, column_name: str):
         self.column_combo_box.setCurrentText(column_name)
