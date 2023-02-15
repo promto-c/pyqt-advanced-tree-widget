@@ -9,6 +9,8 @@ Here is an example of how to use the GroupableTreeWidget class:
 import sys
 from PyQt5 import QtWidgets
 
+from GroupableTreeWidget import GroupableTreeWidget
+
 # Define example data
 COLUMN_NAME_LIST = ["ID", "Name", "Age", "City"]
 ID_TO_DATA_DICT = {
@@ -55,6 +57,9 @@ Here is an example of how to use the ScalableView class:
 import sys
 from PyQt5 import QtWidgets
 
+from GroupableTreeWidget import GroupableTreeWidget
+from ScalableView import ScalableView
+
 # Create the application and tree widget
 app = QtWidgets.QApplication(sys.argv)
 tree_widget = GroupableTreeWidget(column_name_list=COLUMN_NAME_LIST, 
@@ -75,6 +80,65 @@ The ScalableView class has the following features:
 The ability to scale the contents of the view using the mouse wheel while pressing the Ctrl key.
 Minimum and maximum zoom levels that can be set to limit the amount of scaling.
 The ability to reset the zoom level to the default value (1.0 or no zoom) by pressing "F".
+___
+## PyQt AdvancedFilterSearch
+The AdvancedFilterSearch module is a PyQt5 widget that extends the GroupableTreeWidget class with additional filter and search functionality. It allows the user to filter and search the data in the tree structure based on specific criteria.
+### Example usage
+Here is an example of how to use the AdvancedFilterSearch class:
+
+```python
+import sys
+from PyQt5 import QtWidgets
+
+from GroupableTreeWidget import GroupableTreeWidget
+from AdvancedFilterSearch import AdvancedFilterSearch
+
+# Define example data
+COLUMN_NAME_LIST = ["ID", "Name", "Age", "City"]
+ID_TO_DATA_DICT = {
+    1: {
+        "Name": "Alice", 
+        "Age": "30", 
+        "City": "New York"},
+    2: {
+        "Name": "Bob", 
+        "Age": "25", 
+        "City": "Chicago"},
+    3: {
+        "Name": "Charlie", 
+        "Age": "35", 
+        "City": "Los Angeles"},
+}
+
+# Create the application and the main window
+app = QtWidgets.QApplication(sys.argv)
+window = QtWidgets.QMainWindow()
+
+# Create the tree widget with example data
+tree_widget = GroupableTreeWidget(column_name_list=COLUMN_NAME_LIST, id_to_data_dict=ID_TO_DATA_DICT)
+
+# Create an instance of the widget and set it as the central widget
+widget = AdvancedFilterSearch(tree_widget)
+widget.set_column_filter('Name')
+window.setCentralWidget(widget)
+
+# Add the tree widget to the layout of the widget
+widget.layout().addWidget(tree_widget)
+
+# Show the window
+window.show()
+
+# Run the application
+sys.exit(app.exec_())
+```
+
+### Features
+The AdvancedFilterSearch class has the following features:
+
+- Filter the data in the tree structure based on specific criteria.
+- Search for the data in the tree structure based on specific criteria, and highlight the matching items.
+- Ability to add multiple filters and search criteria.
+- Option to clear all filters and search criteria.
 ___
 
 ## Requirements
