@@ -1,4 +1,11 @@
 # pyqt-advanced-tree-widget
+
+<p align="center">
+  <img src="screenshots\screenshot1.png" width="300" />
+  <img src="screenshots\screenshot2.png" width="300" /> 
+  <img src="screenshots\screenshot3.png" width="300" />
+</p>
+
 ## GroupableTreeWidget
 This repository contains a PyQt5 implementation of a GroupableTreeWidget class that displays data in a tree structure with the ability to group data by a specific column.
 
