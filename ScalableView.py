@@ -3,7 +3,7 @@ from typing import Optional
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-from theme.theme import setTheme
+from theme.theme import set_theme
 
 from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
@@ -143,7 +143,7 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
 
     # Set theme of QApplication to the dark theme
-    setTheme(app, 'dark')
+    set_theme(app, 'dark')
 
     # Create the tree widget with example data
     tree_widget = GroupableTreeWidget(column_name_list=COLUMN_NAME_LIST, id_to_data_dict=ID_TO_DATA_DICT)

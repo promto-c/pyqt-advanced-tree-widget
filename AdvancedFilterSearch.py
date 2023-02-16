@@ -3,7 +3,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 from typing import Any, List, Tuple
 
-from theme.theme import setTheme
+from theme.theme import set_theme
 
 from TablerQIcon import TablerQIcon
 
@@ -735,7 +735,7 @@ def main():
     window = QtWidgets.QMainWindow()
 
     # Set theme of QApplication to the dark theme
-    setTheme(app, 'dark')
+    set_theme(app, 'dark')
 
     # Create the tree widget with example data
     tree_widget = GroupableTreeWidget(column_name_list=COLUMN_NAME_LIST, id_to_data_dict=ID_TO_DATA_DICT)

@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Union
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-from theme.theme import setTheme
+from theme.theme import set_theme
 
 # Define example data
 COLUMN_NAME_LIST = ['ID', 'Name', 'Age', 'City']
@@ -419,7 +419,7 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
 
     # Set theme of QApplication to the dark theme
-    setTheme(app, 'dark')
+    set_theme(app, 'dark')
 
     # Create an instance of the widget and set it as the central widget
     tree_widget = GroupableTreeWidget(
