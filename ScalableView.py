@@ -68,7 +68,7 @@ class ScalableView(QtWidgets.QGraphicsView):
         self.viewport().installEventFilter(self)
         self.viewport().wheelEvent = self.wheelEvent
 
-    def setScale(self, zoom_level: float = 1.0) -> None:
+    def set_scale(self, zoom_level: float = 1.0) -> None:
         ''' Set scale of the view to specified zoom level.
         '''
         # Clamp the zoom level between the min and max zoom levels
@@ -82,7 +82,7 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Update the size of the widget to fit the view window
         self.resizeEvent(None)
 
-    def resetScale(self) -> None:
+    def reset_scale(self) -> None:
         ''' Reset scaling of the view to default zoom level (1.0 or no zoom).
         '''
         # Reset the scaling of the view
@@ -92,6 +92,7 @@ class ScalableView(QtWidgets.QGraphicsView):
         
         # Update the size of the widget to fit the view window
         self.resizeEvent(None)
+
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         ''' Handle resize events to resize the widget to the full size of the view, reserved for scaling.
         '''
@@ -124,7 +125,7 @@ class ScalableView(QtWidgets.QGraphicsView):
             # Calculate the new zoom level
             new_zoom_level = self.current_zoom_level * scale_factor
             # Set scale of the view to new zoom level.
-            self.setScale(new_zoom_level)
+            self.set_scale(new_zoom_level)
 
         # If the Ctrl key is not pressed, pass the event on to the parent class
         else:
@@ -136,7 +137,7 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Check if the F key is pressed
         if event.key() == QtCore.Qt.Key_F:
             # Reset the scaling of the view
-            self.resetScale()
+            self.reset_scale()
 
 def main():
     # Create the Qt application
