@@ -144,13 +144,13 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         id_to_data_dict (Dict[int, Dict[str, str]]): A dictionary mapping item IDs to their data as a dictionary.
         groups (Dict[str, QtWidgets.QTreeWidgetItem]): A dictionary mapping group names to their tree widget items.
     '''
-    #
+    # Signals emitted by the GroupableTreeWidget
     ungrouped_all = QtCore.pyqtSignal()
     grouped_by_column = QtCore.pyqtSignal(str)
 
     def __init__(self, parent: QtWidgets.QWidget = None, 
                        column_name_list: List[str] = list(), 
-                       id_to_data_dict: Dict[int, Dict[str, str]] = dict() ):
+                       id_to_data_dict: Dict[int, Dict[str, str]] = dict()):
         # Call the parent class constructor
         super(GroupableTreeWidget, self).__init__(parent)
 
@@ -242,7 +242,14 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         column = self.header().logicalIndexAt(pos)
         
         # Create the context menu
-        menu = QtWidgets.QMenu(self)
+        # NOTE: Check if the widget has a 'scalable_view' attribute and if it is an instance of QtWidgets.QGraphicsView
+        # If 'scalable_view' is available and is an instance of QtWidgets.QGraphicsView, use it as the parent for the menu
+        # This ensures that the context menu is displayed correctly within the view
+        # Otherwise, use self as the parent for the menu
+        if hasattr(self, 'scalable_view') and isinstance(self.scalable_view, QtWidgets.QGraphicsView):
+            menu = QtWidgets.QMenu(self.scalable_view)
+        else:
+            menu = QtWidgets.QMenu(self)
         
         # Create the 'Group by this column' action and connect it to the 'group_by_column' method. Pass in the selected column as an argument.
         group_by_action = menu.addAction('Group by this column')

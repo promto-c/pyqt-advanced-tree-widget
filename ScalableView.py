@@ -34,6 +34,11 @@ class ScalableView(QtWidgets.QGraphicsView):
     def _setup_initial_values(self):
         ''' Set up the initial values for the widget.
         '''
+        # Create a reference in the widget to the ScalableView object
+        # NOTE: This reference ensures that context menus are displayed correctly within the view
+        # Also, use this reference as an argument when creating context menu (QMenu) instances in the widget
+        self.widget.scalable_view = self
+
         # Set the minimum and maximum scale values
         self.min_zoom_level = 0.5
         self.max_zoom_level = 4.0
@@ -75,7 +80,7 @@ class ScalableView(QtWidgets.QGraphicsView):
         zoom_level = max(self.min_zoom_level, min(zoom_level, self.max_zoom_level))
 
         # Set the new zoom level
-        self.setTransform( QtGui.QTransform().scale( zoom_level, zoom_level ) )
+        self.setTransform( QtGui.QTransform().scale(zoom_level, zoom_level) )
         # Update current zoom level
         self.current_zoom_level = zoom_level
 

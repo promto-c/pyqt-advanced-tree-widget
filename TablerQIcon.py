@@ -31,7 +31,7 @@ class TablerQIcon:
     # Get the default color (text color) of the palette and store it in the _default_color attribute
     _default_color = _palette.color(QtGui.QPalette.Text)
 
-    def __init__(self, color: QtGui.QColor=_default_color, size: int=24, view_box_size: int=24, stroke_width: int=2, opacity: float=1.0 ):
+    def __init__(self, color: QtGui.QColor=_default_color, size: int=24, view_box_size: int=24, stroke_width: int=2, opacity: float=1.0):
         ''' Initialize the widget and load the icons from the tabler-icons directory.
             Args:
                 color (QtGui.QColor): color of the icon
@@ -109,7 +109,7 @@ class TablerQIcon:
         painter.setCompositionMode(QtGui.QPainter.CompositionMode_SourceIn)
         
         # Fill the pixmap with the specified color
-        painter.fillRect(pixmap.rect(), self._color )
+        painter.fillRect(pixmap.rect(), self._color)
         
         # End the painter
         painter.end()

@@ -519,7 +519,7 @@ class AdvancedFilterSearch(base_class, form_class):
         '''
         # Update the tabler_qicon based on the state of the match case action
         tabler_qicon = self.tabler_action_checked_qicon if state else self.tabler_action_qicon
-        self.match_case_action.setIcon( tabler_qicon.letter_case )
+        self.match_case_action.setIcon(tabler_qicon.letter_case)
 
     def update_negate(self, state: bool):
         ''' Update the is_negate member variable when the negate action state changes.
@@ -528,7 +528,7 @@ class AdvancedFilterSearch(base_class, form_class):
         '''
         # Update the tabler_qicon based on the state of the negate action
         tabler_qicon = self.tabler_action_checked_qicon if state else self.tabler_action_qicon
-        self.negate_action.setIcon( tabler_qicon.a_b_off )
+        self.negate_action.setIcon(tabler_qicon.a_b_off)
 
     @staticmethod
     def get_child_level(item: QtWidgets.QTreeWidgetItem) -> int:
