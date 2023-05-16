@@ -8,6 +8,7 @@
 </p>
 
 ## GroupableTreeWidget
+---
 This repository contains a PyQt5 implementation of a GroupableTreeWidget class that displays data in a tree structure with the ability to group data by a specific column.
 
 ### Example usage
@@ -53,9 +54,10 @@ The GroupableTreeWidget class has the following features:
 Ability to set the column names and data to be displayed in the tree widget.
 Context menu for the header that allows the user to group the data by a specific column.
 Option to expand or collapse all groups.
-___
 
 ## ScalableView
+___
+
 The ScalableView class is a PyQt5 widget that extends the QGraphicsView class and provides the ability to scale the contents of the view using the mouse wheel. The ScalableView class takes a parent widget and a widget to be displayed in the view as arguments in its constructor.
 
 ### Example usage
@@ -82,14 +84,45 @@ scalable_view.show()
 # Run the application
 sys.exit(app.exec_())
 ```
+
 ### Features
 The ScalableView class has the following features:
 
-The ability to scale the contents of the view using the mouse wheel while pressing the Ctrl key.
-Minimum and maximum zoom levels that can be set to limit the amount of scaling.
-The ability to reset the zoom level to the default value (1.0 or no zoom) by pressing "F".
-___
+- The ability to scale the contents of the view using the mouse wheel while pressing the Ctrl key.
+- Minimum and maximum zoom levels that can be set to limit the amount of scaling.
+- The ability to reset the zoom level to the default value (1.0 or no zoom) by pressing "F".
+
+### Setting up the Context Menu (QMenu)
+When setting up the context menu (QMenu) in the widget class that is used with ScalableView, follow these steps to ensure proper display within the view:
+
+1. In the `ScalableView` class, a reference to the `ScalableView` object is already assigned to the widget using the following line of code:
+
+    ```python
+    self.widget.scalable_view = self
+    ```
+
+    This assignment establishes a reference from the widget to the `ScalableView` object.
+
+    The purpose of this reference is to enable the widget to access and utilize functionalities or properties of the `ScalableView` object. By having this reference, the widget can interact with the `ScalableView` object when necessary, such as when creating context menus (QMenu) within the widget.
+
+    To access the `ScalableView` object from the widget, you can use `self.scalable_view`.
+
+2. When creating instances of `QMenu` within the widget class, use `self.scalable_view` as the parent argument if it is available and an instance of `QtWidgets.QGraphicsView`. Otherwise, use `self` as the parent argument. This ensures that the context menu is associated with the `ScalableView` object and displayed correctly within the view.
+
+    ```python
+    if hasattr(self, 'scalable_view') and isinstance(self.scalable_view, QtWidgets.QGraphicsView):
+        menu = QtWidgets.QMenu(self.scalable_view)
+    else:
+        menu = QtWidgets.QMenu(self)
+    ```
+
+    Replace `self` with `self.scalable_view` in any relevant places where `QMenu` instances are created.
+
+Following these steps will ensure that the context menu is properly displayed within the ScalableView, preventing cutoff issues.
+
 ## AdvancedFilterSearch
+___
+
 The AdvancedFilterSearch module is a PyQt5 widget that extends the GroupableTreeWidget class with additional filter and search functionality. It allows the user to filter and search the data in the tree structure based on specific criteria.
 ### Example usage
 Here is an example of how to use the AdvancedFilterSearch class:
@@ -147,9 +180,9 @@ The AdvancedFilterSearch class has the following features:
 - Search for the data in the tree structure based on specific criteria, and highlight the matching items.
 - Ability to add multiple filters and search criteria.
 - Option to clear all filters and search criteria.
-___
 
 ## Requirements
+___
 The GroupableTreeWidget class requires PyQt5 to be installed. You can install PyQt5 using pip:
 
 ```
