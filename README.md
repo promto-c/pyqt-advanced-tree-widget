@@ -8,7 +8,6 @@
 </p>
 
 ## GroupableTreeWidget
----
 This repository contains a PyQt5 implementation of a GroupableTreeWidget class that displays data in a tree structure with the ability to group data by a specific column.
 
 ### Example usage
@@ -56,8 +55,6 @@ Context menu for the header that allows the user to group the data by a specific
 Option to expand or collapse all groups.
 
 ## ScalableView
-___
-
 The ScalableView class is a PyQt5 widget that extends the QGraphicsView class and provides the ability to scale the contents of the view using the mouse wheel. The ScalableView class takes a parent widget and a widget to be displayed in the view as arguments in its constructor.
 
 ### Example usage
@@ -121,8 +118,6 @@ When setting up the context menu (QMenu) in the widget class that is used with S
 Following these steps will ensure that the context menu is properly displayed within the ScalableView, preventing cutoff issues.
 
 ## AdvancedFilterSearch
-___
-
 The AdvancedFilterSearch module is a PyQt5 widget that extends the GroupableTreeWidget class with additional filter and search functionality. It allows the user to filter and search the data in the tree structure based on specific criteria.
 ### Example usage
 Here is an example of how to use the AdvancedFilterSearch class:
@@ -182,7 +177,6 @@ The AdvancedFilterSearch class has the following features:
 - Option to clear all filters and search criteria.
 
 ## Requirements
-___
 The GroupableTreeWidget class requires PyQt5 to be installed. You can install PyQt5 using pip:
 
 ```
