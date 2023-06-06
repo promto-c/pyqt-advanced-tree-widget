@@ -57,13 +57,13 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         id (int): The ID of the item.
     '''
 
-    def __init__(self, parent: QtWidgets.QTreeWidget = None, 
+    def __init__(self, parent: Union[QtWidgets.QTreeWidget, QtWidgets.QTreeWidgetItem], 
                  item_data: Union[Dict[str, Any], List[str]] = None, 
                  item_id: int = None):
         ''' Initialize the `TreeWidgetItem` with the given parent and item data.
         
         Args:
-            parent (QtWidgets.QTreeWidget, optional): The parent `QTreeWidget`. Defaults to `None`.
+            parent (Union[QtWidgets.QTreeWidget, QtWidgets.QTreeWidgetItem]): The parent `QTreeWidget` or QtWidgets.QTreeWidgetItem.
             item_data (Union[Dict[str, Any], List[str]], optional): The data for the item. Can be a list of strings or a dictionary with keys matching the headers of the parent `QTreeWidget`. Defaults to `None`.
             item_id (int, optional): The ID of the item. Defaults to `None`.
         '''
@@ -77,7 +77,11 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         # If the data for the item is in dictionary form
         if isinstance(item_data, dict):
             # Get the header item from the parent tree widget
-            header_item = parent.headerItem()
+            if not isinstance(parent, QtWidgets.QTreeWidget):
+                header_item = parent.treeWidget().headerItem()
+            else:
+                header_item = parent.headerItem()
+
             # Get the column names from the header item
             column_names = [header_item.text(i) for i in range(header_item.columnCount())]
 
@@ -219,7 +223,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Iterate through the dictionary of items
         for item_id, item_data in self.id_to_data_dict.items():
             # Create a new custom QTreeWidgetItem for sorting by type of the item data, and add to the self tree widget
-            tree_item = TreeWidgetItem(self, item_data=item_data, item_id=item_id)
+            _tree_item = TreeWidgetItem(self, item_data=item_data, item_id=item_id)
 
         # Resize all columns to fit their contents
         self.resize_to_contents()
