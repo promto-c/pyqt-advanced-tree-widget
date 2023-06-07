@@ -86,7 +86,7 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
             item_data_list = [item_id] + [item_data[column] if column in item_data.keys()
                                                                  else str() 
                                                                  for column in column_names[1:]]
-            
+
         # Call the superclass's constructor to set the item's data
         super(TreeWidgetItem, self).__init__(parent, map(str, item_data_list))
 
@@ -105,32 +105,48 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
             self.set_value(column_index, value)
 
     def get_value(self, column: Union[int, str]) -> Any:
+        ''' Get the value of the item's UserRole data for the given column.
+
+        Args:
+            column (Union[int, str]): The column index or name.
+
+        Returns:
+            Any: The value of the UserRole data.
         '''
-        '''
-        #
+        # Get the column index from the column name if necessary
         column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
-        
-        #
+
+        # Get the UserRole data for the column
         value = self.data(column_index, QtCore.Qt.UserRole)
-        if value is None:
-            value = self.data(column_index, QtCore.Qt.DisplayRole)
-        #
+        # Fallback to the DisplayRole data if UserRole data is None
+        value = self.data(column_index, QtCore.Qt.DisplayRole) if value is None else value
+
         return value
 
     def set_value(self, column: Union[int, str], value: Any):
+        ''' Set the value of the item's UserRole data for the given column.
+
+        Args:
+            column (Union[int, str]): The column index or name.
+            value (Any): The value to set.
         '''
-        '''
-        #
+        # Get the column index from the column name if necessary
         column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
-        
-        #
+
+        # Set the value for the column in the UserRole data
         self.setData(column_index, QtCore.Qt.UserRole, value)
 
-    def __getiem__(self, key: Union[int, str]) -> Any:
+    def __getitem__(self, key: Union[int, str]) -> Any:
+        ''' Get the value of the item's UserRole data for the given column.
+
+        Args:
+            key (Union[int, str]): The column index or name.
+
+        Returns:
+            Any: The value of the UserRole data.
         '''
-        '''
-        #
-        return self.get_data(key)
+        # Delegate the retrieval of the value to the `get_value` method
+        return self.get_value(key)
 
     def __lt__(self, other_item: QtWidgets.QTreeWidgetItem) -> bool:
         ''' Sort the items in the tree widget based on their data.
@@ -145,28 +161,32 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         column = self.treeWidget().sortColumn()
 
         # Get the UserRole data for the column for both this item and the other item
-        data_a = self.get_value(column)
-        data_b = other_item.data(column, QtCore.Qt.UserRole)
-        #
-        if data_b is None:
-            data_b = other_item.data(column, QtCore.Qt.DisplayRole)
+        self_data = self.get_value(column)
+        other_data = other_item.get_value(column)
+
+        # If the UserRole data is None, fallback to DisplayRole data
+        if other_data is None:
+            # Get the DisplayRole data for the column of the other item
+            other_data = other_item.data(column, QtCore.Qt.DisplayRole)
 
         # If both UserRole data are None, compare their texts
-        if not data_a and not data_b:
+        if self_data is None and other_data is None:
             return self.text(column) < other_item.text(column)
+
         # If this item's UserRole data is None, it is considered greater
-        elif not data_a:
+        if self_data is None:
             return True
+
         # If the other item's UserRole data is None, this item is considered greater
-        elif not data_b:
+        if other_data is None:
             return False
 
         try:
             # Try to compare the UserRole data directly
-            return data_a < data_b
+            return self_data < other_data
         except TypeError:
             # If the comparison fails, compare their string representations
-            return (str(data_a) < str(data_b))
+            return str(self_data) < str(other_data)
 
 class GroupableTreeWidget(QtWidgets.QTreeWidget):
     ''' A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
@@ -345,7 +365,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setHeaderLabel(f'{self.grouped_column_name} / {first_column_label}')
         
         # Get the data for each tree item in the column
-        data = [self.topLevelItem(row).data(column, QtCore.Qt.DisplayRole) for row in range(self.topLevelItemCount())]
+        data = [self.topLevelItem(row).data(column, QtCore.Qt.UserRole) for row in range(self.topLevelItemCount())]
         
         # Group the data and add the tree items to the appropriate group
         groups = self.group_data(data)
@@ -419,7 +439,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setHeaderLabel(self.column_name_list[0])
         
         # Show hidden column
-        column_index = self.get_column_index.index(self.grouped_column_name)
+        column_index = self.get_column_index(self.grouped_column_name)
         self.setColumnHidden(column_index, False)
 
         # Get a list of all the top-level items in the tree widget
