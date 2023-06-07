@@ -208,6 +208,12 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setColumnCount(len(self.column_name_list))
         self.setHeaderLabels(self.column_name_list)
 
+    def get_column_index(self, column_name: str) -> int:
+        '''
+        '''
+        #
+        return self.column_name_list.index(column_name)
+
     def add_items(self, id_to_data_dict: Dict[int, Dict[str, str]]) -> None:
         ''' Add items to the tree widget.
 
@@ -368,7 +374,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setHeaderLabel(self.column_name_list[0])
         
         # Show hidden column
-        column_index = self.column_name_list.index(self.grouped_column_name)
+        column_index = self.get_column_index.index(self.grouped_column_name)
         self.setColumnHidden(column_index, False)
 
         # Get a list of all the top-level items in the tree widget
