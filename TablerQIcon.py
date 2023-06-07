@@ -63,6 +63,9 @@ class TablerQIcon:
 
         # Return empty qicon if the icon doesn't exist in the dictionary
         if not svg_icon_path:
+            # Print a message indicating that the icon is not available
+            print(f'WARNING: Icon "{name}" is not available.')
+            # Return an empty QIcon object
             return QtGui.QIcon()
 
         if IS_QTSVG_SUPPORTED:
