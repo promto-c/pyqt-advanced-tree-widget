@@ -209,9 +209,23 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setHeaderLabels(self.column_name_list)
 
     def get_column_index(self, column_name: str) -> int:
+        ''' Retrieves the index of the specified column name.
+
+        Args:
+            column_name: The name of the column.
+
+        Returns:
+            int: The index of the column if found.
+
+        Raises:
+            ValueError: If the column name is not found.
         '''
-        '''
-        #
+        # Check if the column name is not in the column_name_list
+        if column_name not in self.column_name_list:
+            # Raise an exception with a descriptive error message
+            raise ValueError(f"Invalid column name: {column_name}")
+
+        # Return the index of the column if found
         return self.column_name_list.index(column_name)
 
     def add_items(self, id_to_data_dict: Dict[int, Dict[str, str]]) -> None:
