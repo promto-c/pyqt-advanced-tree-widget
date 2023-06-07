@@ -111,7 +111,11 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
         
         #
-        return self.data(column_index, QtCore.Qt.UserRole)
+        value = self.data(column_index, QtCore.Qt.UserRole)
+        if value is None:
+            value = self.data(column_index, QtCore.Qt.DisplayRole)
+        #
+        return value
 
     def set_value(self, column: Union[int, str], value: Any):
         '''
@@ -141,8 +145,11 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         column = self.treeWidget().sortColumn()
 
         # Get the UserRole data for the column for both this item and the other item
-        data_a = self.data(column, QtCore.Qt.UserRole)
+        data_a = self.get_value(column)
         data_b = other_item.data(column, QtCore.Qt.UserRole)
+        #
+        if data_b is None:
+            data_b = other_item.data(column, QtCore.Qt.DisplayRole)
 
         # If both UserRole data are None, compare their texts
         if not data_a and not data_b:
