@@ -77,10 +77,7 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         # If the data for the item is in dictionary form
         if isinstance(item_data, dict):
             # Get the header item from the parent tree widget
-            if not isinstance(parent, QtWidgets.QTreeWidget):
-                header_item = parent.treeWidget().headerItem()
-            else:
-                header_item = parent.headerItem()
+            header_item = parent.headerItem() if isinstance(parent, QtWidgets.QTreeWidget) else parent.treeWidget().headerItem()
 
             # Get the column names from the header item
             column_names = [header_item.text(i) for i in range(header_item.columnCount())]
