@@ -56,7 +56,8 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
     Attributes:
         id (int): The ID of the item.
     '''
-
+    # Initialization and Setup
+    # ------------------------
     def __init__(self, parent: Union[QtWidgets.QTreeWidget, QtWidgets.QTreeWidgetItem], 
                  item_data: Union[Dict[str, Any], List[str]] = None, 
                  item_id: int = None):
@@ -93,6 +94,8 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         # Set the UserRole data for the item.
         self.set_user_role_data(item_data_list)
 
+    # Extended Methods
+    # ----------------
     def set_user_role_data(self, item_data_list: List[Any]):
         ''' Set the UserRole data for the item.
 
@@ -195,11 +198,15 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         column_name_list (List[str]): The list of column names to be displayed in the tree widget.
         id_to_data_dict (Dict[int, Dict[str, str]]): A dictionary mapping item IDs to their data as a dictionary.
         groups (Dict[str, QtWidgets.QTreeWidgetItem]): A dictionary mapping group names to their tree widget items.
+        middle_button_pressed (bool): Indicates if the middle mouse button is pressed.
+            It's used for scrolling functionality when the middle button is pressed and the mouse is moved.
     '''
     # Signals emitted by the GroupableTreeWidget
     ungrouped_all = QtCore.pyqtSignal()
     grouped_by_column = QtCore.pyqtSignal(str)
 
+    # Initialization and Setup
+    # ------------------------
     def __init__(self, parent: QtWidgets.QWidget = None, 
                        column_name_list: List[str] = list(), 
                        id_to_data_dict: Dict[int, Dict[str, str]] = dict()):
@@ -223,9 +230,16 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Store the current grouped column name
         self.grouped_column_name = str()
 
+        # Initialize middle button pressed flag
+        self.middle_button_pressed = False
+
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
         '''
+        # Initializes scroll modes for the widget.
+        self.setVerticalScrollMode(QtWidgets.QTreeWidget.ScrollMode.ScrollPerPixel)
+        self.setHorizontalScrollMode(QtWidgets.QTreeWidget.ScrollMode.ScrollPerPixel)
+
         # Set up the context menu for the header
         self.header().setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
@@ -246,6 +260,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Connect signal of header
         self.header().customContextMenuRequested.connect(self.on_header_context_menu)
 
+    # Extended Methods
+    # ----------------
     def set_column_name_list(self, column_name_list: List[str]) -> None:
         ''' Set the names of the columns in the tree widget.
 
@@ -490,6 +506,73 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
                 groups[item_data] = [item]
 
         return groups
+
+    # Event Handling or Override Methods
+    # ----------------------------------
+    def mousePressEvent(self, event: QtGui.QMouseEvent):
+        ''' Handles mouse press event.
+        
+        Overrides the parent class method to handle the event where the middle mouse button is pressed.
+        If the middle button is pressed, sets the cursor to SizeAllCursor.
+        
+        Args:
+            event: The mouse event.
+        '''
+        # Check if middle mouse button is pressed
+        if event.button() == QtCore.Qt.MouseButton.MiddleButton:
+            # Set middle button press flag to True
+            self.middle_button_pressed = True
+            # Record the initial position where mouse button is pressed
+            self.middle_button_start_pos = event.pos()
+            # Change the cursor to SizeAllCursor
+            QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.SizeAllCursor)
+        else:
+            # If not middle button, call the parent class method to handle the event
+            super(GroupableTreeWidget, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
+        ''' Handles mouse release event.
+        
+        Overrides the parent class method to handle the event where the middle mouse button is released.
+        If the middle button is released, restores the cursor to the default.
+        
+        Args:
+            event: The mouse event.
+        '''
+        # Check if middle mouse button is released
+        if event.button() == QtCore.Qt.MouseButton.MiddleButton:
+            # Set middle button press flag to False
+            self.middle_button_pressed = False
+            # Restore the cursor to default
+            QtWidgets.QApplication.restoreOverrideCursor()
+        else:
+            # If not middle button, call the parent class method to handle the event
+            super(GroupableTreeWidget, self).mouseReleaseEvent(event)
+
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent):
+        ''' Handles mouse move event.
+        
+        Overrides the parent class method to handle the event where the mouse is moved.
+        If the middle button is pressed, adjusts the scroll bar values according to the mouse movement.
+        
+        Args:
+            event: The mouse event.
+        '''
+        # Check if middle mouse button is pressed
+        if self.middle_button_pressed:
+            # Calculate the change in mouse position
+            delta = event.pos() - self.middle_button_start_pos
+            # Get the scroll bars
+            horizontal_scroll_bar = self.horizontalScrollBar()
+            vertical_scroll_bar = self.verticalScrollBar()
+            # Adjust the scroll bar values according to mouse movement
+            horizontal_scroll_bar.setValue(horizontal_scroll_bar.value() - int(delta.x()))
+            vertical_scroll_bar.setValue(vertical_scroll_bar.value() - int(delta.y()))
+            # Update the start position for next move event
+            self.middle_button_start_pos = event.pos()
+        else:
+            # If middle button is not pressed, call the parent class method to handle the event
+            super(GroupableTreeWidget, self).mouseMoveEvent(event)
 
 def main():
     ''' Create the application and main window, and show the widget.
