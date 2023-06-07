@@ -102,8 +102,32 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         # Iterate through each column in the item
         for column_index, value in enumerate(item_data_list):
             # Set the value for the column in the UserRole data
-            self.setData(column_index, QtCore.Qt.UserRole, value)
-            
+            self.set_value(column_index, value)
+
+    def get_value(self, column: Union[int, str]) -> Any:
+        '''
+        '''
+        #
+        column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
+        
+        #
+        return self.data(column_index, QtCore.Qt.UserRole)
+
+    def set_value(self, column: Union[int, str], value: Any):
+        '''
+        '''
+        #
+        column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
+        
+        #
+        self.setData(column_index, QtCore.Qt.UserRole, value)
+
+    def __getiem__(self, key: Union[int, str]) -> Any:
+        '''
+        '''
+        #
+        return self.get_data(key)
+
     def __lt__(self, other_item: QtWidgets.QTreeWidgetItem) -> bool:
         ''' Sort the items in the tree widget based on their data.
 
