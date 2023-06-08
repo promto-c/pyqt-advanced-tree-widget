@@ -409,8 +409,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Expand all items
         self.expandAll()
 
-        # Resize all columns to fit their contents
-        self.resize_to_contents()
+        # Resize first columns to fit their contents
+        self.resizeColumnToContents(0)
 
         # Emit signal for grouped by column with column name
         self.grouped_by_column.emit(self.grouped_column_name)
@@ -474,8 +474,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Clear the grouped column label
         self.grouped_column_name = str()
 
-        # Resize all columns to fit their contents
-        self.resize_to_contents()
+        # Resize first columns to fit their contents
+        self.resizeColumnToContents(0)
 
         # Emit signal for ungrouped all
         self.ungrouped_all.emit()
