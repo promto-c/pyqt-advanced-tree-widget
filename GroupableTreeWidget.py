@@ -1,4 +1,6 @@
 import sys
+import time
+
 from typing import Any, Dict, List, Union
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -92,11 +94,11 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         super(TreeWidgetItem, self).__init__(parent, map(str, item_data_list))
 
         # Set the UserRole data for the item.
-        self.set_user_role_data(item_data_list)
+        self._set_user_role_data(item_data_list)
 
-    # Extended Methods
-    # ----------------
-    def set_user_role_data(self, item_data_list: List[Any]):
+    # Private Methods
+    # ---------------
+    def _set_user_role_data(self, item_data_list: List[Any]):
         ''' Set the UserRole data for the item.
 
         Args:
@@ -107,6 +109,8 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
             # Set the value for the column in the UserRole data
             self.set_value(column_index, value)
 
+    # Extended Methods
+    # ----------------
     def get_value(self, column: Union[int, str]) -> Any:
         ''' Get the value of the item's UserRole data for the given column.
 
@@ -139,6 +143,8 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         # Set the value for the column in the UserRole data
         self.setData(column_index, QtCore.Qt.UserRole, value)
 
+    # Special Methods
+    # ---------------
     def __getitem__(self, key: Union[int, str]) -> Any:
         ''' Get the value of the item's UserRole data for the given column.
 
@@ -198,8 +204,11 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         column_name_list (List[str]): The list of column names to be displayed in the tree widget.
         id_to_data_dict (Dict[int, Dict[str, str]]): A dictionary mapping item IDs to their data as a dictionary.
         groups (Dict[str, QtWidgets.QTreeWidgetItem]): A dictionary mapping group names to their tree widget items.
-        middle_button_pressed (bool): Indicates if the middle mouse button is pressed.
+        _is_middle_button_pressed (bool): Indicates if the middle mouse button is pressed.
             It's used for scrolling functionality when the middle button is pressed and the mouse is moved.
+        _middle_button_prev_pos (QtCore.QPoint): The previous position of the mouse when the middle button was pressed.
+        _middle_button_start_pos (QtCore.QPoint): The initial position of the mouse when the middle button was pressed.
+        _mouse_move_timestamp (float): The timestamp of the last mouse movement.
     '''
     # Signals emitted by the GroupableTreeWidget
     ungrouped_all = QtCore.pyqtSignal()
@@ -227,11 +236,23 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
     def _setup_initial_values(self):
         ''' Set up the initial values for the widget.
         '''
+        # Attributes
+        # ----------
         # Store the current grouped column name
         self.grouped_column_name = str()
 
+        # Private Attributes
+        # ------------------
         # Initialize middle button pressed flag
-        self.middle_button_pressed = False
+        self._is_middle_button_pressed = False
+
+        # Previous position of the middle mouse button
+        self._middle_button_prev_pos = QtCore.QPoint()
+        # Initial position of the middle mouse button
+        self._middle_button_start_pos = QtCore.QPoint()
+
+        # Timestamp of the last mouse move event
+        self._mouse_move_timestamp = float()
 
     def _setup_ui(self):
         ''' Set up the UI for the widget, including creating widgets and layouts.
@@ -258,7 +279,150 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         ''' Set up signal connections between widgets and slots.
         '''
         # Connect signal of header
-        self.header().customContextMenuRequested.connect(self.on_header_context_menu)
+        self.header().customContextMenuRequested.connect(self._on_header_context_menu)
+
+    # Private Methods
+    # ---------------
+    def _on_header_context_menu(self, pos: QtCore.QPoint) -> None:
+        ''' Show a context menu for the header of the tree widget.
+
+        Context Menu:
+            +-------------------------------+
+            | Group by this column          |
+            | Ungroup all                   |
+            | ----------------------------- |
+            | Fit in View                   |
+            +-------------------------------+
+
+        Args:
+            pos (QtCore.QPoint): The position where the right click occurred.
+        '''
+        # Get the index of the column where the right click occurred
+        column = self.header().logicalIndexAt(pos)
+        
+        # Create the context menu
+        # NOTE: Check if the widget has a 'scalable_view' attribute and if it is an instance of QtWidgets.QGraphicsView
+        # If 'scalable_view' is available and is an instance of QtWidgets.QGraphicsView, use it as the parent for the menu
+        # This ensures that the context menu is displayed correctly within the view
+        # Otherwise, use self as the parent for the menu
+        if hasattr(self, 'scalable_view') and isinstance(self.scalable_view, QtWidgets.QGraphicsView):
+            menu = QtWidgets.QMenu(self.scalable_view)
+        else:
+            menu = QtWidgets.QMenu(self)
+        
+        # Create the 'Group by this column' action and connect it to the 'group_by_column' method. Pass in the selected column as an argument.
+        group_by_action = menu.addAction('Group by this column')
+        group_by_action.triggered.connect(lambda: self.group_by_column(column))
+        
+        # Create the 'Ungroup all' action and connect it to the 'ungroup_all' method.
+        ungroup_all_action = menu.addAction('Ungroup all')
+        ungroup_all_action.triggered.connect(self.ungroup_all)
+
+        # Add a separator
+        menu.addSeparator()
+        
+        # Add the 'Fit in View' action and connect it to the 'fit_column_in_view' method.
+        fit_column_in_view_action = menu.addAction('Fit in View')
+        fit_column_in_view_action.triggered.connect(self.fit_column_in_view)
+                
+        # Disable 'Group by this column' on first column
+        if not column:
+            group_by_action.setDisabled(True)
+
+        # Show the context menu
+        menu.popup(self.header().mapToGlobal(pos))
+        
+    def _create_item_groups(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
+        ''' Group the data into a dictionary mapping group names to lists of tree items.
+
+        Args:
+            data (List[str]): The data to be grouped.
+
+        Returns:
+            Dict[str, List[QtWidgets.QTreeWidgetItem]]: A dictionary mapping group names to lists of tree items.
+        '''
+        # Create a dictionary to store the groups
+        groups = {}
+
+        # Group the data
+        for i, item_data in enumerate(data):
+            # If the data is empty, add it to the '_others' group
+            if not item_data:
+                item_data = '_others'
+
+            # Add the tree item to the appropriate group
+            item = self.topLevelItem(i)
+            if item_data in groups:
+                groups[item_data].append(item)
+            else:
+                groups[item_data] = [item]
+
+        return groups
+
+    def _apply_scroll_momentum(self, velocity: QtCore.QPointF, momentum_factor: float = 0.5) -> None:
+        ''' Applies momentum to the scroll bars based on the given velocity.
+
+        Args:
+            velocity (QtCore.QPointF): The velocity of the mouse movement.
+            momentum_factor (float, optional): The factor to control the momentum strength. Defaults to 0.5.
+        '''
+        # Calculate horizontal and vertical momentum based on velocity and momentum factor
+        horizontal_momentum = int(velocity.x() * momentum_factor)
+        vertical_momentum = int(velocity.y() * momentum_factor)
+
+        # Scroll horizontally and vertically with animation using the calculated momenta
+        self._animate_scroll(self.horizontalScrollBar(), horizontal_momentum)
+        self._animate_scroll(self.verticalScrollBar(), vertical_momentum)
+
+    def _animate_scroll(self, scroll_bar: QtWidgets.QScrollBar, momentum: int) -> None:
+        ''' Animates the scrolling of the given scroll bar to the target value over the specified duration.
+
+        Args:
+            scroll_bar (QtWidgets.QScrollBar): The scroll bar to animate.
+            momentum (int): The momentum value to scroll.
+        '''
+        # Get the current value of the scroll bar
+        current_value = scroll_bar.value()
+        # Calculate the target value by subtracting the momentum from the current value
+        target_value = current_value - momentum
+
+        # Calculate the duration of the animation based on the absolute value of the momentum
+        duration = min(abs(momentum) * 20, 500)
+
+        # Get the start time of the animation
+        start_time = time.time()
+
+        def _perform_scroll_animation():
+            ''' Animates the scrolling of the given scroll bar to the target value over the specified duration.
+
+            The animation interpolates the scroll bar value from the current value to the target value based on the elapsed time.
+            '''
+            # Access the current_value variable from the enclosing scope
+            nonlocal current_value
+
+            # Stop the animation if the middle mouse button is pressed
+            if self._is_middle_button_pressed:
+                return
+
+            # Calculate the elapsed time since the start of the animation
+            elapsed_time = int((time.time() - start_time) * 1000)
+
+            # Check if the elapsed time has reached the duration
+            if elapsed_time >= duration:
+                # Animation complete
+                scroll_bar.setValue(target_value)
+                return
+
+            # Calculate the interpolated value based on elapsed time and duration
+            progress = elapsed_time / duration
+            interpolated_value = int(current_value + (target_value - current_value) * progress)
+
+            # Update the scroll bar value and schedule the next animation frame
+            scroll_bar.setValue(interpolated_value)
+            QtCore.QTimer.singleShot(10, _perform_scroll_animation)
+
+        # Start the animation
+        _perform_scroll_animation()
 
     # Extended Methods
     # ----------------
@@ -312,55 +476,6 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Resize all columns to fit their contents
         self.resize_to_contents()
 
-    def on_header_context_menu(self, pos: QtCore.QPoint) -> None:
-        ''' Show a context menu for the header of the tree widget.
-
-        Context Menu:
-            +-------------------------------+
-            | Group by this column          |
-            | Ungroup all                   |
-            | ----------------------------- |
-            | Fit in View                   |
-            +-------------------------------+
-
-        Args:
-            pos (QtCore.QPoint): The position where the right click occurred.
-        '''
-        # Get the index of the column where the right click occurred
-        column = self.header().logicalIndexAt(pos)
-        
-        # Create the context menu
-        # NOTE: Check if the widget has a 'scalable_view' attribute and if it is an instance of QtWidgets.QGraphicsView
-        # If 'scalable_view' is available and is an instance of QtWidgets.QGraphicsView, use it as the parent for the menu
-        # This ensures that the context menu is displayed correctly within the view
-        # Otherwise, use self as the parent for the menu
-        if hasattr(self, 'scalable_view') and isinstance(self.scalable_view, QtWidgets.QGraphicsView):
-            menu = QtWidgets.QMenu(self.scalable_view)
-        else:
-            menu = QtWidgets.QMenu(self)
-        
-        # Create the 'Group by this column' action and connect it to the 'group_by_column' method. Pass in the selected column as an argument.
-        group_by_action = menu.addAction('Group by this column')
-        group_by_action.triggered.connect(lambda: self.group_by_column(column))
-        
-        # Create the 'Ungroup all' action and connect it to the 'ungroup_all' method.
-        ungroup_all_action = menu.addAction('Ungroup all')
-        ungroup_all_action.triggered.connect(self.ungroup_all)
-
-        # Add a separator
-        menu.addSeparator()
-        
-        # Add the 'Fit in View' action and connect it to the 'fit_column_in_view' method.
-        fit_column_in_view_action = menu.addAction('Fit in View')
-        fit_column_in_view_action.triggered.connect(self.fit_column_in_view)
-                
-        # Disable 'Group by this column' on first column
-        if not column:
-            group_by_action.setDisabled(True)
-
-        # Show the context menu
-        menu.popup(self.header().mapToGlobal(pos))
-        
     def group_by_column(self, column: int) -> None:
         ''' Group the items in the tree widget by the values in the specified column.
 
@@ -384,7 +499,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         data = [self.topLevelItem(row).data(column, QtCore.Qt.UserRole) for row in range(self.topLevelItemCount())]
         
         # Group the data and add the tree items to the appropriate group
-        groups = self.group_data(data)
+        groups = self._create_item_groups(data)
 
         # Iterate through each group and its items
         for group_name, items in groups.items():
@@ -479,33 +594,6 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         # Emit signal for ungrouped all
         self.ungrouped_all.emit()
-        
-    def group_data(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
-        ''' Group the data into a dictionary mapping group names to lists of tree items.
-
-        Args:
-            data (List[str]): The data to be grouped.
-
-        Returns:
-            Dict[str, List[QtWidgets.QTreeWidgetItem]]: A dictionary mapping group names to lists of tree items.
-        '''
-        # Create a dictionary to store the groups
-        groups = {}
-
-        # Group the data
-        for i, item_data in enumerate(data):
-            # If the data is empty, add it to the '_others' group
-            if not item_data:
-                item_data = '_others'
-
-            # Add the tree item to the appropriate group
-            item = self.topLevelItem(i)
-            if item_data in groups:
-                groups[item_data].append(item)
-            else:
-                groups[item_data] = [item]
-
-        return groups
 
     # Event Handling or Override Methods
     # ----------------------------------
@@ -521,9 +609,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Check if middle mouse button is pressed
         if event.button() == QtCore.Qt.MouseButton.MiddleButton:
             # Set middle button press flag to True
-            self.middle_button_pressed = True
+            self._is_middle_button_pressed = True
             # Record the initial position where mouse button is pressed
-            self.middle_button_start_pos = event.pos()
+            self._middle_button_start_pos = event.pos()
             # Change the cursor to SizeAllCursor
             QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.SizeAllCursor)
         else:
@@ -542,7 +630,12 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Check if middle mouse button is released
         if event.button() == QtCore.Qt.MouseButton.MiddleButton:
             # Set middle button press flag to False
-            self.middle_button_pressed = False
+            self._is_middle_button_pressed = False
+            # Calculate the velocity based on the change in mouse position and the elapsed time
+            # NOTE: The + 0.01 is added to avoid division by zero
+            velocity = (event.pos() - self._middle_button_prev_pos) / ((time.time() - self._mouse_move_timestamp + 0.01))
+            # Apply momentum based on velocity
+            self._apply_scroll_momentum(velocity)
             # Restore the cursor to default
             QtWidgets.QApplication.restoreOverrideCursor()
         else:
@@ -559,17 +652,24 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             event: The mouse event.
         '''
         # Check if middle mouse button is pressed
-        if self.middle_button_pressed:
+        if self._is_middle_button_pressed:
             # Calculate the change in mouse position
-            delta = event.pos() - self.middle_button_start_pos
+            delta = event.pos() - self._middle_button_start_pos
+
             # Get the scroll bars
             horizontal_scroll_bar = self.horizontalScrollBar()
             vertical_scroll_bar = self.verticalScrollBar()
+
             # Adjust the scroll bar values according to mouse movement
             horizontal_scroll_bar.setValue(horizontal_scroll_bar.value() - int(delta.x()))
             vertical_scroll_bar.setValue(vertical_scroll_bar.value() - int(delta.y()))
-            # Update the start position for next move event
-            self.middle_button_start_pos = event.pos()
+
+            # Update the previous and start positions of the middle mouse button
+            self._middle_button_prev_pos = self._middle_button_start_pos
+            self._middle_button_start_pos = event.pos()
+
+            # Set the timestamp of the last mouse move event
+            self._mouse_move_timestamp = time.time()
         else:
             # If middle button is not pressed, call the parent class method to handle the event
             super(GroupableTreeWidget, self).mouseMoveEvent(event)
