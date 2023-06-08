@@ -84,7 +84,7 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
         # Set the color attribute
         self.color = color
     
-    def paint(self, painter, option, model_index):
+    def paint(self, painter: QtGui.QPainter, option: QtWidgets.QStyleOptionViewItem, model_index: QtCore.QModelIndex):
         ''' Paint the delegate.
         
         Args:
