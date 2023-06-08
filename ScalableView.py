@@ -143,6 +143,8 @@ class ScalableView(QtWidgets.QGraphicsView):
         if event.key() == QtCore.Qt.Key_F:
             # Reset the scaling of the view
             self.reset_scale()
+            
+        super(ScalableView, self).keyPressEvent(event)
 
 def main():
     # Create the Qt application
