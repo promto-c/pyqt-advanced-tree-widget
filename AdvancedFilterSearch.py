@@ -27,20 +27,6 @@ def intersection(item_list_1: List[Any], item_list_2: List[Any]) -> List[Any]:
     # Return the items that exist in both lists
     return [item for item in item_list_1 if item in item_list_2]
 
-
-def extract_model_index_prop_tuple(model_index: QtCore.QModelIndex) -> Tuple[int, int, QtCore.QModelIndex, QtCore.QAbstractItemModel]:
-    '''
-    Extracts the properties of a QModelIndex and returns a tuple of the row, column, parent, and model.
-
-    Args:
-        model_index (QtCore.QModelIndex): The QModelIndex to extract the properties from.
-
-    Returns:
-        Tuple : A tuple containing the row, column, parent, and model of the QModelIndex.
-    '''
-    # Return the row, column, parent, and model of the QModelIndex
-    return (model_index.row(), model_index.column(), model_index.parent(), model_index.model())
-
 # NOTE: test
 class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent=None):
@@ -66,10 +52,10 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
     #     return QtCore.QSize(50, 50)
 
 class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
-    ''' Custom item delegate class that highlights the rows specified by the `target_model_index_props` list.
+    ''' Custom item delegate class that highlights the rows specified by the `target_model_indexes` list.
     '''
-    # List of tuple of target model index properties (row, column, parent, model) for highlighting
-    target_model_index_props: List[Tuple[int, int, QtCore.QModelIndex, QtCore.QAbstractItemModel]] = list()
+    # List of tuple of target model index for highlighting
+    target_model_indexes: List[QtCore.QModelIndex] = list()
     
     def __init__(self, parent=None, color: QtGui.QColor = QtGui.QColor(165, 165, 144, 128)):
         ''' Initialize the highlight item delegate.
@@ -92,11 +78,8 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
             option (QtWidgets.QStyleOptionViewItem): The style option to use for drawing.
             model_index (QtCore.QModelIndex): The model index of the item to be painted.
         '''
-        # Get the properties of the model index
-        model_index_prop_tuple = extract_model_index_prop_tuple(model_index)
-
         # Check if the current model index is not in the target list
-        if model_index_prop_tuple not in self.target_model_index_props:
+        if model_index not in self.target_model_indexes:
             # If not, paint the item normally using the parent implementation
             super().paint(painter, option, model_index)
             return
@@ -312,8 +295,8 @@ class AdvancedFilterSearch(base_class, form_class):
     def hightlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
         ''' Highlight the specified `tree_items` in the tree widget.
         '''
-        # Reset the previous target model index properties
-        self.hightlight_item_delegate.target_model_index_props = list()
+        # Reset the previous target model indexes
+        self.hightlight_item_delegate.target_model_indexes = list()
 
         # Loop through the specified tree items
         for tree_item in tree_items:
@@ -321,41 +304,37 @@ class AdvancedFilterSearch(base_class, form_class):
             # Get the item index in the tree widget
             item_index = self.tree_widget.indexFromItem(tree_item).row()
 
-            # Add the model index properties of the current tree item to the target properties
-            self.hightlight_item_delegate.target_model_index_props += self.get_model_index_props(tree_item)
+            # Add the model indexes of the current tree item to the target properties
+            self.hightlight_item_delegate.target_model_indexes += self.get_model_indexes(tree_item)
 
             # Set the item delegate for the current row to the highlight item delegate
             self.tree_widget.setItemDelegateForRow(item_index, self.hightlight_item_delegate)
 
-    def get_model_index_props(self, tree_item: QtWidgets.QTreeWidgetItem) -> List[Tuple[int, int, QtCore.QModelIndex, QtCore.QAbstractItemModel]]:
+    def get_model_indexes(self, tree_item: QtWidgets.QTreeWidgetItem) -> List[QtCore.QModelIndex]:
         ''' Get the properties of the model index for each column in the tree widget.
 
         Parameters:
             tree_item (QtWidgets.QTreeWidgetItem): The tree item to extract the model index properties from.
 
         Returns:
-            List[Tuple[int, int, QtCore.QModelIndex, QtCore.QAbstractItemModel]]: A list of tuples representing the properties of the model index for each column in the tree widget. Each tuple contains the following information:
-                - The row of the model index.
-                - The column of the model index.
-                - The model index.
-                - The abstract item model associated with the model index.
+            List[QtCore.QModelIndex]: A list of model index for each column in the tree widget.
         '''
         # Get a list of the shown column indices
         shown_column_index_list = self.get_shown_column_index_list()
 
-        # Create a list to store the model index properties
-        model_index_prop_tuple_list = list()
+        # Create a list to store the model index
+        model_indexes = list()
 
         # Loop through each shown column index
         for column_index in shown_column_index_list:
             # Get the model index for the current column
             model_index = self.tree_widget.indexFromItem(tree_item, column_index)
 
-            # Extract the properties of the model index and add to the list
-            model_index_prop_tuple_list.append(extract_model_index_prop_tuple(model_index))
+            # Add the model index to the list
+            model_indexes.append(model_index)
 
         # Return the list of model index properties
-        return model_index_prop_tuple_list
+        return model_indexes
 
     def get_shown_column_index_list(self) -> List[int]:
         ''' Returns a list of indices for the columns that are shown (i.e., not hidden) in the tree widget.
@@ -379,7 +358,7 @@ class AdvancedFilterSearch(base_class, form_class):
             The target model index properties stored in `self.hightlight_item_delegate` will also be reset to an empty list.
         '''
         # Reset the target model index properties
-        self.hightlight_item_delegate.target_model_index_props = list()
+        self.hightlight_item_delegate.target_model_indexes = list()
 
         # Get all items in the tree widget
         all_items = self.get_all_items()

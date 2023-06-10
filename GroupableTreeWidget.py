@@ -111,6 +111,27 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
 
     # Extended Methods
     # ----------------
+    def get_child_level(self) -> int:
+        ''' Get the child level of TreeWidgetItem
+
+        Returns:
+            int: The child level of the TreeWidgetItem
+        '''
+        # Set the current item as self
+        item = self
+        # Initialize child level
+        child_level = 0
+
+        # Iterate through the parent items to determine the child level
+        while item.parent():
+            # Increment child level for each parent
+            child_level += 1
+            # Update item to be its parent
+            item = item.parent()
+
+        # Return the final child level
+        return child_level
+
     def get_value(self, column: Union[int, str]) -> Any:
         ''' Get the value of the item's UserRole data for the given column.
 
