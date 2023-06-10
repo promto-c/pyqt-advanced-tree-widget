@@ -613,7 +613,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             row = model_index.row()
             column = model_index.column()
 
-            cell_text = str(self.itemFromIndex(model_index).get_value(column))
+            cell_value = self.itemFromIndex(model_index).get_value(column)
+            cell_text = str() if cell_value is None else str(cell_value)
 
             cell_dict.setdefault(row, dict())
             cell_dict[row][column] = cell_text
