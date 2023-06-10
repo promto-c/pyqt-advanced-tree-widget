@@ -275,6 +275,10 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Enable uniform row heights
         self.setUniformRowHeights(True)
 
+        # Enable ExtendedSelection mode for multi-select and set the selection behavior to SelectItems
+        self.setSelectionMode(QtWidgets.QTreeWidget.ExtendedSelection)
+        self.setSelectionBehavior(QtWidgets.QTreeWidget.SelectItems)
+
     def _setup_signal_connections(self):
         ''' Set up signal connections between widgets and slots.
         '''
@@ -595,8 +599,52 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Emit signal for ungrouped all
         self.ungrouped_all.emit()
 
+    def copy_selected_cells(self):
+        model = self.selectionModel()
+        model_indexes = model.selectedIndexes()
+
+        # Sort the cells based on their row and column
+        sorted_indexes = sorted(model_indexes, key=lambda model_index: (model_index.row(), model_index.column()))
+
+        cell_dict = dict()
+        column_set = set()
+
+        for model_index in sorted_indexes:
+            row = model_index.row()
+            column = model_index.column()
+
+            cell_text = str(self.itemFromIndex(model_index).get_value(column))
+
+            cell_dict.setdefault(row, dict())
+            cell_dict[row][column] = cell_text
+            column_set.add(column)
+
+        for row_dict in cell_dict.values():
+            for column in column_set:
+                row_dict.setdefault(column, str())
+
+        row_texts = list()
+        for row_dict in cell_dict.values():
+            row_text = '\t'.join(row_dict[column] for column in sorted(column_set))
+            row_texts.append(row_text)
+
+        full_text = '\n'.join(row_texts)
+
+        clipboard = QtWidgets.QApplication.clipboard()
+        clipboard.setText(full_text)
+
+        # Show tooltip message
+        QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), f'Copied:\n{full_text}', self, QtCore.QRect(), 1000)
+
     # Event Handling or Override Methods
     # ----------------------------------
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        # Override the key press event to handle copy shortcut
+        if event.matches(QtGui.QKeySequence.Copy):
+            self.copy_selected_cells()
+        else:
+            super(GroupableTreeWidget, self).keyPressEvent(event)
+
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         ''' Handles mouse press event.
         
