@@ -1,7 +1,8 @@
 import sys
 import time
 
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Union, Tuple
+from numbers import Number
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
@@ -51,6 +52,97 @@ ID_TO_DATA_DICT = {
         'Age': 33,
         'City': 'Boston'},
     }
+
+def get_pastel_color(color: QtGui.QColor) -> QtGui.QColor:
+    ''' Get a pastel version of the given color.
+
+    Args:
+        color (QtGui.QColor): The original color.
+
+    Returns:
+        QtGui.QColor: The pastel color.
+    '''
+    h, s, v, a = color.getHsvF()
+    s = s * 0.4  # Decrease saturation to achieve a more pastel look
+    v = v * 0.9  # Decrease value/brightness slightly
+
+    pastel_color = QtGui.QColor.fromHsvF(h, s, v, a)
+    return pastel_color
+
+class ColorScaleDelegate(QtWidgets.QStyledItemDelegate):
+    def __init__(self, parent=None, min_value: Number = 0, max_value: Number = 100, 
+                 min_color: QtGui.QColor = get_pastel_color(QtGui.QColor(29, 144, 0)), 
+                 max_color: QtGui.QColor = get_pastel_color(QtGui.QColor(144, 0, 0))
+                 ):
+        ''' Initialize the ColorScaleDelegate.
+
+        Args:
+            parent (QtCore.QObject): The parent object. Default is None.
+            min_value (Number): The minimum value of the range. Default is 0.
+            max_value (Number): The maximum value of the range. Default is 100.
+            min_color (QtGui.QColor): The color corresponding to the minimum value. Default is a pastel green.
+            max_color (QtGui.QColor): The color corresponding to the maximum value. Default is a pastel red.
+        '''
+        # Initialize the super class
+        super().__init__(parent)
+
+        # Store the arguments
+        self.min_value = min_value
+        self.max_value = max_value
+        self.min_color = min_color
+        self.max_color = max_color
+
+    def interpolate_color(self, value: Number) -> QtGui.QColor:
+        ''' Interpolate between the min_color and max_color based on the given value.
+
+        Args:
+            value (Number): The value within the range.
+
+        Returns:
+            QtGui.QColor: The interpolated color.
+        '''
+        # Normalize the value between 0 and 1
+        normalized_value = (value - self.min_value) / (self.max_value - self.min_value)
+
+        # Interpolate between the min_color and max_color based on the normalized value
+        color = QtGui.QColor()
+        color.setRgbF(
+            self.min_color.redF() + (self.max_color.redF() - self.min_color.redF()) * normalized_value,
+            self.min_color.greenF() + (self.max_color.greenF() - self.min_color.greenF()) * normalized_value,
+            self.min_color.blueF() + (self.max_color.blueF() - self.min_color.blueF()) * normalized_value
+        )
+
+        return color
+
+    def paint(self, painter: QtGui.QPainter, option: QtWidgets.QStyleOptionViewItem, model_index: QtCore.QModelIndex):
+        ''' Paint the delegate.
+        
+        Args:
+            painter (QtGui.QPainter): The painter to use for drawing.
+            option (QtWidgets.QStyleOptionViewItem): The style option to use for drawing.
+            model_index (QtCore.QModelIndex): The model index of the item to be painted.
+        '''
+        # Retrieve the value from the model using UserRole
+        value = model_index.data(QtCore.Qt.UserRole)
+
+        # Check if the value is not a number or if min_value is greater than or equal to max_value
+        if not isinstance(value, Number) or self.min_value >= self.max_value:
+            # Paint the item normally using the parent implementation
+            super().paint(painter, option, model_index)
+            return
+
+        # Interpolate between the min_color and max_color based on the value
+        color = self.interpolate_color(value)
+
+        # If the current model index is in the target list, set the background color and style
+        option.backgroundBrush.setColor(color)
+        option.backgroundBrush.setStyle(QtCore.Qt.SolidPattern)
+
+        # Fill the rect with the background brush
+        painter.fillRect(option.rect, option.backgroundBrush)
+
+        # Paint the item normally using the parent implementation
+        super().paint(painter, option, model_index)
 
 class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
     ''' A custom `QTreeWidgetItem` that can handle different data formats and store additional data in the user role.
@@ -246,7 +338,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Store the column names and data dictionary for later use
         self.column_name_list = column_name_list
         self.id_to_data_dict = id_to_data_dict
-        
+
         # Set up the initial values
         self._setup_initial_values()
         # Set up the UI
@@ -316,6 +408,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             | Group by this column          |
             | Ungroup all                   |
             | ----------------------------- |
+            | Set Color Scale               |
+            | ----------------------------- |
             | Fit in View                   |
             +-------------------------------+
 
@@ -346,10 +440,17 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Add a separator
         menu.addSeparator()
         
+        # Create the 'Set Color Scale' action and connect it to the 'set_column_color_scale_dialog' method
+        set_color_scale_action = menu.addAction('Set Color Scale')
+        set_color_scale_action.triggered.connect(lambda: self.set_column_color_scale(column))
+
+        # Add a separator
+        menu.addSeparator()
+        
         # Add the 'Fit in View' action and connect it to the 'fit_column_in_view' method.
         fit_column_in_view_action = menu.addAction('Fit in View')
         fit_column_in_view_action.triggered.connect(self.fit_column_in_view)
-                
+        
         # Disable 'Group by this column' on first column
         if not column:
             group_by_action.setDisabled(True)
@@ -451,6 +552,50 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
     # Extended Methods
     # ----------------
+    def calculate_column_min_max(self, column: int) -> Tuple[Number, Number]:
+        ''' Calculate the minimum and maximum values of a specific column.
+
+        Args:
+            column (int): The index of the column.
+
+        Returns:
+            tuple: A tuple containing the minimum and maximum values.
+
+        Raises:
+            ValueError: If no valid values are found in the column.
+        '''
+        # Collect the values from the specified column
+        values = [self.topLevelItem(index).get_value(column) for index in range(self.topLevelItemCount()) if isinstance(self.topLevelItem(index).get_value(column), Number)]
+
+        # If there are no valid values, raise an exception
+        if not values:
+            raise ValueError("No valid values found in the column")
+
+        # Calculate the minimum and maximum values
+        min_value = min(*values)
+        max_value = max(*values)
+
+        # Return the minimum and maximum values
+        return min_value, max_value
+
+    def set_column_color_scale(self, column: int):
+        ''' Set the color scale for a specific column.
+
+        Args:
+            column (int): The index of the column to set the color scale.
+        '''
+        try:
+            # Calculate the minimum and maximum values of the column
+            min_value, max_value = self.calculate_column_min_max(column)
+        except ValueError as e:
+            # Show tooltip message if no valid values or non-numeric column
+            self.show_tool_tip(str(e))
+            return
+        else:
+            # Create and set the color scale delegate for the column
+            delegate = ColorScaleDelegate(self, min_value, max_value)
+            self.setItemDelegateForColumn(column, delegate)
+
     def set_column_name_list(self, column_name_list: List[str]) -> None:
         ''' Set the names of the columns in the tree widget.
 
@@ -622,24 +767,31 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
     
     def get_all_items(self) -> List[QtWidgets.QTreeWidgetItem]:
         ''' This function returns all the items in the tree widget as a list.
+
+        The items are sorted based on their order in the tree structure, 
+        with children appearing after their parent items for each grouping.
+
+        Returns:
+            List[QtWidgets.QTreeWidgetItem]: A list containing all the items in the tree widget.
         '''
-        def get_items(item):
-            nonlocal items
-            # Loop through all children of the current item
+        def traverse_items(item: QtWidgets.QTreeWidgetItem):
+            # Recursively traverse the children of the current item
             for child_index in range(item.childCount()):
-                # Get the child item
+                # Get the child item at the current index
                 child = item.child(child_index)
 
+                # Add the current child item to the list
                 items.append(child)
 
-                if child.childCount():
-                    get_items(child)
-
-        items = list()
+                # Recursively traverse the children of the current child item
+                traverse_items(child)
 
         # Get the root item of the tree widget
         root = self.invisibleRootItem()
-        get_items(root)
+
+        # Traverse the items in a depth-first manner and collect them in a list
+        items = list()
+        traverse_items(root)
 
         # Return the list of items
         return items
@@ -692,7 +844,10 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         clipboard.setText(full_text)
 
         # Show tooltip message
-        QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), f'Copied:\n{full_text}', self, QtCore.QRect(), 1000)
+        self.show_tool_tip(f'Copied:\n{full_text}', 5000)
+
+    def show_tool_tip(self, text: str, msc_show_time: Number = 1000):
+        QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), text, self, QtCore.QRect(), msc_show_time)
 
     def paste_cells_from_clipboard(self):
         # NOTE: Further Implementation Required
