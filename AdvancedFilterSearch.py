@@ -1,7 +1,7 @@
 import sys, os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
-from typing import Any, List, Tuple
+from typing import Any, List
 
 from theme.theme import set_theme
 
@@ -30,7 +30,7 @@ def intersection(item_list_1: List[Any], item_list_2: List[Any]) -> List[Any]:
 class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
     ''' Custom item delegate class that highlights the rows specified by the `target_model_indexes` list.
     '''
-    # List of tuple of target model index for highlighting
+    # List of target model index for highlighting
     target_model_indexes: List[QtCore.QModelIndex] = list()
     
     def __init__(self, parent=None, color: QtGui.QColor = QtGui.QColor(165, 165, 144, 65)):
