@@ -645,6 +645,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         return items
 
     def copy_selected_cells(self):
+        # NOTE: For refactoring
+        #
+        #
         model = self.selectionModel()
         model_indexes = model.selectedIndexes()
 
@@ -690,6 +693,29 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         # Show tooltip message
         QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), f'Copied:\n{full_text}', self, QtCore.QRect(), 1000)
+
+    def paste_cells_from_clipboard(self):
+        # NOTE: Further Implementation Required
+        #
+        #
+        model = self.selectionModel()
+        model_indexes = model.selectedIndexes()
+
+        # Get the text from the clipboard
+        clipboard = QtWidgets.QApplication.clipboard()
+        text = clipboard.text()
+        
+        # Split the text into rows and columns
+        rows = text.split('\n')
+        rows = [row.split('\t') for row in rows]
+
+        # Get the current selected item
+
+        # Get the current row and column
+
+        # Paste the values into the tree widget
+
+        print('Not implement')
 
     # Event Handling or Override Methods
     # ----------------------------------
