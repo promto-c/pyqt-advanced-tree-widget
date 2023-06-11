@@ -216,6 +216,9 @@ class AdvancedFilterSearch(base_class, form_class):
         self.tree_widget.ungrouped_all.connect(self.hightlight_search)
         self.tree_widget.ungrouped_all.connect(self.apply_filters)
 
+        # Connect header signals to slots
+        self.tree_widget.header().sectionClicked.connect(self.hightlight_search)
+
         # Connect filter count changed signals to slots
         self.filter_count_changed.connect(self.update_show_filter_button)
         self.filter_count_changed.connect(self.apply_filters)
@@ -361,7 +364,7 @@ class AdvancedFilterSearch(base_class, form_class):
         self.hightlight_item_delegate.target_model_indexes = list()
 
         # Get all items in the tree widget
-        all_items = self.get_all_items()
+        all_items = self.tree_widget.get_all_items()
 
         # Loop through all items
         for tree_item in all_items:
@@ -369,33 +372,6 @@ class AdvancedFilterSearch(base_class, form_class):
             item_index = self.tree_widget.indexFromItem(tree_item).row()
             # Set the delegate for the row to None
             self.tree_widget.setItemDelegateForRow(item_index, None)
-
-    def get_all_items(self):
-        ''' This function returns all the items in the tree widget as a list.
-        '''
-        # Get the root item of the tree widget
-        root = self.tree_widget.invisibleRootItem()
-
-        # Create a list to store the items and a queue to store items to be processed
-        items = [root]
-        queue = [root]
-
-        # Iterate through all items in the queue
-        while queue:
-            # Get the next item in the queue
-            item = queue.pop(0)
-
-            # Loop through all children of the current item
-            for child_index in range(item.childCount()):
-                # Get the child item
-                child = item.child(child_index)
-
-                # Add the child item to the items list and the queue
-                items.append(child)
-                queue.append(child)
-
-        # Return the list of items
-        return items
 
     def get_all_items_at_child_level(self, child_level: int = 0) -> List[QtWidgets.QTreeWidgetItem]:
         ''' Retrieve all items at a specific child level in the tree widget.
@@ -412,7 +388,7 @@ class AdvancedFilterSearch(base_class, form_class):
             return [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
 
         # Get all items in the tree widget
-        all_items = self.get_all_items()
+        all_items = self.tree_widget.get_all_items()
 
         # Filter items to only those at the specified child level
         return [item for item in all_items if self.get_child_level(item) == child_level]
@@ -633,7 +609,7 @@ class AdvancedFilterSearch(base_class, form_class):
         ''' Apply the filters specified by the user to the tree widget.
         '''
         # Get a list of all items in the tree widget
-        all_items = self.get_all_items()
+        all_items = self.tree_widget.get_all_items()
 
         # Hide all items
         for item in all_items:

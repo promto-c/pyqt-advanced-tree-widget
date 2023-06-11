@@ -619,26 +619,59 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         # Emit signal for ungrouped all
         self.ungrouped_all.emit()
+    
+    def get_all_items(self) -> List[QtWidgets.QTreeWidgetItem]:
+        ''' This function returns all the items in the tree widget as a list.
+        '''
+        def get_items(item):
+            nonlocal items
+            # Loop through all children of the current item
+            for child_index in range(item.childCount()):
+                # Get the child item
+                child = item.child(child_index)
+
+                items.append(child)
+
+                if child.childCount():
+                    get_items(child)
+
+        items = list()
+
+        # Get the root item of the tree widget
+        root = self.invisibleRootItem()
+        get_items(root)
+
+        # Return the list of items
+        return items
 
     def copy_selected_cells(self):
         model = self.selectionModel()
         model_indexes = model.selectedIndexes()
 
-        # Sort the cells based on their row and column
-        sorted_indexes = sorted(model_indexes, key=lambda model_index: (model_index.row(), model_index.column()))
+        all_items = self.get_all_items()
+        # Sort the cells based on their global row and column
+        sorted_indexes = sorted(
+            model_indexes, 
+            key=lambda model_index: (
+                all_items.index(self.itemFromIndex(model_index)),
+                model_index.column()
+                )
+            )
 
         cell_dict = dict()
         column_set = set()
 
         for model_index in sorted_indexes:
-            row = model_index.row()
+            tree_item = self.itemFromIndex(model_index)
+
+            global_row = all_items.index(tree_item)
             column = model_index.column()
 
-            cell_value = self.itemFromIndex(model_index).get_value(column)
+            cell_value = tree_item.get_value(column)
             cell_text = str() if cell_value is None else str(cell_value)
 
-            cell_dict.setdefault(row, dict())
-            cell_dict[row][column] = cell_text
+            cell_dict.setdefault(global_row, dict())
+            cell_dict[global_row][column] = cell_text
             column_set.add(column)
 
         for row_dict in cell_dict.values():
