@@ -69,12 +69,12 @@ def get_pastel_color(color: QtGui.QColor) -> QtGui.QColor:
     pastel_color = QtGui.QColor.fromHsvF(h, s, v, a)
     return pastel_color
 
-class ColorScaleDelegate(QtWidgets.QStyledItemDelegate):
+class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent=None, min_value: Number = 0, max_value: Number = 100, 
                  min_color: QtGui.QColor = get_pastel_color(QtGui.QColor(29, 144, 0)), 
                  max_color: QtGui.QColor = get_pastel_color(QtGui.QColor(144, 0, 0))
                  ):
-        ''' Initialize the ColorScaleDelegate.
+        ''' Initialize the ColorScaleItemDelegate.
 
         Args:
             parent (QtCore.QObject): The parent object. Default is None.
@@ -84,7 +84,7 @@ class ColorScaleDelegate(QtWidgets.QStyledItemDelegate):
             max_color (QtGui.QColor): The color corresponding to the maximum value. Default is a pastel red.
         '''
         # Initialize the super class
-        super().__init__(parent)
+        super(ColorScaleItemDelegate, self).__init__(parent)
 
         # Store the arguments
         self.min_value = min_value
@@ -128,7 +128,7 @@ class ColorScaleDelegate(QtWidgets.QStyledItemDelegate):
         # Check if the value is not a number or if min_value is greater than or equal to max_value
         if not isinstance(value, Number) or self.min_value >= self.max_value:
             # Paint the item normally using the parent implementation
-            super().paint(painter, option, model_index)
+            super(ColorScaleItemDelegate, self).paint(painter, option, model_index)
             return
 
         # Interpolate between the min_color and max_color based on the value
@@ -142,7 +142,7 @@ class ColorScaleDelegate(QtWidgets.QStyledItemDelegate):
         painter.fillRect(option.rect, option.backgroundBrush)
 
         # Paint the item normally using the parent implementation
-        super().paint(painter, option, model_index)
+        super(ColorScaleItemDelegate, self).paint(painter, option, model_index)
 
 class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
     ''' A custom `QTreeWidgetItem` that can handle different data formats and store additional data in the user role.
@@ -593,7 +593,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             return
         else:
             # Create and set the color scale delegate for the column
-            delegate = ColorScaleDelegate(self, min_value, max_value)
+            delegate = ColorScaleItemDelegate(self, min_value, max_value)
             self.setItemDelegateForColumn(column, delegate)
 
     def set_column_name_list(self, column_name_list: List[str]) -> None:

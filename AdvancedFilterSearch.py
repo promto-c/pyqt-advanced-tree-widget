@@ -27,37 +27,13 @@ def intersection(item_list_1: List[Any], item_list_2: List[Any]) -> List[Any]:
     # Return the items that exist in both lists
     return [item for item in item_list_1 if item in item_list_2]
 
-# NOTE: test
-class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
-    def __init__(self, parent=None):
-        super(ColorScaleItemDelegate, self).__init__(parent)
-
-    def paint(self, painter, option, index):
-        # Get the data for the item
-        value = index.data(QtCore.Qt.UserRole)
-
-        # NOTE: test
-        # Set the background color based on the item's value
-        if int(value) > 29:
-            background_color = QtGui.QColor(255, 0, 0)
-        else:
-            background_color = QtGui.QColor(0, 255, 0)
-        # Draw the background
-        painter.fillRect(option.rect, background_color)
-
-        # Draw the text
-        painter.drawText(option.rect, QtCore.Qt.AlignCenter, str(value))
-
-    # def sizeHint(self, option, index):
-    #     return QtCore.QSize(50, 50)
-
 class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
     ''' Custom item delegate class that highlights the rows specified by the `target_model_indexes` list.
     '''
     # List of tuple of target model index for highlighting
     target_model_indexes: List[QtCore.QModelIndex] = list()
     
-    def __init__(self, parent=None, color: QtGui.QColor = QtGui.QColor(165, 165, 144, 128)):
+    def __init__(self, parent=None, color: QtGui.QColor = QtGui.QColor(165, 165, 144, 65)):
         ''' Initialize the highlight item delegate.
         
         Args:
@@ -81,7 +57,7 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
         # Check if the current model index is not in the target list
         if model_index not in self.target_model_indexes:
             # If not, paint the item normally using the parent implementation
-            super().paint(painter, option, model_index)
+            super(HighlightItemDelegate, self).paint(painter, option, model_index)
             return
 
         # If the current model index is in the target list, set the background color and style
@@ -92,7 +68,7 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.fillRect(option.rect, option.backgroundBrush)
 
         # Paint the item normally using the parent implementation
-        super().paint(painter, option, model_index)
+        super(HighlightItemDelegate, self).paint(painter, option, model_index)
 
 class AdvancedFilterSearch(base_class, form_class):
     ''' A PyQt5 widget that allows the user to apply advanced filters to a tree widget.
