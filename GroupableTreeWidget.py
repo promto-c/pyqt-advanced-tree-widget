@@ -70,6 +70,8 @@ def get_pastel_color(color: QtGui.QColor) -> QtGui.QColor:
     return pastel_color
 
 class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
+    # Initialization and Setup
+    # ------------------------
     def __init__(self, parent=None, min_value: Number = 0, max_value: Number = 100, 
                  min_color: QtGui.QColor = get_pastel_color(QtGui.QColor(29, 144, 0)), 
                  max_color: QtGui.QColor = get_pastel_color(QtGui.QColor(144, 0, 0))
@@ -92,7 +94,9 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
         self.min_color = min_color
         self.max_color = max_color
 
-    def interpolate_color(self, value: Number) -> QtGui.QColor:
+    # Private Methods
+    # ---------------
+    def _interpolate_color(self, value: Number) -> QtGui.QColor:
         ''' Interpolate between the min_color and max_color based on the given value.
 
         Args:
@@ -114,6 +118,8 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
 
         return color
 
+    # Event Handling or Override Methods
+    # ----------------------------------
     def paint(self, painter: QtGui.QPainter, option: QtWidgets.QStyleOptionViewItem, model_index: QtCore.QModelIndex):
         ''' Paint the delegate.
         
@@ -132,7 +138,7 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
             return
 
         # Interpolate between the min_color and max_color based on the value
-        color = self.interpolate_color(value)
+        color = self._interpolate_color(value)
 
         # If the current model index is in the target list, set the background color and style
         option.backgroundBrush.setColor(color)
@@ -223,6 +229,29 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
 
         # Return the final child level
         return child_level
+
+    def get_model_indexes(self) -> List[QtCore.QModelIndex]:
+        ''' Get the model index for each column in the tree widget.
+
+        Returns:
+            List[QtCore.QModelIndex]: A list of model index for each column in the tree widget.
+        '''
+        # Get a list of the shown column indices
+        shown_column_index_list = self.treeWidget().get_shown_column_index_list()
+
+        # Create a list to store the model index
+        model_indexes = list()
+
+        # Loop through each shown column index
+        for column_index in shown_column_index_list:
+            # Get the model index for the current column
+            model_index = self.treeWidget().indexFromItem(self, column_index)
+
+            # Add the model index to the list
+            model_indexes.append(model_index)
+
+        # Return the list of model index properties
+        return model_indexes
 
     def get_value(self, column: Union[int, str]) -> Any:
         ''' Get the value of the item's UserRole data for the given column.
@@ -577,6 +606,21 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         # Return the minimum and maximum values
         return min_value, max_value
+
+    def get_shown_column_index_list(self) -> List[int]:
+        ''' Returns a list of indices for the columns that are shown (i.e., not hidden) in the tree widget.
+
+        Returns:
+            List[int]: A list of integers, where each integer is the index of a shown column in the tree widget.
+        '''
+        # Get the header of the tree widget
+        header = self.header()
+
+        # Generate a list of the indices of the columns that are not hidden
+        column_index_list = [column_index for column_index in range(header.count()) if not header.isSectionHidden(column_index)]
+
+        # Return the list of the index of a shown column in the tree widget.
+        return column_index_list
 
     def set_column_color_scale(self, column: int):
         ''' Set the color scale for a specific column.

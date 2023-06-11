@@ -280,56 +280,12 @@ class AdvancedFilterSearch(base_class, form_class):
         # Loop through the specified tree items
         for tree_item in tree_items:
 
-            # Get the item index in the tree widget
-            item_index = self.tree_widget.indexFromItem(tree_item).row()
-
             # Add the model indexes of the current tree item to the target properties
-            self.hightlight_item_delegate.target_model_indexes += self.get_model_indexes(tree_item)
+            self.hightlight_item_delegate.target_model_indexes.extend(tree_item.get_model_indexes())
 
-            # Set the item delegate for the current row to the highlight item delegate
-            self.tree_widget.setItemDelegateForRow(item_index, self.hightlight_item_delegate)
+        # Set the item delegate for the current row to the highlight item delegate
+        self.tree_widget.setItemDelegate(self.hightlight_item_delegate)
 
-    def get_model_indexes(self, tree_item: QtWidgets.QTreeWidgetItem) -> List[QtCore.QModelIndex]:
-        ''' Get the properties of the model index for each column in the tree widget.
-
-        Parameters:
-            tree_item (QtWidgets.QTreeWidgetItem): The tree item to extract the model index properties from.
-
-        Returns:
-            List[QtCore.QModelIndex]: A list of model index for each column in the tree widget.
-        '''
-        # Get a list of the shown column indices
-        shown_column_index_list = self.get_shown_column_index_list()
-
-        # Create a list to store the model index
-        model_indexes = list()
-
-        # Loop through each shown column index
-        for column_index in shown_column_index_list:
-            # Get the model index for the current column
-            model_index = self.tree_widget.indexFromItem(tree_item, column_index)
-
-            # Add the model index to the list
-            model_indexes.append(model_index)
-
-        # Return the list of model index properties
-        return model_indexes
-
-    def get_shown_column_index_list(self) -> List[int]:
-        ''' Returns a list of indices for the columns that are shown (i.e., not hidden) in the tree widget.
-
-        Returns:
-            List[int]: A list of integers, where each integer is the index of a shown column in the tree widget.
-        '''
-        # Get the header of the tree widget
-        header = self.tree_widget.header()
-
-        # Generate a list of the indices of the columns that are not hidden
-        column_index_list = [column_index for column_index in range(header.count()) if not header.isSectionHidden(column_index)]
-
-        # Return the list of the index of a shown column in the tree widget.
-        return column_index_list
-        
     def reset_highlight_all_items(self):
         ''' Reset the highlight of all items in the tree widget.
 
