@@ -438,6 +438,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             | Ungroup all                   |
             | ----------------------------- |
             | Set Color Scale               |
+            | Reset All Color Scale         |
             | ----------------------------- |
             | Fit in View                   |
             +-------------------------------+
@@ -457,36 +458,40 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             menu = QtWidgets.QMenu(self.scalable_view)
         else:
             menu = QtWidgets.QMenu(self)
-        
+
         # Create the 'Group by this column' action and connect it to the 'group_by_column' method. Pass in the selected column as an argument.
         group_by_action = menu.addAction('Group by this column')
         group_by_action.triggered.connect(lambda: self.group_by_column(column))
-        
-        # Create the 'Ungroup all' action and connect it to the 'ungroup_all' method.
+
+        # Create the 'Ungroup all' action and connect it to the 'ungroup_all' method
         ungroup_all_action = menu.addAction('Ungroup all')
         ungroup_all_action.triggered.connect(self.ungroup_all)
 
         # Add a separator
         menu.addSeparator()
-        
-        # Create the 'Set Color Scale' action and connect it to the 'set_column_color_scale_dialog' method
+
+        # Create the 'Set Color Scale' action and connect it to the 'set_column_color_scale' method
         set_color_scale_action = menu.addAction('Set Color Scale')
         set_color_scale_action.triggered.connect(lambda: self.set_column_color_scale(column))
 
+        # Create the 'Reset All Color Scale' action and connect it to the 'reset_all_color_scale_column' method
+        reset_all_color_scale_action = menu.addAction('Reset All Color Scale')
+        reset_all_color_scale_action.triggered.connect(self.reset_all_color_scale_column)
+
         # Add a separator
         menu.addSeparator()
-        
-        # Add the 'Fit in View' action and connect it to the 'fit_column_in_view' method.
+
+        # Add the 'Fit in View' action and connect it to the 'fit_column_in_view' method
         fit_column_in_view_action = menu.addAction('Fit in View')
         fit_column_in_view_action.triggered.connect(self.fit_column_in_view)
-        
-        # Disable 'Group by this column' on first column
+
+        # Disable 'Group by this column' on the first column
         if not column:
             group_by_action.setDisabled(True)
 
         # Show the context menu
         menu.popup(self.header().mapToGlobal(pos))
-        
+
     def _create_item_groups(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
         ''' Group the data into a dictionary mapping group names to lists of tree items.
 
@@ -639,6 +644,12 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             # Create and set the color scale delegate for the column
             delegate = ColorScaleItemDelegate(self, min_value, max_value)
             self.setItemDelegateForColumn(column, delegate)
+
+    def reset_all_color_scale_column(self):
+        ''' Reset the color scale for all columns in the tree widget.
+        '''
+        for column in range(self.columnCount()):
+            self.setItemDelegateForColumn(column, None)
 
     def set_column_name_list(self, column_name_list: List[str]) -> None:
         ''' Set the names of the columns in the tree widget.
