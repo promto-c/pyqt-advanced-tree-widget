@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>350</height>
+    <height>44</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -110,55 +110,8 @@
      </item>
     </layout>
    </item>
-   <item>
-    <widget class="QTreeWidget" name="filter_tree_widget">
-     <property name="selectionMode">
-      <enum>QAbstractItemView::NoSelection</enum>
-     </property>
-     <property name="rootIsDecorated">
-      <bool>false</bool>
-     </property>
-     <property name="itemsExpandable">
-      <bool>false</bool>
-     </property>
-     <property name="allColumnsShowFocus">
-      <bool>true</bool>
-     </property>
-     <attribute name="headerDefaultSectionSize">
-      <number>32</number>
-     </attribute>
-     <attribute name="headerMinimumSectionSize">
-      <number>32</number>
-     </attribute>
-     <attribute name="headerStretchLastSection">
-      <bool>false</bool>
-     </attribute>
-     <column>
-      <property name="text">
-       <string notr="true">1</string>
-      </property>
-     </column>
-    </widget>
-   </item>
   </layout>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>show_filter_button</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>filter_tree_widget</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>378</x>
-     <y>25</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>377</x>
-     <y>52</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>
