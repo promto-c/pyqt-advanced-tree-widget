@@ -323,7 +323,7 @@ class AdvancedFilterSearch(base_class, form_class):
         all_items = self.tree_widget.get_all_items()
 
         # Filter items to only those at the specified child level
-        return [item for item in all_items if self.get_child_level(item) == child_level]
+        return [item for item in all_items if item.get_child_level() == child_level]
     
     def hightlight_search(self):
         ''' Highlight the items in the tree widget that match the search criteria.
@@ -417,29 +417,6 @@ class AdvancedFilterSearch(base_class, form_class):
         tabler_qicon = self.tabler_action_checked_qicon if state else self.tabler_action_qicon
         self.negate_action.setIcon(tabler_qicon.a_b_off)
 
-    @staticmethod
-    def get_child_level(item: QtWidgets.QTreeWidgetItem) -> int:
-        ''' Get the child level of a given QTreeWidgetItem
-
-        Args:
-            item (QtWidgets.QTreeWidgetItem): The QTreeWidgetItem to get the child level of
-
-        Returns:
-            int: The child level of the given QTreeWidgetItem
-        '''
-        # Initialize child level
-        child_level = 0
-
-        # Iterate through the parent items to determine the child level
-        while item.parent():
-            # Increment child level for each parent
-            child_level += 1
-            # Update item to be its parent
-            item = item.parent()
-
-        # Return the final child level
-        return child_level
-    
     def add_filter(self):
         ''' Add a filter to the tree widget. Called when the "Add Filter" button is clicked 
             or when the Enter key is pressed in the keyword_line_edit widget.
