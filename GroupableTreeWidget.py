@@ -490,7 +490,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             group_by_action.setDisabled(True)
 
         # Show the context menu
-        menu.popup(self.header().mapToGlobal(pos))
+        menu.popup(QtGui.QCursor.pos())
 
     def _create_item_groups(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
         ''' Group the data into a dictionary mapping group names to lists of tree items.
