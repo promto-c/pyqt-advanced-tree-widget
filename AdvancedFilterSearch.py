@@ -1,7 +1,7 @@
 import sys, os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
-from typing import Any, List
+from typing import Any, List, Callable
 
 from theme.theme import set_theme
 
@@ -136,13 +136,11 @@ class FilterTreeWidget(QtWidgets.QTreeWidget):
         self.setRootIsDecorated(False)
         self.setItemsExpandable(False)
         self.setAllColumnsShowFocus(True)
-        
 
         # Resize header sections, with the first three (Column, Condition, Keyword) stretched and the rest fixed
         for column_index, _ in enumerate(header_labels):
             stretch = column_index in (0, 1, 2) # stretch the first three columns (Column, Condition, Keyword)
             header.setSectionResizeMode(column_index, QtWidgets.QHeaderView.Stretch if stretch else QtWidgets.QHeaderView.Fixed)
-
 
     # Private Methods
     # ---------------
@@ -282,6 +280,17 @@ class FilterTreeWidget(QtWidgets.QTreeWidget):
         # Emit signal indicating the number of filter criteria has changed
         self.filter_count_changed.emit(len(self.filter_criteria_list))
 
+class MoveEventFilter(QtCore.QObject):
+    def __init__(self, method: Callable, parent=None) -> None:
+        super(MoveEventFilter, self).__init__(parent)
+        self.method = method
+    def eventFilter(self, obj, event):
+        
+        if event.type() == QtCore.QEvent.Move:
+            self.method()
+            return True
+        return super(MoveEventFilter, self).eventFilter(obj, event)
+
 class PopupDialog(QtWidgets.QDialog):
     ''' A popup dialog that contains a tree widget.
 
@@ -289,6 +298,8 @@ class PopupDialog(QtWidgets.QDialog):
         button (QtWidgets.QPushButton): The button that triggers the popup.
         relative_offset (QtCore.QPoint): The relative offset between the popup and the button.
     '''
+    # Initialization and Setup
+    # ------------------------
     def __init__(self, widget, parent=None):
         ''' Initialize the popup dialog and set up the UI, signal connections, and position.
             Args:
@@ -306,16 +317,16 @@ class PopupDialog(QtWidgets.QDialog):
         self._setup_initial_values()
         self._setup_ui()
         self._setup_signal_connections()
-        
 
     def _setup_initial_values(self):
         ''' Set up the initial values for the popup dialog.
         '''
-        self.drag_start_position = None
         self.dragging = False
 
         self.opacity_animation = QtCore.QPropertyAnimation(self, b'windowOpacity')
         self.opacity_animation.setDuration(200)
+
+        self.top_parent = self._get_top_parent()
 
     def _setup_ui(self):
         ''' Set up the UI for the popup dialog, including creating widgets and layouts.
@@ -339,21 +350,29 @@ class PopupDialog(QtWidgets.QDialog):
         self.widget.mouseMoveEvent = self.mouseMoveEvent
         self.widget.mouseReleaseEvent = self.mouseReleaseEvent
 
+        event_filter = MoveEventFilter( self._update_position, self.top_parent )
+        self.top_parent.installEventFilter(event_filter)
+
+    # Private Methods
+    # ---------------
+    def _get_top_parent(self):
+        top_parent = self.parent()
+
+        while top_parent.parent():
+            top_parent = top_parent.parent()
+
+        return top_parent
+
     def _update_relative_offset(self):
         ''' Update the relative offset between the popup dialog and the parent widget.
         '''
-        parent_pos = self.parent().pos()
-        self.relative_offset = self.pos() - parent_pos
+        self.relative_offset = self.pos() - self.top_parent.pos()
 
     def _update_position(self):
         ''' Update the position of the popup dialog based on the button's location and the relative offset.
         '''
-
-        parent_pos = self.parent().pos()
-        # button_pos = self.button.mapToGlobal(QtCore.QPoint(0, self.button.height()))
-        parent_pos += self.relative_offset
+        parent_pos = self.top_parent.pos() + self.relative_offset
         self.move(parent_pos)
-
 
     def _show_position(self):
         ''' Update the position of the popup dialog based on the mouse position and the relative offset.
@@ -363,6 +382,8 @@ class PopupDialog(QtWidgets.QDialog):
         cursor_pos.setY(cursor_pos.y() + 30)
         self.move(cursor_pos)
 
+    # Event Handling or Override Methods
+    # ----------------------------------
     def enterEvent(self, event):
         ''' Event handler for when the mouse enters the popup dialog.
         '''
@@ -381,6 +402,7 @@ class PopupDialog(QtWidgets.QDialog):
         self._show_position()
         self._update_relative_offset()
         return super(PopupDialog, self).setVisible(visible)
+
     def mousePressEvent(self, event):
         ''' Event handler for when a mouse button is pressed within the popup dialog.
         '''
@@ -534,14 +556,6 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         # Connect filter count changed signals to slots
         self.filter_tree_widget.filter_count_changed.connect(self.update_show_filter_button)
         self.filter_tree_widget.filter_count_changed.connect(self.apply_filters)
-        
-    def moveEvent(self, event):
-        # NOTE: fix when not main ui
-        super(AdvancedFilterSearch, self).moveEvent(event)
-        # if hasattr(self, 'popup') and self.popup.isVisible():
-
-        # move event from global
-        self.filter_tree_popup._update_position()
 
     def add_action_on_keyword_line_edit(self):
         ''' Add two actions to the keyword line edit widget: match case and negate match.
@@ -785,7 +799,7 @@ def main():
     '''
     # Create the application and the main window
     app = QtWidgets.QApplication(sys.argv)
-    # window = QtWidgets.QMainWindow()
+    window = QtWidgets.QMainWindow()
 
     # Set theme of QApplication to the dark theme
     set_theme(app, 'dark')
@@ -794,9 +808,9 @@ def main():
     tree_widget = GroupableTreeWidget(column_name_list=COLUMN_NAME_LIST, id_to_data_dict=ID_TO_DATA_DICT)
 
     # Create an instance of the widget and set it as the central widget
-    widget = AdvancedFilterSearch(tree_widget)
+    widget = AdvancedFilterSearch(tree_widget, parent=window)
     widget.set_column_filter('Name')
-    # window.setCentralWidget(widget)
+    window.setCentralWidget(widget)
     
     # Create the scalable view and set the tree widget as its central widget
     scalable_tree_widget_view = ScalableView(widget=tree_widget)
@@ -805,10 +819,7 @@ def main():
     widget.layout().addWidget(scalable_tree_widget_view)
 
     # Show the window
-    # window.show()
-
-    # NOTE: test
-    widget.show()
+    window.show()
 
     # Run the application
     sys.exit(app.exec_())
