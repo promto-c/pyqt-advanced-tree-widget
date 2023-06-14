@@ -684,6 +684,12 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Return the index of the column if found
         return self.column_name_list.index(column_name)
 
+    def get_column_visual_index(self, column_name: str) -> int:
+        ''' 
+        '''
+        #
+        return self.header().visualIndex(self.column_name_list.index(column_name))
+
     def add_items(self, id_to_data_dict: Dict[int, Dict[str, str]]) -> None:
         ''' Add items to the tree widget.
 
