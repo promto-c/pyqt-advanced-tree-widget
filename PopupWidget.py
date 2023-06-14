@@ -1,5 +1,4 @@
 from typing import Callable, Optional
-
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 class MoveEventFilter(QtCore.QObject):
@@ -48,50 +47,70 @@ class PopupWidget(QtWidgets.QWidget):
         """
         super().__init__(parent)
 
+        # Store the widget
         self.widget = widget
 
+        # Set up the initial values
         self._setup_initial_values()
+        # Set up the UI
         self._setup_ui()
+        # Set up signal connections
         self._setup_signal_connections()
 
     def _setup_initial_values(self):
         """Set up the initial values for the popup widget.
         """
-        self.dragging = False
+        # Initialize _is_dragging state
+        self._is_dragging = False
 
+        # Relative offset between the popup widget and the top parent widget
         self._relative_offset = QtCore.QPoint(0, 0)
 
-        self.opacity_animation = QtCore.QPropertyAnimation(self, b'windowOpacity')
-        self.opacity_animation.setDuration(200)
+        # Create an opacity animation for visual effects
+        self._opacity_animation = QtCore.QPropertyAnimation(self, b'windowOpacity')
+        self._opacity_animation.setDuration(200)
 
+        # Determine the top parent widget of the popup widget
         self.top_parent = self._get_top_parent() or self.parent()
 
     def _setup_ui(self):
         """Set up the UI for the popup widget, including creating widgets and layouts.
         """
+        # Window properties
         self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
         self.setMouseTracking(True)
 
+        # Create a vertical layout to hold the content of the popup widget.
         layout = QtWidgets.QVBoxLayout()
+
+        # Add the widget to the layout
         layout.addWidget(self.widget)
 
+        # Add a close button to the layout
         self.close_button = QtWidgets.QPushButton('Close')
         layout.addWidget(self.close_button)
 
+        # Set the layout for the popup widget
         self.setLayout(layout)
 
+        # Set the initial position of the popup widget
         self._set_initial_position()
 
     def _setup_signal_connections(self):
         """Set up signal connections between widgets and slots.
         """
+        # Connect the clicked signal of the close button to the close method
         self.close_button.clicked.connect(self.close)
 
+        # Assign mouse event handlers to the widget
         self.widget.mousePressEvent = self.mousePressEvent
         self.widget.mouseMoveEvent = self.mouseMoveEvent
         self.widget.mouseReleaseEvent = self.mouseReleaseEvent
 
+        # Create an event filter to handle move events of the top parent
         event_filter = MoveEventFilter(self._update_position, self.top_parent)
+
+        # Install the event filter on the top parent widget
         self.top_parent.installEventFilter(event_filter)
 
     # Private Methods
@@ -114,18 +133,25 @@ class PopupWidget(QtWidgets.QWidget):
     def _update_relative_offset(self):
         """Update the relative offset between the popup widget and the parent widget.
         """
+        # Calculate the relative offset by subtracting the parent's position from the popup widget's position
         self._relative_offset = self.pos() - self.top_parent.pos()
 
     def _update_position(self):
         """Update the position of the popup widget based on the button's location and the relative offset.
         """
+        # Calculate the new position by adding the relative offset to the parent's position
         parent_pos = self.top_parent.pos() + self._relative_offset
+
+        # Move the popup widget to the new position
         self.move(parent_pos)
 
     def _set_initial_position(self):
         """Set the initial position of the popup widget based on the instance's position.
         """
+        # Calculate the initial position by adding the initial offset to the current cursor position
         cursor_pos = QtGui.QCursor.pos() + self.INITIAL_POSITION_OFFSET
+
+        # Move the popup widget to the initial position
         self.move(cursor_pos)
 
     # Event Handling or Override Methods
@@ -133,15 +159,15 @@ class PopupWidget(QtWidgets.QWidget):
     def enterEvent(self, event):
         """Event handler for when the mouse enters the popup widget.
         """
-        self.opacity_animation.setEndValue(1.0)
-        self.opacity_animation.start()
+        self._opacity_animation.setEndValue(1.0)
+        self._opacity_animation.start()
         super().enterEvent(event)
 
     def leaveEvent(self, event):
         """Event handler for when the mouse leaves the popup widget.
         """
-        self.opacity_animation.setEndValue(0.5)
-        self.opacity_animation.start()
+        self._opacity_animation.setEndValue(0.5)
+        self._opacity_animation.start()
         super().leaveEvent(event)
 
     def setVisible(self, visible: bool):
@@ -158,25 +184,25 @@ class PopupWidget(QtWidgets.QWidget):
         """Event handler for when a mouse button is pressed within the popup widget.
         """
         if event.button() == QtCore.Qt.MiddleButton:
-            self.drag_start_position = event.globalPos()
-            self.dragging = True
+            self._drag_start_position = event.globalPos()
+            self._is_dragging = True
         else:
             super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         """Event handler for when the mouse is moved within the popup widget.
         """
-        if self.dragging:
-            delta = event.globalPos() - self.drag_start_position
+        if self._is_dragging:
+            delta = event.globalPos() - self._drag_start_position
             self.move(self.pos() + delta)
-            self.drag_start_position = event.globalPos()
+            self._drag_start_position = event.globalPos()
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
         """Event handler for when a mouse button is released within the popup widget.
         """
         if event.button() == QtCore.Qt.MiddleButton:
-            self.dragging = False
+            self._is_dragging = False
             self._update_relative_offset()
         else:
             super().mouseReleaseEvent(event)
