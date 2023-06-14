@@ -156,53 +156,100 @@ class PopupWidget(QtWidgets.QWidget):
 
     # Event Handling or Override Methods
     # ----------------------------------
-    def enterEvent(self, event):
+    def enterEvent(self, event: QtGui.QEnterEvent):
         """Event handler for when the mouse enters the popup widget.
+
+        Args:
+            event (QtCore.QEvent): The mouse enter event.
         """
+        #  Sets the end value of the opacity animation to 1.0 for full opacity.
         self._opacity_animation.setEndValue(1.0)
+        # Starts the opacity animation.
         self._opacity_animation.start()
+
+        # Calls the base class implementation to handle the event.
         super().enterEvent(event)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event: QtCore.QEvent):
         """Event handler for when the mouse leaves the popup widget.
+
+        Args:
+            event (QtCore.QEvent): The mouse leave event.
         """
+        # Sets the end value of the opacity animation to 0.5 for semi-opacity.
         self._opacity_animation.setEndValue(0.5)
+        # Starts the opacity animation.
         self._opacity_animation.start()
+
+        # Calls the base class implementation to handle the event.
         super().leaveEvent(event)
 
     def setVisible(self, visible: bool):
         """Show or hide the popup widget and update the position.
 
         Args:
-            visible: True to show the widget, False to hide it.
+            visible (bool): True to show the widget, False to hide it.
         """
+        # Sets the initial position of the popup widget.
         self._set_initial_position()
+        # Updates the relative offset between the popup widget and the parent widget.
         self._update_relative_offset()
+
+        # Calls the base class implementation to set the visibility of the widget.
         return super().setVisible(visible)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QtGui.QMouseEvent):
         """Event handler for when a mouse button is pressed within the popup widget.
+
+        Args:
+            event (QtCore.QEvent): The mouse press event.
         """
+        # If the middle mouse button is pressed, stores the initial drag position and sets the _is_dragging flag to True.
         if event.button() == QtCore.Qt.MiddleButton:
+            # Store the initial drag position
             self._drag_start_position = event.globalPos()
+
+            # Set the _is_dragging flag to True
             self._is_dragging = True
+        # If a different mouse button is pressed, the base class implementation is called to handle the event.
         else:
+            # Call the base class implementation to handle the event for other mouse buttons
             super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event: QtGui.QMouseEvent):
         """Event handler for when the mouse is moved within the popup widget.
+
+        Args:
+            event (QtCore.QEvent): The mouse move event.
         """
+        # If dragging is in progress, the popup widget is moved accordingly to simulate dragging.
         if self._is_dragging:
+            # Calculate the delta between the current mouse position and the initial drag start position
             delta = event.globalPos() - self._drag_start_position
+
+            # Move the popup widget to the new position
             self.move(self.pos() + delta)
+
+            # Update the drag start position to the current mouse position
             self._drag_start_position = event.globalPos()
+
+        # Call the base class implementation to handle the event
         super().mouseMoveEvent(event)
 
-    def mouseReleaseEvent(self, event):
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
         """Event handler for when a mouse button is released within the popup widget.
+
+        Args:
+            event (QtCore.QEvent): The mouse release event.
         """
+        # If the middle mouse button is released, dragging is stopped and the relative offset is updated.
         if event.button() == QtCore.Qt.MiddleButton:
+            # Stop dragging by setting the _is_dragging flag to False
             self._is_dragging = False
+
+            # Update the relative offset between the popup widget and the parent widget
             self._update_relative_offset()
+        # If a different mouse button is released, the base class implementation is called to handle the event.
         else:
+            # Call the base class implementation to handle the event for other mouse buttons
             super().mouseReleaseEvent(event)
