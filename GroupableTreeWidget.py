@@ -54,14 +54,14 @@ ID_TO_DATA_DICT = {
     }
 
 def get_pastel_color(color: QtGui.QColor) -> QtGui.QColor:
-    ''' Get a pastel version of the given color.
+    """Get a pastel version of the given color.
 
     Args:
         color (QtGui.QColor): The original color.
 
     Returns:
         QtGui.QColor: The pastel color.
-    '''
+    """
     h, s, v, a = color.getHsvF()
     s = s * 0.4  # Decrease saturation to achieve a more pastel look
     v = v * 0.9  # Decrease value/brightness slightly
@@ -76,7 +76,7 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
                  min_color: QtGui.QColor = get_pastel_color(QtGui.QColor(29, 144, 0)), 
                  max_color: QtGui.QColor = get_pastel_color(QtGui.QColor(144, 0, 0))
                  ):
-        ''' Initialize the ColorScaleItemDelegate.
+        """Initialize the ColorScaleItemDelegate.
 
         Args:
             parent (QtCore.QObject): The parent object. Default is None.
@@ -84,9 +84,9 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
             max_value (Number): The maximum value of the range. Default is 100.
             min_color (QtGui.QColor): The color corresponding to the minimum value. Default is a pastel green.
             max_color (QtGui.QColor): The color corresponding to the maximum value. Default is a pastel red.
-        '''
+        """
         # Initialize the super class
-        super(ColorScaleItemDelegate, self).__init__(parent)
+        super().__init__(parent)
 
         # Store the arguments
         self.min_value = min_value
@@ -97,14 +97,14 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
     # Private Methods
     # ---------------
     def _interpolate_color(self, value: Number) -> QtGui.QColor:
-        ''' Interpolate between the min_color and max_color based on the given value.
+        """Interpolate between the min_color and max_color based on the given value.
 
         Args:
             value (Number): The value within the range.
 
         Returns:
             QtGui.QColor: The interpolated color.
-        '''
+        """
         # Normalize the value between 0 and 1
         normalized_value = (value - self.min_value) / (self.max_value - self.min_value)
 
@@ -121,20 +121,20 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
     # Event Handling or Override Methods
     # ----------------------------------
     def paint(self, painter: QtGui.QPainter, option: QtWidgets.QStyleOptionViewItem, model_index: QtCore.QModelIndex):
-        ''' Paint the delegate.
+        """Paint the delegate.
         
         Args:
             painter (QtGui.QPainter): The painter to use for drawing.
             option (QtWidgets.QStyleOptionViewItem): The style option to use for drawing.
             model_index (QtCore.QModelIndex): The model index of the item to be painted.
-        '''
+        """
         # Retrieve the value from the model using UserRole
         value = model_index.data(QtCore.Qt.UserRole)
 
         # Check if the value is not a number or if min_value is greater than or equal to max_value
         if not isinstance(value, Number) or self.min_value >= self.max_value:
             # Paint the item normally using the parent implementation
-            super(ColorScaleItemDelegate, self).paint(painter, option, model_index)
+            super().paint(painter, option, model_index)
             return
 
         # Interpolate between the min_color and max_color based on the value
@@ -148,26 +148,26 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.fillRect(option.rect, option.backgroundBrush)
 
         # Paint the item normally using the parent implementation
-        super(ColorScaleItemDelegate, self).paint(painter, option, model_index)
+        super().paint(painter, option, model_index)
 
 class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
-    ''' A custom `QTreeWidgetItem` that can handle different data formats and store additional data in the user role.
+    """A custom `QTreeWidgetItem` that can handle different data formats and store additional data in the user role.
 
     Attributes:
         id (int): The ID of the item.
-    '''
+    """
     # Initialization and Setup
     # ------------------------
     def __init__(self, parent: Union[QtWidgets.QTreeWidget, QtWidgets.QTreeWidgetItem], 
                  item_data: Union[Dict[str, Any], List[str]] = None, 
                  item_id: int = None):
-        ''' Initialize the `TreeWidgetItem` with the given parent and item data.
+        """Initialize the `TreeWidgetItem` with the given parent and item data.
         
         Args:
             parent (Union[QtWidgets.QTreeWidget, QtWidgets.QTreeWidgetItem]): The parent `QTreeWidget` or QtWidgets.QTreeWidgetItem.
             item_data (Union[Dict[str, Any], List[str]], optional): The data for the item. Can be a list of strings or a dictionary with keys matching the headers of the parent `QTreeWidget`. Defaults to `None`.
             item_id (int, optional): The ID of the item. Defaults to `None`.
-        '''
+        """
         # Set the item's ID
         self.id = item_id
 
@@ -189,7 +189,7 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
                                                                  for column in column_names[1:]]
 
         # Call the superclass's constructor to set the item's data
-        super(TreeWidgetItem, self).__init__(parent, map(str, item_data_list))
+        super().__init__(parent, map(str, item_data_list))
 
         # Set the UserRole data for the item.
         self._set_user_role_data(item_data_list)
@@ -197,11 +197,11 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
     # Private Methods
     # ---------------
     def _set_user_role_data(self, item_data_list: List[Any]):
-        ''' Set the UserRole data for the item.
+        """Set the UserRole data for the item.
 
         Args:
             item_data_list (List[Any]): The list of data to set as the item's data.
-        '''
+        """
         # Iterate through each column in the item
         for column_index, value in enumerate(item_data_list):
             # Set the value for the column in the UserRole data
@@ -210,11 +210,11 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
     # Extended Methods
     # ----------------
     def get_child_level(self) -> int:
-        ''' Get the child level of TreeWidgetItem
+        """Get the child level of TreeWidgetItem
 
         Returns:
             int: The child level of the TreeWidgetItem
-        '''
+        """
         # Set the current item as self
         item = self
         # Initialize child level
@@ -231,11 +231,11 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         return child_level
 
     def get_model_indexes(self) -> List[QtCore.QModelIndex]:
-        ''' Get the model index for each column in the tree widget.
+        """Get the model index for each column in the tree widget.
 
         Returns:
             List[QtCore.QModelIndex]: A list of model index for each column in the tree widget.
-        '''
+        """
         # Get a list of the shown column indices
         shown_column_index_list = self.treeWidget().get_shown_column_index_list()
 
@@ -254,14 +254,14 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         return model_indexes
 
     def get_value(self, column: Union[int, str]) -> Any:
-        ''' Get the value of the item's UserRole data for the given column.
+        """Get the value of the item's UserRole data for the given column.
 
         Args:
             column (Union[int, str]): The column index or name.
 
         Returns:
             Any: The value of the UserRole data.
-        '''
+        """
         # Get the column index from the column name if necessary
         column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
 
@@ -273,12 +273,12 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         return value
 
     def set_value(self, column: Union[int, str], value: Any):
-        ''' Set the value of the item's UserRole data for the given column.
+        """Set the value of the item's UserRole data for the given column.
 
         Args:
             column (Union[int, str]): The column index or name.
             value (Any): The value to set.
-        '''
+        """
         # Get the column index from the column name if necessary
         column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
 
@@ -288,26 +288,26 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
     # Special Methods
     # ---------------
     def __getitem__(self, key: Union[int, str]) -> Any:
-        ''' Get the value of the item's UserRole data for the given column.
+        """Get the value of the item's UserRole data for the given column.
 
         Args:
             key (Union[int, str]): The column index or name.
 
         Returns:
             Any: The value of the UserRole data.
-        '''
+        """
         # Delegate the retrieval of the value to the `get_value` method
         return self.get_value(key)
 
     def __lt__(self, other_item: QtWidgets.QTreeWidgetItem) -> bool:
-        ''' Sort the items in the tree widget based on their data.
+        """Sort the items in the tree widget based on their data.
 
         Args:
             other_item (QtWidgets.QTreeWidgetItem): The item to compare with.
 
         Returns:
             bool: Whether this item is less than the other item.
-        '''
+        """
         # Get the column that is currently being sorted
         column = self.treeWidget().sortColumn()
 
@@ -340,7 +340,7 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
             return str(self_data) < str(other_data)
 
 class GroupableTreeWidget(QtWidgets.QTreeWidget):
-    ''' A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
+    """A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
 
     Attributes:
         column_name_list (List[str]): The list of column names to be displayed in the tree widget.
@@ -351,7 +351,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         _middle_button_prev_pos (QtCore.QPoint): The previous position of the mouse when the middle button was pressed.
         _middle_button_start_pos (QtCore.QPoint): The initial position of the mouse when the middle button was pressed.
         _mouse_move_timestamp (float): The timestamp of the last mouse movement.
-    '''
+    """
     # Signals emitted by the GroupableTreeWidget
     ungrouped_all = QtCore.pyqtSignal()
     grouped_by_column = QtCore.pyqtSignal(str)
@@ -362,7 +362,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
                        column_name_list: List[str] = list(), 
                        id_to_data_dict: Dict[int, Dict[str, str]] = dict()):
         # Call the parent class constructor
-        super(GroupableTreeWidget, self).__init__(parent)
+        super().__init__(parent)
 
         # Store the column names and data dictionary for later use
         self.column_name_list = column_name_list
@@ -376,8 +376,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self._setup_signal_connections()
 
     def _setup_initial_values(self):
-        ''' Set up the initial values for the widget.
-        '''
+        """Set up the initial values for the widget.
+        """
         # Attributes
         # ----------
         # Store the current grouped column name
@@ -397,8 +397,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self._mouse_move_timestamp = float()
 
     def _setup_ui(self):
-        ''' Set up the UI for the widget, including creating widgets and layouts.
-        '''
+        """Set up the UI for the widget, including creating widgets and layouts.
+        """
         # Initializes scroll modes for the widget.
         self.setVerticalScrollMode(QtWidgets.QTreeWidget.ScrollMode.ScrollPerPixel)
         self.setHorizontalScrollMode(QtWidgets.QTreeWidget.ScrollMode.ScrollPerPixel)
@@ -422,15 +422,15 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setSelectionBehavior(QtWidgets.QTreeWidget.SelectItems)
 
     def _setup_signal_connections(self):
-        ''' Set up signal connections between widgets and slots.
-        '''
+        """Set up signal connections between widgets and slots.
+        """
         # Connect signal of header
         self.header().customContextMenuRequested.connect(self._on_header_context_menu)
 
     # Private Methods
     # ---------------
     def _on_header_context_menu(self, pos: QtCore.QPoint) -> None:
-        ''' Show a context menu for the header of the tree widget.
+        """Show a context menu for the header of the tree widget.
 
         Context Menu:
             +-------------------------------+
@@ -445,7 +445,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         Args:
             pos (QtCore.QPoint): The position where the right click occurred.
-        '''
+        """
         # Get the index of the column where the right click occurred
         column = self.header().logicalIndexAt(pos)
         
@@ -493,14 +493,14 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         menu.popup(QtGui.QCursor.pos())
 
     def _create_item_groups(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
-        ''' Group the data into a dictionary mapping group names to lists of tree items.
+        """Group the data into a dictionary mapping group names to lists of tree items.
 
         Args:
             data (List[str]): The data to be grouped.
 
         Returns:
             Dict[str, List[QtWidgets.QTreeWidgetItem]]: A dictionary mapping group names to lists of tree items.
-        '''
+        """
         # Create a dictionary to store the groups
         groups = {}
 
@@ -520,12 +520,12 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         return groups
 
     def _apply_scroll_momentum(self, velocity: QtCore.QPointF, momentum_factor: float = 0.5) -> None:
-        ''' Applies momentum to the scroll bars based on the given velocity.
+        """Applies momentum to the scroll bars based on the given velocity.
 
         Args:
             velocity (QtCore.QPointF): The velocity of the mouse movement.
             momentum_factor (float, optional): The factor to control the momentum strength. Defaults to 0.5.
-        '''
+        """
         # Calculate horizontal and vertical momentum based on velocity and momentum factor
         horizontal_momentum = int(velocity.x() * momentum_factor)
         vertical_momentum = int(velocity.y() * momentum_factor)
@@ -535,12 +535,12 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self._animate_scroll(self.verticalScrollBar(), vertical_momentum)
 
     def _animate_scroll(self, scroll_bar: QtWidgets.QScrollBar, momentum: int) -> None:
-        ''' Animates the scrolling of the given scroll bar to the target value over the specified duration.
+        """Animates the scrolling of the given scroll bar to the target value over the specified duration.
 
         Args:
             scroll_bar (QtWidgets.QScrollBar): The scroll bar to animate.
             momentum (int): The momentum value to scroll.
-        '''
+        """
         # Get the current value of the scroll bar
         current_value = scroll_bar.value()
         # Calculate the target value by subtracting the momentum from the current value
@@ -553,10 +553,10 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         start_time = time.time()
 
         def _perform_scroll_animation():
-            ''' Animates the scrolling of the given scroll bar to the target value over the specified duration.
+            """Animates the scrolling of the given scroll bar to the target value over the specified duration.
 
             The animation interpolates the scroll bar value from the current value to the target value based on the elapsed time.
-            '''
+            """
             # Access the current_value variable from the enclosing scope
             nonlocal current_value
 
@@ -587,7 +587,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
     # Extended Methods
     # ----------------
     def calculate_column_min_max(self, column: int) -> Tuple[Number, Number]:
-        ''' Calculate the minimum and maximum values of a specific column.
+        """Calculate the minimum and maximum values of a specific column.
 
         Args:
             column (int): The index of the column.
@@ -597,7 +597,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         Raises:
             ValueError: If no valid values are found in the column.
-        '''
+        """
         # Collect the values from the specified column
         values = [self.topLevelItem(index).get_value(column) for index in range(self.topLevelItemCount()) if isinstance(self.topLevelItem(index).get_value(column), Number)]
 
@@ -613,11 +613,11 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         return min_value, max_value
 
     def get_shown_column_index_list(self) -> List[int]:
-        ''' Returns a list of indices for the columns that are shown (i.e., not hidden) in the tree widget.
+        """Returns a list of indices for the columns that are shown (i.e., not hidden) in the tree widget.
 
         Returns:
             List[int]: A list of integers, where each integer is the index of a shown column in the tree widget.
-        '''
+        """
         # Get the header of the tree widget
         header = self.header()
 
@@ -628,11 +628,11 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         return column_index_list
 
     def set_column_color_scale(self, column: int):
-        ''' Set the color scale for a specific column.
+        """Set the color scale for a specific column.
 
         Args:
             column (int): The index of the column to set the color scale.
-        '''
+        """
         try:
             # Calculate the minimum and maximum values of the column
             min_value, max_value = self.calculate_column_min_max(column)
@@ -646,17 +646,17 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             self.setItemDelegateForColumn(column, delegate)
 
     def reset_all_color_scale_column(self):
-        ''' Reset the color scale for all columns in the tree widget.
-        '''
+        """Reset the color scale for all columns in the tree widget.
+        """
         for column in range(self.columnCount()):
             self.setItemDelegateForColumn(column, None)
 
     def set_column_name_list(self, column_name_list: List[str]) -> None:
-        ''' Set the names of the columns in the tree widget.
+        """Set the names of the columns in the tree widget.
 
         Args:
             column_name_list (List[str]): The list of column names to be set.
-        '''
+        """
         # Store the column names for later use
         self.column_name_list = column_name_list
 
@@ -665,7 +665,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setHeaderLabels(self.column_name_list)
 
     def get_column_index(self, column_name: str) -> int:
-        ''' Retrieves the index of the specified column name.
+        """Retrieves the index of the specified column name.
 
         Args:
             column_name: The name of the column.
@@ -675,7 +675,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         Raises:
             ValueError: If the column name is not found.
-        '''
+        """
         # Check if the column name is not in the column_name_list
         if column_name not in self.column_name_list:
             # Raise an exception with a descriptive error message
@@ -685,17 +685,17 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         return self.column_name_list.index(column_name)
 
     def get_column_visual_index(self, column_name: str) -> int:
-        ''' 
-        '''
+        """
+        """
         #
         return self.header().visualIndex(self.column_name_list.index(column_name))
 
     def add_items(self, id_to_data_dict: Dict[int, Dict[str, str]]) -> None:
-        ''' Add items to the tree widget.
+        """Add items to the tree widget.
 
         Args:
             id_to_data_dict (Dict[int, Dict[str, str]]): A dictionary mapping item IDs to their data as a dictionary.
-        '''
+        """
         # Store the data dictionary for later use
         self.id_to_data_dict = id_to_data_dict
 
@@ -708,11 +708,11 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.resize_to_contents()
 
     def group_by_column(self, column: int) -> None:
-        ''' Group the items in the tree widget by the values in the specified column.
+        """Group the items in the tree widget by the values in the specified column.
 
         Args:
             column (int): The index of the column to group by.
-        '''
+        """
         # Ungroup all items in the tree widget
         self.ungroup_all()
 
@@ -762,11 +762,11 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.grouped_by_column.emit(self.grouped_column_name)
         
     def fit_column_in_view(self) -> None:
-        ''' Adjust the width of all columns to fit the entire view.
+        """Adjust the width of all columns to fit the entire view.
     
             This method resizes columns so that their sum is equal to the width of the view minus the width of the vertical scroll bar. 
             It starts by reducing the width of the column with the largest width by 10% until all columns fit within the expected width.
-        '''
+        """
         # Get the expected width of the columns (the width of the view minus the width of the scroll bar)
         expect_column_width = self.size().width() - self.verticalScrollBar().width()
         # Calculate the sum of the current column widths
@@ -783,16 +783,16 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             column_width_sum -= self.columnWidth(largest_column) - new_width
 
     def resize_to_contents(self) -> None:
-        ''' Resize all columns in the object to fit their contents.
-        '''
+        """Resize all columns in the object to fit their contents.
+        """
         # Iterate through all columns
         for column_index in range(self.columnCount()):  
             # Resize the column to fit its contents
             self.resizeColumnToContents(column_index) 
 
     def ungroup_all(self) -> None:
-        ''' Ungroup all the items in the tree widget.
-        '''
+        """Ungroup all the items in the tree widget.
+        """
         # Return if there are no groups to ungroup
         if not self.grouped_column_name:
             return
@@ -827,14 +827,14 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.ungrouped_all.emit()
     
     def get_all_items(self) -> List[QtWidgets.QTreeWidgetItem]:
-        ''' This function returns all the items in the tree widget as a list.
+        """This function returns all the items in the tree widget as a list.
 
         The items are sorted based on their order in the tree structure, 
         with children appearing after their parent items for each grouping.
 
         Returns:
             List[QtWidgets.QTreeWidgetItem]: A list containing all the items in the tree widget.
-        '''
+        """
         def traverse_items(item: QtWidgets.QTreeWidgetItem):
             # Recursively traverse the children of the current item
             for child_index in range(item.childCount()):
@@ -940,17 +940,17 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         if event.matches(QtGui.QKeySequence.Copy):
             self.copy_selected_cells()
         else:
-            super(GroupableTreeWidget, self).keyPressEvent(event)
+            super().keyPressEvent(event)
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
-        ''' Handles mouse press event.
+        """Handles mouse press event.
         
         Overrides the parent class method to handle the event where the middle mouse button is pressed.
         If the middle button is pressed, sets the cursor to SizeAllCursor.
         
         Args:
             event: The mouse event.
-        '''
+        """
         # Check if middle mouse button is pressed
         if event.button() == QtCore.Qt.MouseButton.MiddleButton:
             # Set middle button press flag to True
@@ -961,17 +961,17 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.SizeAllCursor)
         else:
             # If not middle button, call the parent class method to handle the event
-            super(GroupableTreeWidget, self).mousePressEvent(event)
+            super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        ''' Handles mouse release event.
+        """Handles mouse release event.
         
         Overrides the parent class method to handle the event where the middle mouse button is released.
         If the middle button is released, restores the cursor to the default.
         
         Args:
             event: The mouse event.
-        '''
+        """
         # Check if middle mouse button is released
         if event.button() == QtCore.Qt.MouseButton.MiddleButton:
             # Set middle button press flag to False
@@ -985,17 +985,17 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             QtWidgets.QApplication.restoreOverrideCursor()
         else:
             # If not middle button, call the parent class method to handle the event
-            super(GroupableTreeWidget, self).mouseReleaseEvent(event)
+            super().mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event: QtGui.QMouseEvent):
-        ''' Handles mouse move event.
+        """Handles mouse move event.
         
         Overrides the parent class method to handle the event where the mouse is moved.
         If the middle button is pressed, adjusts the scroll bar values according to the mouse movement.
         
         Args:
             event: The mouse event.
-        '''
+        """
         # Check if middle mouse button is pressed
         if self._is_middle_button_pressed:
             # Calculate the change in mouse position
@@ -1017,11 +1017,11 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             self._mouse_move_timestamp = time.time()
         else:
             # If middle button is not pressed, call the parent class method to handle the event
-            super(GroupableTreeWidget, self).mouseMoveEvent(event)
+            super().mouseMoveEvent(event)
 
 def main():
-    ''' Create the application and main window, and show the widget.
-    '''
+    """Create the application and main window, and show the widget.
+    """
     # Create the application and the main window
     app = QtWidgets.QApplication(sys.argv)
 
