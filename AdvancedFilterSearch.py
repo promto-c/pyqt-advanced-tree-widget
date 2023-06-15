@@ -644,6 +644,9 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
     def set_column_filter(self, column_name: str):
         self.column_combo_box.setCurrentText(column_name)
 
+    def set_keyword(self, keyword: str):
+        self.keyword_line_edit.setText(keyword)
+
 def main():
     """Create the application and main window, and show the widget.
     """
