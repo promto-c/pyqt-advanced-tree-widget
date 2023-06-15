@@ -1,7 +1,7 @@
 import sys, os
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
-from typing import Any, List, Callable
+from typing import Any, List, Callable, Union
 
 from theme.theme import set_theme
 
@@ -71,7 +71,13 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
         super().paint(painter, option, model_index)
 
 class FilterTreeWidget(QtWidgets.QTreeWidget):
-    """
+    """A custom tree widget for managing filters.
+
+    This widget provides a UI for managing filters with multiple columns, conditions, keywords,
+    and other filter options.
+
+    Signals:
+        filter_count_changed(int): Signal emitted when the filter count changes.
     """
     # Define a signal that will be emitted when the filter count changes
     filter_count_changed = QtCore.pyqtSignal(int)
@@ -231,7 +237,7 @@ class FilterTreeWidget(QtWidgets.QTreeWidget):
     # ----------------
     def add_filter(self, column, condition, keyword, is_negate: bool = False, is_case_sensitive: bool = False):
         """Add a filter to the tree widget. Called when the "Add Filter" button is clicked 
-            or when the Enter key is pressed in the keyword_line_edit widget.
+        or when the Enter key is pressed in the keyword_line_edit widget.
         """
         # Store the filter criteria in a list
         filter_criteria = [column, condition, keyword, is_negate, is_case_sensitive]
@@ -305,6 +311,8 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         'reg_exp': QtCore.Qt.MatchFlag.MatchRegExp,
     }
 
+    # Initialization and Setup
+    # ------------------------
     def __init__(self, tree_widget: QtWidgets.QTreeWidget, parent=None):
         """Initialize the widget and set up the UI, signal connections, and icon.
             Args:
@@ -343,31 +351,26 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         self.tabler_button_qicon = TablerQIcon(color=icon_color)
 
         # Initialize the HighlightItemDelegate object to highlight items in the tree widget.
-        self.hightlight_item_delegate = HighlightItemDelegate()
+        self.highlight_item_delegate = HighlightItemDelegate()
 
     def _setup_ui(self):
         """Set up the UI for the widget, including creating widgets and layouts.
         """
-        # Get a reference to the header item
-        header_item = self.tree_widget.headerItem()
-
-        # Get the list of column names
-        self.column_names = [header_item.text(column_index) for column_index in range(header_item.columnCount())]
-
         # Set up combo boxes
-        self.column_combo_box.addItems(self.column_names)
-        self.condition_combo_box.addItems(self.CONDITION_TO_MATCH_FLAG_DICT.keys())
+        self._update_column_combo_box()
+        self.condition_combo_box.addItems(self.CONDITION_TO_MATCH_FLAG_DICT)
 
-        #
+        # Create a filter tree widget instance for managing filters
         self.filter_tree_widget = FilterTreeWidget(self)
 
+        # Create a popup widget that contains the filter management widget
         self.filter_tree_popup = PopupWidget(
             widget=self.filter_tree_widget,
             parent=self,
         )
         
         # Add action to keyword line edit
-        self.add_action_on_keyword_line_edit()
+        self._add_action_on_keyword_line_edit()
         
         # Set the icon for the add filter button
         self.add_filter_button.setIcon(self.tabler_button_qicon.filter_add)
@@ -380,34 +383,85 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         self.add_filter_button.clicked.connect(self.add_filter)
         self.keyword_line_edit.returnPressed.connect(self.add_filter)
 
+        # Connect match options to slots
+        self.keyword_line_edit.textChanged.connect(self._highlight_search)
+        self.column_combo_box.activated.connect(self._highlight_search)
+        self.condition_combo_box.activated.connect(self._highlight_search)
+        self.match_case_action.triggered.connect(self._highlight_search)
+        self.negate_action.triggered.connect(self._highlight_search)
+
+        # Connect grouping signals to slots
+        self.tree_widget.grouped_by_column.connect(self._highlight_search)
+        self.tree_widget.grouped_by_column.connect(self._apply_filters)
+        self.tree_widget.ungrouped_all.connect(self._highlight_search)
+        self.tree_widget.ungrouped_all.connect(self._apply_filters)
+
+        # Connect filter count changed signals to slots
+        self.filter_tree_widget.filter_count_changed.connect(self._update_show_filter_button)
+        self.filter_tree_widget.filter_count_changed.connect(self._apply_filters)
+
         # Connect match actions to slots
         self.match_case_action.triggered.connect(self.set_case_sensitive_state)
         self.negate_action.triggered.connect(self.set_negate_state)
 
-        # Connect match options to slots
-        self.keyword_line_edit.textChanged.connect(self.hightlight_search)
-        self.column_combo_box.activated.connect(self.hightlight_search)
-        self.condition_combo_box.activated.connect(self.hightlight_search)
-        self.match_case_action.triggered.connect(self.hightlight_search)
-        self.negate_action.triggered.connect(self.hightlight_search)
-
-        # Connect grouping signals to slots
-        self.tree_widget.grouped_by_column.connect(self.hightlight_search)
-        self.tree_widget.grouped_by_column.connect(self.apply_filters)
-        self.tree_widget.ungrouped_all.connect(self.hightlight_search)
-        self.tree_widget.ungrouped_all.connect(self.apply_filters)
+        # Connect a signal to update the column combo box when the header's section count changes
+        self.tree_widget.header().sectionCountChanged.connect(self._update_column_combo_box)
 
         # Connect header signals to slots
-        self.tree_widget.header().sectionClicked.connect(self.hightlight_search)
+        self.tree_widget.header().sectionClicked.connect(self._highlight_search)
 
-
+        # Connect a signal to control the visibility of the filter_tree_popup based on the toggled state of the show_filter_button
         self.show_filter_button.toggled.connect(self.filter_tree_popup.setVisible)
 
-        # Connect filter count changed signals to slots
-        self.filter_tree_widget.filter_count_changed.connect(self.update_show_filter_button)
-        self.filter_tree_widget.filter_count_changed.connect(self.apply_filters)
+        # Create a shortcut for Ctrl+F
+        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
+        # Connect the activated signal of the shortcut to the _set_filter_as_selection slot
+        shortcut.activated.connect(self._set_filter_as_selection)
 
-    def add_action_on_keyword_line_edit(self):
+    # Private Methods
+    # ---------------
+    def _update_column_combo_box(self):
+        """Update the column combo box with the column names from the tree widget's header.
+
+        This method retrieves the column names from the header item of the tree widget
+        and populates the column combo box with the retrieved names.
+        """
+        # Get a reference to the header item
+        header_item = self.tree_widget.headerItem()
+
+        # Get the list of column names
+        self.column_names = [header_item.text(column_index) for column_index in range(header_item.columnCount())]
+
+        # Clear the existing items in the column combo box
+        self.column_combo_box.clear()
+
+        # Add the column names to the column combo box
+        self.column_combo_box.addItems(self.column_names)
+
+    def _set_filter_as_selection(self):
+        """Set the filter based on the selected item in the tree widget.
+
+        The filter is set by retrieving the selected item's value in the current column.
+        The column filter and keyword are updated accordingly, and the focus is set to the keyword line edit.
+        """
+        # Get the currently selected item in the tree widget
+        tree_item = self.tree_widget.currentItem()
+
+        # Get the index of the currently selected column
+        column = self.tree_widget.currentColumn()
+
+        # Retrieve the text value of the selected item in the current column
+        keyword = str(tree_item.get_value(column))
+
+        # Set the column filter to the current column
+        self.set_search_column(column)
+        # Set the keyword to the selected item's value
+        self.set_keyword(keyword)
+
+        # Set focus to the keyword line edit for user convenience
+        self.keyword_line_edit.setFocus()
+
+    def _add_action_on_keyword_line_edit(self):
         """Add two actions to the keyword line edit widget: match case and negate match.
         """
         # Add the match case action to the keyword line edit widget
@@ -424,29 +478,29 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         # Set the action to be checkable
         self.negate_action.setCheckable(True)
 
-    def hightlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
+    def _highlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
         """Highlight the specified `tree_items` in the tree widget.
         """
         # Reset the previous target model indexes
-        self.hightlight_item_delegate.target_model_indexes = list()
+        self.highlight_item_delegate.target_model_indexes = list()
 
         # Loop through the specified tree items
         for tree_item in tree_items:
 
             # Add the model indexes of the current tree item to the target properties
-            self.hightlight_item_delegate.target_model_indexes.extend(tree_item.get_model_indexes())
+            self.highlight_item_delegate.target_model_indexes.extend(tree_item.get_model_indexes())
 
         # Set the item delegate for the current row to the highlight item delegate
-        self.tree_widget.setItemDelegate(self.hightlight_item_delegate)
+        self.tree_widget.setItemDelegate(self.highlight_item_delegate)
 
-    def reset_highlight_all_items(self):
+    def _reset_highlight_all_items(self):
         """Reset the highlight of all items in the tree widget.
 
             This method resets the highlighting of all items in the tree widget by setting the delegate for each row to `None`.
-            The target model index properties stored in `self.hightlight_item_delegate` will also be reset to an empty list.
+            The target model index properties stored in `self.highlight_item_delegate` will also be reset to an empty list.
         """
         # Reset the target model index properties
-        self.hightlight_item_delegate.target_model_indexes = list()
+        self.highlight_item_delegate.target_model_indexes = list()
 
         # Get all items in the tree widget
         all_items = self.tree_widget.get_all_items()
@@ -458,31 +512,46 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
             # Set the delegate for the row to None
             self.tree_widget.setItemDelegateForRow(item_index, None)
 
-    def get_all_items_at_child_level(self, child_level: int = 0) -> List[QtWidgets.QTreeWidgetItem]:
-        """Retrieve all items at a specific child level in the tree widget.
-
-        Args:
-            child_level (int): The child level to retrieve items from. Defaults to 0 (top-level items).
-
-        Returns:
-            List[QtWidgets.QTreeWidgetItem]: List of `QTreeWidgetItem` objects at the specified child level.
+    def _apply_filters(self):
+        """Apply the filters specified by the user to the tree widget.
         """
-        # If child level is 0, return top-level items
-        if not child_level:
-            # return top-level items
-            return [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
-
-        # Get all items in the tree widget
+        # Get a list of all items in the tree widget
         all_items = self.tree_widget.get_all_items()
 
-        # Filter items to only those at the specified child level
-        return [item for item in all_items if item.get_child_level() == child_level]
-    
-    def hightlight_search(self):
+        # Hide all items
+        for item in all_items:
+            item.setHidden(True)
+
+        # Initial the intersection items list as all items
+        intersect_match_items = all_items
+
+        # Iterate through each filter criteria in the list, then intersect the match items for each filter criteria
+        for column, condition, keyword, is_negate, is_case_sensitive in self.filter_tree_widget.filter_criteria_list:
+            # Get the items that match the filter criteria
+            match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
+
+            # Update the intersected match items list
+            intersect_match_items = intersection(match_items, intersect_match_items)
+
+        # Show the items that match all filter criteria and their parent and children
+        self.show_matching_items(intersect_match_items)
+        
+    def _update_show_filter_button(self, filter_count: int = 0):
+        """Updates the text of the show filter button to reflect the number of active filters.
+
+        Args:
+            filter_count (int): The number of active filters. Defaults to 0.
+        """
+        # Convert the filter count to a string, or an empty string if it's zero
+        filter_count = str(filter_count) if filter_count else str()
+        # Set the text of the show filter button to the filter count
+        self.show_filter_button.setText(filter_count)
+
+    def _highlight_search(self):
         """Highlight the items in the tree widget that match the search criteria.
         """
         # Reset the highlight for all items
-        self.reset_highlight_all_items()
+        self._reset_highlight_all_items()
 
         # Get the selected column, condition, and keyword
         column = self.column_combo_box.currentText()
@@ -499,8 +568,10 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
 
         # Highlight the matched items
-        self.hightlight_items(match_items)
+        self._highlight_items(match_items)
 
+    # Extended Methods
+    # ----------------
     def find_match_items(self, column, condition, keyword, is_negate, is_case_sensitive) -> List[QtWidgets.QTreeWidgetItem]:
         """Find the items that match the given criteria.
 
@@ -552,8 +623,29 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         # Return the list of items that match the criteria.
         return match_items_at_child_level
 
+    def get_all_items_at_child_level(self, child_level: int = 0) -> List[QtWidgets.QTreeWidgetItem]:
+        """Retrieve all items at a specific child level in the tree widget.
+
+        Args:
+            child_level (int): The child level to retrieve items from. Defaults to 0 (top-level items).
+
+        Returns:
+            List[QtWidgets.QTreeWidgetItem]: List of `QTreeWidgetItem` objects at the specified child level.
+        """
+        # If child level is 0, return top-level items
+        if not child_level:
+            # return top-level items
+            return [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
+
+        # Get all items in the tree widget
+        all_items = self.tree_widget.get_all_items()
+
+        # Filter items to only those at the specified child level
+        return [item for item in all_items if item.get_child_level() == child_level]
+
     def set_case_sensitive_state(self, state: bool):
         """Update the is_case_sensitive member variable when the match case action state changes.
+
             Args:
                 state (bool): The state of match case action.
         """
@@ -563,6 +655,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
 
     def set_negate_state(self, state: bool):
         """Update the is_negate member variable when the negate action state changes.
+
             Args:
                 state (bool): The state of negate action.
         """
@@ -572,7 +665,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
 
     def add_filter(self):
         """Add a filter to the tree widget. Called when the "Add Filter" button is clicked 
-            or when the Enter key is pressed in the keyword_line_edit widget.
+        or when the Enter key is pressed in the keyword_line_edit widget.
         """
         # Get the selected column, condition, and keyword
         column = self.column_combo_box.currentText()
@@ -588,43 +681,8 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         # Clear the keyword_line_edit widget
         self.keyword_line_edit.clear()
 
-        #
+        # Add the filter to the filter_tree_widget
         self.filter_tree_widget.add_filter(column, condition, keyword, is_negate, is_case_sensitive)
-
-    def apply_filters(self):
-        """Apply the filters specified by the user to the tree widget.
-        """
-        # Get a list of all items in the tree widget
-        all_items = self.tree_widget.get_all_items()
-
-        # Hide all items
-        for item in all_items:
-            item.setHidden(True)
-
-        # Initial the intersection items list as all items
-        intersect_match_items = all_items
-
-        # Iterate through each filter criteria in the list, then intersect the match items for each filter criteria
-        for column, condition, keyword, is_negate, is_case_sensitive in self.filter_tree_widget.filter_criteria_list:
-            # Get the items that match the filter criteria
-            match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
-
-            # Update the intersected match items list
-            intersect_match_items = intersection(match_items, intersect_match_items)
-
-        # Show the items that match all filter criteria and their parent and children
-        self.show_matching_items(intersect_match_items)
-        
-    def update_show_filter_button(self, filter_count: int = 0):
-        """Updates the text of the show filter button to reflect the number of active filters.
-
-        Args:
-            filter_count (int): The number of active filters. Defaults to 0.
-        """
-        # Convert the filter count to a string, or an empty string if it's zero
-        filter_count = str(filter_count) if filter_count else str()
-        # Set the text of the show filter button to the filter count
-        self.show_filter_button.setText(filter_count)
 
     def show_matching_items(self, match_items: List[QtWidgets.QTreeWidgetItem]):
         """Show the items and their parent and children.
@@ -641,10 +699,26 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
             for index in range(item.childCount()):
                 item.child(index).setHidden(False)
 
-    def set_column_filter(self, column_name: str):
-        self.column_combo_box.setCurrentText(column_name)
+    def set_search_column(self, column: Union[int, str]):
+        """Set the column filter to the specified column.
+
+        Args:
+            column (Union[int, str]): The column index or column name to set as the column filter.
+        """
+        if isinstance(column, int):
+            # Set the current index of the column combo box to the specified column index
+            self.column_combo_box.setCurrentIndex(column)
+        elif isinstance(column, str):
+            # Set the current text of the column combo box to the specified column name
+            self.column_combo_box.setCurrentText(column)
 
     def set_keyword(self, keyword: str):
+        """Set the keyword for filtering.
+
+        Args:
+            keyword (str): The keyword to set for filtering.
+        """
+        # Set the text of the keyword line edit to the specified keyword
         self.keyword_line_edit.setText(keyword)
 
 def main():
@@ -662,7 +736,7 @@ def main():
 
     # Create an instance of the widget and set it as the central widget
     widget = AdvancedFilterSearch(tree_widget, parent=window)
-    widget.set_column_filter('Name')
+    widget.set_search_column('Name')
     window.setCentralWidget(widget)
     
     # Create the scalable view and set the tree widget as its central widget
