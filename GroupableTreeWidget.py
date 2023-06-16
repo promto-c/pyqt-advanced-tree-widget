@@ -93,6 +93,8 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
         self.max_value = max_value
         self.min_color = min_color
         self.max_color = max_color
+        
+        self.keyword_colors = dict()
 
     # Private Methods
     # ---------------
@@ -118,6 +120,24 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
 
         return color
 
+    def _get_keyword_color(self, keyword: str) -> QtGui.QColor:
+        """Get the color associated with a keyword.
+
+        Args:
+            keyword (str): The keyword for which to retrieve the color.
+
+        Returns:
+            QtGui.QColor: The color associated with the keyword.
+        """
+        if keyword not in self.keyword_colors:
+            # Generate a new color for the keyword
+            hue = hash(keyword) % 360
+            saturation = 0.6
+            value = 0.6
+            keyword_color = QtGui.QColor.fromHsvF(hue / 360, saturation, value)
+            self.keyword_colors[keyword] = keyword_color
+        return self.keyword_colors[keyword]
+
     # Event Handling or Override Methods
     # ----------------------------------
     def paint(self, painter: QtGui.QPainter, option: QtWidgets.QStyleOptionViewItem, model_index: QtCore.QModelIndex):
@@ -137,6 +157,17 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
             super().paint(painter, option, model_index)
             return
 
+        if isinstance(value, Number):
+            # If the value is numerical, use _interpolate_color
+            color = self._interpolate_color(value)
+        elif isinstance(value, str):
+            # If the value is a string, use _get_keyword_color
+            color = self._get_keyword_color(value)
+        # else:
+            # For other data types, paint the item normally
+        #     super().paint(painter, option, model_index)
+        #     return
+        
         # Interpolate between the min_color and max_color based on the value
         color = self._interpolate_color(value)
 
@@ -637,13 +668,15 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             # Calculate the minimum and maximum values of the column
             min_value, max_value = self.calculate_column_min_max(column)
         except ValueError as e:
-            # Show tooltip message if no valid values or non-numeric column
-            self.show_tool_tip(str(e))
-            return
-        else:
+            min_value=0
+            max_value=0
+            # # Show tooltip message if no valid values or non-numeric column
+            # self.show_tool_tip(str(e))
+            # return
+        # else:
             # Create and set the color scale delegate for the column
-            delegate = ColorScaleItemDelegate(self, min_value, max_value)
-            self.setItemDelegateForColumn(column, delegate)
+        delegate = ColorScaleItemDelegate(self, min_value, max_value)
+        self.setItemDelegateForColumn(column, delegate)
 
     def reset_all_color_scale_column(self):
         """Reset the color scale for all columns in the tree widget.
