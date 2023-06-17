@@ -1037,6 +1037,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             This method resizes columns so that their sum is equal to the width of the view minus the width of the vertical scroll bar. 
             It starts by reducing the width of the column with the largest width by 10% until all columns fit within the expected width.
         """
+        # Resize all columns to fit their contents
+        self.resize_to_contents()
+        
         # Get the expected width of the columns (the width of the view minus the width of the scroll bar)
         expect_column_width = self.size().width() - self.verticalScrollBar().width()
         # Calculate the sum of the current column widths
