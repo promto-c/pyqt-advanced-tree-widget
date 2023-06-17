@@ -33,7 +33,8 @@ class PopupWidget(QtWidgets.QWidget):
     Attributes:
         _relative_offset (QtCore.QPoint): The relative offset between the popup widget and the top parent widget.
     """
-    # Class constant
+    # Class constants
+    # ---------------
     INITIAL_POSITION_OFFSET = QtCore.QPoint(-140, 30)
 
     # Initialization and Setup

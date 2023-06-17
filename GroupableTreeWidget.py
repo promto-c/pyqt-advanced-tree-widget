@@ -1,7 +1,9 @@
 import sys
 import time
+import datetime
+import dateutil.parser as date_parser
 
-from typing import Any, Dict, List, Union, Tuple
+from typing import Any, Dict, List, Union, Tuple, Type, Callable, Optional
 from numbers import Number
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -9,81 +11,223 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from theme.theme import set_theme
 
 # Define example data
-COLUMN_NAME_LIST = ['ID', 'Name', 'Age', 'City']
+COLUMN_NAME_LIST = [
+    'shot_id',
+    'sequence',
+    'status',
+    'start_date',
+    'due_date',
+    'priority',
+    'shot_length',
+    'artist',
+    'department',
+]
+
 ID_TO_DATA_DICT = {
     1: {
-        'Name': 'Alice',
-        'Age': 30,
-        'City': 'New York'},
+        'shot_id': 'SHOT001',
+        'sequence': 'SEQ001',
+        'status': 'In Progress',
+        'start_date': '2023-06-17',
+        'due_date': '2023-07-15',
+        'priority': 2,
+        'shot_length': 150,
+        'artist': 'John Smith',
+        'department': 'Compositing'
+    },
     2: {
-        'Name': 'Bob',
-        'Age': 25,
-        'City': 'Chicago'},
+        'shot_id': 'SHOT002',
+        'sequence': 'SEQ001',
+        'status': 'Completed',
+        'start_date': '2023-06-20',
+        'due_date': '2023-07-10',
+        'priority': 1,
+        'shot_length': 200,
+        'artist': 'Jane Doe',
+        'department': 'Animation'
+    },
     3: {
-        'Name': 'Charlie',
-        'Age': 35,
-        'City': 'Los Angeles'},
+        'shot_id': 'SHOT003',
+        'sequence': 'SEQ002',
+        'status': 'Not Started',
+        'start_date': '2023-06-25',
+        'due_date': '2023-07-20',
+        'priority': 3,
+        'shot_length': 120,
+        'artist': 'Alex Johnson',
+        'department': 'Lighting'
+    },
     4: {
-        'Name': 'David',
-        'Age': 40,
-        'City': 'San Francisco'},
+        'shot_id': 'SHOT004',
+        'sequence': 'SEQ002',
+        'status': 'In Progress',
+        'start_date': '2023-06-18',
+        'due_date': '2023-07-25',
+        'priority': 2,
+        'shot_length': 180,
+        'artist': 'Emily Brown',
+        'department': 'Modeling'
+    },
     5: {
-        'Name': 'Emily',
-        'Age': 28,
-        'City': 'Boston'},
+        'shot_id': 'SHOT005',
+        'sequence': 'SEQ003',
+        'status': 'Completed',
+        'start_date': '2023-06-22',
+        'due_date': '2023-07-12',
+        'priority': 1,
+        'shot_length': 250,
+        'artist': 'Michael Johnson',
+        'department': 'Rigging'
+    },
     6: {
-        'Name': 'Frank',
-        'Age': 32,
-        'City': 'New York'},
+        'shot_id': 'SHOT006',
+        'sequence': 'SEQ003',
+        'status': 'In Progress',
+        'start_date': '2023-06-30',
+        'due_date': '2023-07-30',
+        'priority': 3,
+        'shot_length': 130,
+        'artist': 'Sophia Wilson',
+        'department': 'Texturing'
+    },
     7: {
-        'Name': 'Gina',
-        'Age': 27,
-        'City': 'Chicago'},
+        'shot_id': 'SHOT007',
+        'sequence': 'SEQ004',
+        'status': 'Not Started',
+        'start_date': '2023-06-16',
+        'due_date': '2023-07-18',
+        'priority': 2,
+        'shot_length': 160,
+        'artist': 'Daniel Lee',
+        'department': 'Animation'
+    },
     8: {
-        'Name': 'Henry',
-        'Age': 38,
-        'City': 'Los Angeles'},
+        'shot_id': 'SHOT008',
+        'sequence': 'SEQ004',
+        'status': 'In Progress',
+        'start_date': '2023-06-25',
+        'due_date': '2023-07-25',
+        'priority': 2,
+        'shot_length': 190,
+        'artist': 'Olivia Davis',
+        'department': 'Compositing'
+    },
     9: {
-        'Name': 'Irene',
-        'Age': 29,
-        'City': 'San Francisco'},
+        'shot_id': 'SHOT009',
+        'sequence': 'SEQ005',
+        'status': 'In Progress',
+        'start_date': '2023-06-19',
+        'due_date': '2023-07-20',
+        'priority': 3,
+        'shot_length': 140,
+        'artist': 'Noah Johnson',
+        'department': 'Lighting'
+    },
     10: {
-        'Name': 'Jack',
-        'Age': 33,
-        'City': 'Boston'},
-    }
+        'shot_id': 'SHOT010',
+        'sequence': 'SEQ005',
+        'status': 'Completed',
+        'start_date': '2023-06-20',
+        'due_date': '2023-07-15',
+        'priority': 1,
+        'shot_length': 220,
+        'artist': 'Isabella Clark',
+        'department': 'Modeling'
+    },
+}
 
-def get_pastel_color(color: QtGui.QColor) -> QtGui.QColor:
-    """Get a pastel version of the given color.
+def create_pastel_color(color: QtGui.QColor, saturation: float = 0.4, value: float = 0.9) -> QtGui.QColor:
+    """Create a pastel version of the given color.
 
     Args:
         color (QtGui.QColor): The original color.
+        saturation (float): The desired saturation factor (default: 0.4).
+        value (float): The desired value/brightness factor (default: 0.9).
 
     Returns:
         QtGui.QColor: The pastel color.
     """
     h, s, v, a = color.getHsvF()
-    s = s * 0.4  # Decrease saturation to achieve a more pastel look
-    v = v * 0.9  # Decrease value/brightness slightly
+
+    # Decrease saturation and value to achieve a more pastel look
+    s *= saturation
+    v *= value
 
     pastel_color = QtGui.QColor.fromHsvF(h, s, v, a)
     return pastel_color
 
-class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
+def parse_date(date_string: str) -> Optional[datetime.datetime]:
+    """Parse the given date string into a datetime.datetime object.
+
+    Args:
+        date_string: The date string to parse.
+
+    Returns:
+        The parsed datetime object, or None if parsing fails.
+    """
+    try:
+        parsed_date = date_parser.parse(date_string)
+        return parsed_date
+    except ValueError:
+        return None
+
+class AdaptiveColorMappingDelegate(QtWidgets.QStyledItemDelegate):
+    """A delegate class for adaptive color mapping in Qt items.
+
+    This delegate maps values to colors based on specified rules and color definitions.
+    It provides functionality to map numerical values, keywords, and date strings to colors.
+
+    Class Constants:
+        COLOR_DICT: A dictionary that maps color names to corresponding QColor objects.
+
+    Attributes:
+        min_value (Optional[Number]): The minimum value of the range.
+        max_value (Optional[Number]): The maximum value of the range.
+        min_color (QtGui.QColor): The color corresponding to the minimum value.
+        max_color (QtGui.QColor): The color corresponding to the maximum value.
+        keyword_color_dict (Dict[str, QtGui.QColor]): A dictionary that maps keywords to specific colors.
+        date_format (str): The date format string.
+        date_color_dict (Dict[str, QtGui.QColor]): A dictionary that caches colors for date values.
+    """
+    # Class constants
+    # ---------------
+    COLOR_DICT = {
+        'pastel_green': create_pastel_color(QtGui.QColor(65, 144, 0)),
+        'pastel_red': create_pastel_color(QtGui.QColor(144, 0, 0)),
+        'red': QtGui.QColor(183, 26, 28),
+        'light_red': QtGui.QColor(183, 102, 77),
+        'light_green': QtGui.QColor(170, 140, 88),
+        'dark_green': QtGui.QColor(82, 134, 74),
+        'green': QtGui.QColor(44, 65, 44),
+        'blue': QtGui.QColor(0, 120, 215),
+    }
+
     # Initialization and Setup
     # ------------------------
-    def __init__(self, parent=None, min_value: Number = 0, max_value: Number = 100, 
-                 min_color: QtGui.QColor = get_pastel_color(QtGui.QColor(29, 144, 0)), 
-                 max_color: QtGui.QColor = get_pastel_color(QtGui.QColor(144, 0, 0))
-                 ):
-        """Initialize the ColorScaleItemDelegate.
+    def __init__(
+        self,
+        parent: Optional[QtCore.QObject] = None,
+        min_value: Optional[Number] = None,
+        max_value: Optional[Number] = None,
+        min_color: QtGui.QColor = COLOR_DICT['pastel_green'],
+        max_color: QtGui.QColor = COLOR_DICT['pastel_red'],
+        keyword_color_dict: Dict[str, QtGui.QColor] = dict(),
+        date_color_dict: Dict[str, QtGui.QColor] = dict(),
+        date_format: str = '%Y-%m-%d',
+    ):
+        """Initialize the AdaptiveColorMappingDelegate.
 
         Args:
-            parent (QtCore.QObject): The parent object. Default is None.
-            min_value (Number): The minimum value of the range. Default is 0.
-            max_value (Number): The maximum value of the range. Default is 100.
-            min_color (QtGui.QColor): The color corresponding to the minimum value. Default is a pastel green.
-            max_color (QtGui.QColor): The color corresponding to the maximum value. Default is a pastel red.
+            parent (QtCore.QObject, optional): The parent object. Default is None.
+            min_value (Number, optional): The minimum value of the range. Default is None.
+            max_value (Number, optional): The maximum value of the range. Default is None.
+            min_color (QtGui.QColor, optional): The color corresponding to the minimum value.
+                Default is a pastel green.
+            max_color (QtGui.QColor, optional): The color corresponding to the maximum value.
+                Default is a pastel red.
+            keyword_color_dict (Dict[str, QtGui.QColor], optional): A dictionary that maps
+                keywords to specific colors. Default is an empty dictionary.
+            date_format (str, optional): The date format string. Default is '%Y-%m-%d'.
         """
         # Initialize the super class
         super().__init__(parent)
@@ -93,8 +237,9 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
         self.max_value = max_value
         self.min_color = min_color
         self.max_color = max_color
-        
-        self.keyword_colors = dict()
+        self.keyword_color_dict = keyword_color_dict
+        self.date_color_dict = date_color_dict
+        self.date_format = date_format
 
     # Private Methods
     # ---------------
@@ -129,14 +274,82 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
         Returns:
             QtGui.QColor: The color associated with the keyword.
         """
-        if keyword not in self.keyword_colors:
-            # Generate a new color for the keyword
-            hue = hash(keyword) % 360
-            saturation = 0.6
-            value = 0.6
-            keyword_color = QtGui.QColor.fromHsvF(hue / 360, saturation, value)
-            self.keyword_colors[keyword] = keyword_color
-        return self.keyword_colors[keyword]
+        # Check if the keyword color is already cached in the keyword_color_dict
+        if keyword in self.keyword_color_dict:
+            return self.keyword_color_dict[keyword]
+
+        # Generate a new color for the keyword
+        hue = (hash(keyword) % 360) / 360
+        saturation, value = 0.6, 0.6
+        keyword_color = QtGui.QColor.fromHsvF(hue, saturation, value)
+
+        # Cache the color in the keyword_color_dict
+        self.keyword_color_dict[keyword] = keyword_color
+
+        return keyword_color
+
+    def _get_deadline_color(self, difference: int) -> QtGui.QColor:
+        """Get the color based on the difference from the current date.
+
+        Args:
+            difference (int): The difference in days from the current date.
+
+        Returns:
+            QtGui.QColor: The color corresponding to the difference.
+        """
+        color_palette = {
+            0: self.COLOR_DICT['red'],              # Red (today's deadline)
+            1: self.COLOR_DICT['light_red'],        # Slightly lighter tone for tomorrow
+            2: self.COLOR_DICT['light_green'],      # Light green for the day after tomorrow
+            **{diff: self.COLOR_DICT['dark_green'] 
+               for diff in range(3, 8)},            # Dark green for the next 3-7 days
+        }
+
+        if difference >= 7:
+            # Green for dates more than 7 days away
+            return self.COLOR_DICT['green']
+        else:
+            # Blue for other dates
+            return color_palette.get(difference, self.COLOR_DICT['blue'])
+
+    def _get_date_color(self, date_value: str, is_pastel_color: bool = True) -> QtGui.QColor:
+        """Get the color based on the given date value.
+
+        Args:
+            date_value (str): The date string to determine the color for.
+            is_pastel_color (bool, optional): Whether to create a pastel version of the color.
+                Default is True.
+
+        Returns:
+            QtGui.QColor: The color corresponding to the date.
+        """
+        # Check if the date color is already cached in the date_color_dict
+        if date_value in self.date_color_dict:
+            return self.date_color_dict[date_value]
+
+        # Get the current date
+        today = datetime.date.today()
+
+        # If a date format is specified, use datetime.strptime to parse the date string
+        if self.date_format:
+            # Use datetime.strptime to parse the date string
+            parsed_date = datetime.datetime.strptime(date_value, self.date_format).date()
+        else:
+            # Otherwise, use the parse_date function to parse the date string
+            parsed_date = parse_date(date_value).date()
+
+        # Calculate the difference in days between the parsed date and today
+        difference = (parsed_date - today).days
+
+        # Get the color based on the difference in days
+        date_color = self._get_deadline_color(difference)
+        # Optionally create a pastel version of the color
+        date_color = create_pastel_color(date_color, 0.6, 0.9) if is_pastel_color else date_color
+
+        # Cache the color in the date_color_dict
+        self.date_color_dict[date_value] = date_color
+
+        return date_color
 
     # Event Handling or Override Methods
     # ----------------------------------
@@ -151,25 +364,20 @@ class ColorScaleItemDelegate(QtWidgets.QStyledItemDelegate):
         # Retrieve the value from the model using UserRole
         value = model_index.data(QtCore.Qt.UserRole)
 
-        # Check if the value is not a number or if min_value is greater than or equal to max_value
-        if not isinstance(value, Number) or self.min_value >= self.max_value:
-            # Paint the item normally using the parent implementation
-            super().paint(painter, option, model_index)
-            return
-
         if isinstance(value, Number):
             # If the value is numerical, use _interpolate_color
             color = self._interpolate_color(value)
         elif isinstance(value, str):
-            # If the value is a string, use _get_keyword_color
-            color = self._get_keyword_color(value)
-        # else:
+            if not parse_date(value):
+                # If the value is a string and not a date, use _get_keyword_color
+                color = self._get_keyword_color(value)
+            else:
+                # If the value is a date string, use _get_date_color
+                color = self._get_date_color(value)
+        else:
             # For other data types, paint the item normally
-        #     super().paint(painter, option, model_index)
-        #     return
-        
-        # Interpolate between the min_color and max_color based on the value
-        color = self._interpolate_color(value)
+            super().paint(painter, option, model_index)
+            return
 
         # If the current model index is in the target list, set the background color and style
         option.backgroundBrush.setColor(color)
@@ -468,8 +676,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             | Group by this column          |
             | Ungroup all                   |
             | ----------------------------- |
-            | Set Color Scale               |
-            | Reset All Color Scale         |
+            | Set Color Adaptive            |
+            | Reset All Color Adaptive      |
             | ----------------------------- |
             | Fit in View                   |
             +-------------------------------+
@@ -501,13 +709,13 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Add a separator
         menu.addSeparator()
 
-        # Create the 'Set Color Scale' action and connect it to the 'set_column_color_scale' method
-        set_color_scale_action = menu.addAction('Set Color Scale')
-        set_color_scale_action.triggered.connect(lambda: self.set_column_color_scale(column))
+        # Create the 'Set Color Adaptive' action and connect it to the 'apply_column_color_adaptive' method
+        apply_color_adaptive_action = menu.addAction('Set Color Adaptive')
+        apply_color_adaptive_action.triggered.connect(lambda: self.apply_column_color_adaptive(column))
 
-        # Create the 'Reset All Color Scale' action and connect it to the 'reset_all_color_scale_column' method
-        reset_all_color_scale_action = menu.addAction('Reset All Color Scale')
-        reset_all_color_scale_action.triggered.connect(self.reset_all_color_scale_column)
+        # Create the 'Reset All Color Adaptive' action and connect it to the 'reset_all_color_adaptive_column' method
+        reset_all_color_adaptive_action = menu.addAction('Reset All Color Adaptive')
+        reset_all_color_adaptive_action.triggered.connect(self.reset_all_color_adaptive_column)
 
         # Add a separator
         menu.addSeparator()
@@ -617,24 +825,26 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
     # Extended Methods
     # ----------------
-    def calculate_column_min_max(self, column: int) -> Tuple[Number, Number]:
+    def calculate_column_min_max(self, column: int) -> Tuple[Optional[Number], Optional[Number]]:
         """Calculate the minimum and maximum values of a specific column.
 
         Args:
             column (int): The index of the column.
 
         Returns:
-            tuple: A tuple containing the minimum and maximum values.
-
-        Raises:
-            ValueError: If no valid values are found in the column.
+            Tuple[Optional[Number], Optional[Number]]: A tuple containing the minimum and maximum values, 
+        or (None, None) if no valid values are found.
         """
         # Collect the values from the specified column
-        values = [self.topLevelItem(index).get_value(column) for index in range(self.topLevelItemCount()) if isinstance(self.topLevelItem(index).get_value(column), Number)]
+        values = [
+            self.topLevelItem(index).get_value(column)
+            for index in range(self.topLevelItemCount())
+            if isinstance(self.topLevelItem(index).get_value(column), Number)
+        ]
 
-        # If there are no valid values, raise an exception
+        # If there are no valid values, return None
         if not values:
-            raise ValueError("No valid values found in the column")
+            return None, None
 
         # Calculate the minimum and maximum values
         min_value = min(*values)
@@ -658,28 +868,24 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Return the list of the index of a shown column in the tree widget.
         return column_index_list
 
-    def set_column_color_scale(self, column: int):
-        """Set the color scale for a specific column.
+    def apply_column_color_adaptive(self, column: int):
+        """Apply adaptive color mapping to a specific column.
+
+        This method calculates the minimum and maximum values of the column and applies an adaptive color mapping
+        based on the data distribution within the column. The color mapping dynamically adjusts to the range of values.
 
         Args:
-            column (int): The index of the column to set the color scale.
+            column (int): The index of the column to apply the adaptive color mapping.
         """
-        try:
-            # Calculate the minimum and maximum values of the column
-            min_value, max_value = self.calculate_column_min_max(column)
-        except ValueError as e:
-            min_value=0
-            max_value=0
-            # # Show tooltip message if no valid values or non-numeric column
-            # self.show_tool_tip(str(e))
-            # return
-        # else:
-            # Create and set the color scale delegate for the column
-        delegate = ColorScaleItemDelegate(self, min_value, max_value)
+        # Calculate the minimum and maximum values of the column
+        min_value, max_value = self.calculate_column_min_max(column)
+
+        # Create and set the adaptive color mapping delegate for the column
+        delegate = AdaptiveColorMappingDelegate(self, min_value, max_value)
         self.setItemDelegateForColumn(column, delegate)
 
-    def reset_all_color_scale_column(self):
-        """Reset the color scale for all columns in the tree widget.
+    def reset_all_color_adaptive_column(self):
+        """Reset the color adaptive for all columns in the tree widget.
         """
         for column in range(self.columnCount()):
             self.setItemDelegateForColumn(column, None)
