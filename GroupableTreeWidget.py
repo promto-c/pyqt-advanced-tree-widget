@@ -265,7 +265,7 @@ class AdaptiveColorMappingDelegate(QtWidgets.QStyledItemDelegate):
 
         return color
 
-    def _get_keyword_color(self, keyword: str) -> QtGui.QColor:
+    def _get_keyword_color(self, keyword: str, is_pastel_color: bool = True) -> QtGui.QColor:
         """Get the color associated with a keyword.
 
         Args:
@@ -282,6 +282,9 @@ class AdaptiveColorMappingDelegate(QtWidgets.QStyledItemDelegate):
         hue = (hash(keyword) % 360) / 360
         saturation, value = 0.6, 0.6
         keyword_color = QtGui.QColor.fromHsvF(hue, saturation, value)
+
+        # Optionally create a pastel version of the color
+        keyword_color = create_pastel_color(keyword_color, 0.6, 0.9) if is_pastel_color else keyword_color
 
         # Cache the color in the keyword_color_dict
         self.keyword_color_dict[keyword] = keyword_color
@@ -584,7 +587,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
     Attributes:
         column_name_list (List[str]): The list of column names to be displayed in the tree widget.
         id_to_data_dict (Dict[int, Dict[str, str]]): A dictionary mapping item IDs to their data as a dictionary.
-        groups (Dict[str, QtWidgets.QTreeWidgetItem]): A dictionary mapping group names to their tree widget items.
+        groups (Dict[str, TreeWidgetItem]): A dictionary mapping group names to their tree widget items.
         _is_middle_button_pressed (bool): Indicates if the middle mouse button is pressed.
             It's used for scrolling functionality when the middle button is pressed and the mouse is moved.
         _middle_button_prev_pos (QtCore.QPoint): The previous position of the mouse when the middle button was pressed.
@@ -731,14 +734,14 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Show the context menu
         menu.popup(QtGui.QCursor.pos())
 
-    def _create_item_groups(self, data: List[str]) -> Dict[str, List[QtWidgets.QTreeWidgetItem]]:
+    def _create_item_groups(self, data: List[str]) -> Dict[str, List[TreeWidgetItem]]:
         """Group the data into a dictionary mapping group names to lists of tree items.
 
         Args:
             data (List[str]): The data to be grouped.
 
         Returns:
-            Dict[str, List[QtWidgets.QTreeWidgetItem]]: A dictionary mapping group names to lists of tree items.
+            Dict[str, List[TreeWidgetItem]]: A dictionary mapping group names to lists of tree items.
         """
         # Create a dictionary to store the groups
         groups = {}
@@ -825,21 +828,25 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
     # Extended Methods
     # ----------------
-    def calculate_column_min_max(self, column: int) -> Tuple[Optional[Number], Optional[Number]]:
-        """Calculate the minimum and maximum values of a specific column.
+    def get_column_value_range(self, column: int, child_level: int = 0) -> Tuple[Optional[Number], Optional[Number]]:
+        """Get the value range of a specific column at a given child level.
 
         Args:
             column (int): The index of the column.
+            child_level (int): The child level to calculate the range for. Defaults to 0 (top-level items).
 
         Returns:
-            Tuple[Optional[Number], Optional[Number]]: A tuple containing the minimum and maximum values, 
-        or (None, None) if no valid values are found.
+            Tuple[Optional[Number], Optional[Number]]: A tuple containing the minimum and maximum values,
+            or (None, None) if no valid values are found.
         """
-        # Collect the values from the specified column
+        # Get the items at the specified child level
+        items = self.get_all_items_at_child_level(child_level)
+
+        # Collect the values from the specified column in the items
         values = [
-            self.topLevelItem(index).get_value(column)
-            for index in range(self.topLevelItemCount())
-            if isinstance(self.topLevelItem(index).get_value(column), Number)
+            item.get_value(column)
+            for item in items
+            if isinstance(item.get_value(column), Number)
         ]
 
         # If there are no valid values, return None
@@ -850,8 +857,28 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         min_value = min(*values)
         max_value = max(*values)
 
-        # Return the minimum and maximum values
+        # Return the value range
         return min_value, max_value
+
+    def get_all_items_at_child_level(self, child_level: int = 0) -> List[TreeWidgetItem]:
+        """Retrieve all items at a specific child level in the tree widget.
+
+        Args:
+            child_level (int): The child level to retrieve items from. Defaults to 0 (top-level items).
+
+        Returns:
+            List[TreeWidgetItem]: List of `QTreeWidgetItem` objects at the specified child level.
+        """
+        # If child level is 0, return top-level items
+        if not child_level:
+            # return top-level items
+            return [self.topLevelItem(row) for row in range(self.topLevelItemCount())]
+
+        # Get all items in the tree widget
+        all_items = self.get_all_items()
+
+        # Filter items to only those at the specified child level
+        return [item for item in all_items if item.get_child_level() == child_level]
 
     def get_shown_column_index_list(self) -> List[int]:
         """Returns a list of indices for the columns that are shown (i.e., not hidden) in the tree widget.
@@ -869,16 +896,20 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         return column_index_list
 
     def apply_column_color_adaptive(self, column: int):
-        """Apply adaptive color mapping to a specific column.
+        """Apply adaptive color mapping to a specific column at the appropriate child level determined by the group column.
 
-        This method calculates the minimum and maximum values of the column and applies an adaptive color mapping
-        based on the data distribution within the column. The color mapping dynamically adjusts to the range of values.
+        This method calculates the minimum and maximum values of the column at the appropriate child level determined by the group column
+        and applies an adaptive color mapping based on the data distribution within the column.
+        The color mapping dynamically adjusts to the range of values.
 
         Args:
             column (int): The index of the column to apply the adaptive color mapping.
         """
-        # Calculate the minimum and maximum values of the column
-        min_value, max_value = self.calculate_column_min_max(column)
+        # Determine the child level based on the presence of a grouped column
+        child_level = 1 if self.grouped_column_name else 0
+
+        # Calculate the minimum and maximum values of the column at the determined child level
+        min_value, max_value = self.get_column_value_range(column, child_level)
 
         # Create and set the adaptive color mapping delegate for the column
         delegate = AdaptiveColorMappingDelegate(self, min_value, max_value)
@@ -1065,16 +1096,16 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Emit signal for ungrouped all
         self.ungrouped_all.emit()
     
-    def get_all_items(self) -> List[QtWidgets.QTreeWidgetItem]:
+    def get_all_items(self) -> List[TreeWidgetItem]:
         """This function returns all the items in the tree widget as a list.
 
         The items are sorted based on their order in the tree structure, 
         with children appearing after their parent items for each grouping.
 
         Returns:
-            List[QtWidgets.QTreeWidgetItem]: A list containing all the items in the tree widget.
+            List[TreeWidgetItem]: A list containing all the items in the tree widget.
         """
-        def traverse_items(item: QtWidgets.QTreeWidgetItem):
+        def traverse_items(item: TreeWidgetItem):
             # Recursively traverse the children of the current item
             for child_index in range(item.childCount()):
                 # Get the child item at the current index

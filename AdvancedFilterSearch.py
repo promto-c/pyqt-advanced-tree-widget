@@ -70,7 +70,7 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
         # Paint the item normally using the parent implementation
         super().paint(painter, option, model_index)
 
-class FilterTreeWidget(QtWidgets.QTreeWidget):
+class FilterTreeWidget(GroupableTreeWidget):
     """A custom tree widget for managing filters.
 
     This widget provides a UI for managing filters with multiple columns, conditions, keywords,
@@ -610,7 +610,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
             flags |= QtCore.Qt.MatchFlag.MatchCaseSensitive
 
         # Get all items at the specified child level
-        all_items_at_child_level = self.get_all_items_at_child_level(child_level)
+        all_items_at_child_level = self.tree_widget.get_all_items_at_child_level(child_level)
 
         # Find all items matching the given keyword in the specified column and child level
         match_items = self.tree_widget.findItems(keyword, flags, column_index)
@@ -622,26 +622,6 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         
         # Return the list of items that match the criteria.
         return match_items_at_child_level
-
-    def get_all_items_at_child_level(self, child_level: int = 0) -> List[QtWidgets.QTreeWidgetItem]:
-        """Retrieve all items at a specific child level in the tree widget.
-
-        Args:
-            child_level (int): The child level to retrieve items from. Defaults to 0 (top-level items).
-
-        Returns:
-            List[QtWidgets.QTreeWidgetItem]: List of `QTreeWidgetItem` objects at the specified child level.
-        """
-        # If child level is 0, return top-level items
-        if not child_level:
-            # return top-level items
-            return [self.tree_widget.topLevelItem(row) for row in range(self.tree_widget.topLevelItemCount())]
-
-        # Get all items in the tree widget
-        all_items = self.tree_widget.get_all_items()
-
-        # Filter items to only those at the specified child level
-        return [item for item in all_items if item.get_child_level() == child_level]
 
     def set_case_sensitive_state(self, state: bool):
         """Update the is_case_sensitive member variable when the match case action state changes.
