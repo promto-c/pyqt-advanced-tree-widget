@@ -412,6 +412,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
 
         # Connect a signal to control the visibility of the filter_tree_popup based on the toggled state of the show_filter_button
         self.show_filter_button.toggled.connect(self.filter_tree_popup.setVisible)
+        self.filter_tree_popup.close_button.clicked.connect(self.show_filter_button.setChecked)
 
         # Create a shortcut for Ctrl+F
         shortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
