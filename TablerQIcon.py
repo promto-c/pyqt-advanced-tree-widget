@@ -16,7 +16,7 @@ else:
 TABLER_ICONS_SVG_DIRECTORY = os.path.split(__file__)[0] + '/tabler-icons'
 
 class TablerQIcon:
-    ''' A class that loads icons from the tabler-icons directory and makes them available as attributes.
+    """A class that loads icons from the tabler-icons directory and makes them available as attributes.
 
     Attributes:
         _icon_name_to_path_dict (dict): A dictionary containing the icon name as key and the icon path as value.
@@ -25,21 +25,21 @@ class TablerQIcon:
         _view_box_size (int): The size of the icon's view box.
         _stroke_width (int): The width of the icon's stroke.
         _opacity (float): The opacity of the icon.
-    '''
+    """
     # Create an instance of QPalette
     _palette = QtGui.QPalette()
     # Get the default color (text color) of the palette and store it in the _default_color attribute
     _default_color = _palette.color(QtGui.QPalette.Text)
 
     def __init__(self, color: QtGui.QColor=_default_color, size: int=24, view_box_size: int=24, stroke_width: int=2, opacity: float=1.0):
-        ''' Initialize the widget and load the icons from the tabler-icons directory.
+        """Initialize the widget and load the icons from the tabler-icons directory.
             Args:
                 color (QtGui.QColor): color of the icon
                 size (int): size of the icon 
                 view_box_size (int): size of the view box of the icon
                 stroke_width (int): width of the stroke of the icon
                 opacity (float): opacity of the icon
-        '''
+        """
         # Save the properties
         self._color = color
         self._size = size
@@ -52,12 +52,12 @@ class TablerQIcon:
 
     def __getattr__(self, name: str) -> QtGui.QIcon:
 
-        ''' Allows access to the icons as attributes by returning a QIcon object for a given icon name.
+        """Allows access to the icons as attributes by returning a QIcon object for a given icon name.
             Args:
                 name (str): The name of the icon to retrieve.
             Returns:
                 QIcon : QIcon object for the given icon name
-        '''
+        """
         # Get the path of the icon from the dictionary using the name as the key
         svg_icon_path = self._icon_name_to_path_dict.get(name)
 
@@ -125,11 +125,11 @@ class TablerQIcon:
     
     @classmethod
     def get_icon_name_to_path_dict(cls) -> Dict[str, str]:
-        ''' Returns a dictionary containing the icon name as key and the icon path as value.
+        """Returns a dictionary containing the icon name as key and the icon path as value.
         
             Returns:
                 dict: containing the icon name as key and the icon path as value
-        '''
+        """
         # Create an empty dictionary to store the icon name and path
         icon_name_to_path_dict = dict()
         # Get a list of all SVG files in the TABLER_ICONS_SVG_DIRECTORY
@@ -153,15 +153,15 @@ class TablerQIcon:
     
     @classmethod
     def get_icon_name_list(cls) -> List[str]:
-        ''' Returns a list of all the available icon names.
-        '''
+        """Returns a list of all the available icon names.
+        """
         icon_name_to_path_dict = cls.get_icon_name_to_path_dict()
         return list(icon_name_to_path_dict.keys())
     
     @classmethod
     def get_icon_path(cls, name: str) -> str:
-        ''' Returns a icon path from input name.
-        '''
+        """Returns a icon path from input name.
+        """
         icon_name_to_path_dict = cls.get_icon_name_to_path_dict()
         return icon_name_to_path_dict.get(name)
 
