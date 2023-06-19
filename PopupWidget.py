@@ -79,6 +79,7 @@ class PopupWidget(QtWidgets.QWidget):
         """
         # Window properties
         self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
+        self.setMinimumSize(400, 200)
         self.setMouseTracking(True)
 
         # Create a vertical layout to hold the content of the popup widget.
@@ -178,7 +179,7 @@ class PopupWidget(QtWidgets.QWidget):
             event (QtCore.QEvent): The mouse leave event.
         """
         # Sets the end value of the opacity animation to 0.5 for semi-opacity.
-        self._opacity_animation.setEndValue(0.5)
+        self._opacity_animation.setEndValue(0.8)
         # Starts the opacity animation.
         self._opacity_animation.start()
 

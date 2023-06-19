@@ -70,7 +70,7 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
         # Paint the item normally using the parent implementation
         super().paint(painter, option, model_index)
 
-class FilterTreeWidget(GroupableTreeWidget):
+class FilterTreeWidget(QtWidgets.QTreeWidget):
     """A custom tree widget for managing filters.
 
     This widget provides a UI for managing filters with multiple columns, conditions, keywords,
@@ -290,7 +290,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
     """A PyQt5 widget that allows the user to apply advanced filters to a tree widget.
 
     Attributes:
-        tree_widget (QtWidgets.QTreeWidget): The tree widget to be filtered.
+        tree_widget (GroupableTreeWidget): The tree widget to be filtered.
         column_names (List[str]): The list of column names for the tree widget.
         filter_criteria_list (List[str]): The list of filter criteria applied to the tree widget.
     """
@@ -313,10 +313,10 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
 
     # Initialization and Setup
     # ------------------------
-    def __init__(self, tree_widget: QtWidgets.QTreeWidget, parent=None):
+    def __init__(self, tree_widget: GroupableTreeWidget, parent=None):
         """Initialize the widget and set up the UI, signal connections, and icon.
             Args:
-                tree_widget (QtWidgets.QTreeWidget): The tree widget to be filtered.
+                tree_widget (GroupableTreeWidget): The tree widget to be filtered.
                 parent (QtWidgets.QWidget): The parent widget.
         """
         # Initialize the super class
@@ -447,15 +447,16 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         """
         # Get the currently selected item in the tree widget
         tree_item = self.tree_widget.currentItem()
-
         # Get the index of the currently selected column
         column = self.tree_widget.currentColumn()
 
+        # Determine the search column based on the grouped column and child level
+        search_column = self.tree_widget.grouped_column_name if self.tree_widget.grouped_column_name and tree_item.get_child_level() == 0 else column
+        # Set the column filter to the current column or the grouped column if applicable
+        self.set_search_column(search_column)
+
         # Retrieve the text value of the selected item in the current column
         keyword = str(tree_item.get_value(column))
-
-        # Set the column filter to the current column
-        self.set_search_column(column)
         # Set the keyword to the selected item's value
         self.set_keyword(keyword)
 
