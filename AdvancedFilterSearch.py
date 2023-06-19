@@ -599,11 +599,11 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         grouped_column_name = self.tree_widget.grouped_column_name
 
         # Determine the column index and child level to search in based on the given column and grouped column
-        column_index = 0 if grouped_column_name and column == grouped_column_name else self.column_names.index(column)
-        child_level = 1 if grouped_column_name and column != grouped_column_name else 0
+        column_index = self.column_names.index(column)
+        child_level = 1 if grouped_column_name else 0
 
-        # Set the match flag for search recursively if the tree widget is grouped by column and the column is not the grouped column
-        if grouped_column_name and column != grouped_column_name:
+        # Set the match flag for search recursively if the tree widget is grouped by column
+        if grouped_column_name:
             flags |= QtCore.Qt.MatchFlag.MatchRecursive
 
         # Add the case sensitivity flag if neededs
