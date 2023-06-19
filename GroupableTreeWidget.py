@@ -252,6 +252,9 @@ class AdaptiveColorMappingDelegate(QtWidgets.QStyledItemDelegate):
         Returns:
             QtGui.QColor: The interpolated color.
         """
+        if not value:
+            return QtGui.QColor()
+
         # Normalize the value between 0 and 1
         normalized_value = (value - self.min_value) / (self.max_value - self.min_value)
 
@@ -274,6 +277,9 @@ class AdaptiveColorMappingDelegate(QtWidgets.QStyledItemDelegate):
         Returns:
             QtGui.QColor: The color associated with the keyword.
         """
+        if not keyword:
+            return QtGui.QColor()
+
         # Check if the keyword color is already cached in the keyword_color_dict
         if keyword in self.keyword_color_dict:
             return self.keyword_color_dict[keyword]
