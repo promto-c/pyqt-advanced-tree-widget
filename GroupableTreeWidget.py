@@ -631,6 +631,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Store the current grouped column name
         self.grouped_column_name = str()
 
+        #
+        self.id_to_tree_item = dict()
+
         # Private Attributes
         # ------------------
         # Initialize middle button pressed flag
@@ -978,7 +981,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Iterate through the dictionary of items
         for item_id, item_data in self.id_to_data_dict.items():
             # Create a new custom QTreeWidgetItem for sorting by type of the item data, and add to the self tree widget
-            _tree_item = TreeWidgetItem(self, item_data=item_data, item_id=item_id)
+            tree_item = TreeWidgetItem(self, item_data=item_data, item_id=item_id)
+            # 
+            self.id_to_tree_item[item_id] = tree_item
 
         # Resize all columns to fit their contents
         self.resize_to_contents()
@@ -1214,6 +1219,10 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
     # Event Handling or Override Methods
     # ----------------------------------
+    def clear(self):
+        self.id_to_tree_item.clear()
+        super().clear()
+
     def keyPressEvent(self, event: QtGui.QKeyEvent):
         # Override the key press event to handle copy shortcut
         if event.matches(QtGui.QKeySequence.Copy):
