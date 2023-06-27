@@ -1169,6 +1169,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
             cell_value = tree_item.get_value(column)
             cell_text = str() if cell_value is None else str(cell_value)
+            cell_text = f'"{cell_text}"' if '\t' in cell_text or '\n' in cell_text else cell_text
 
             cell_dict.setdefault(global_row, dict())
             cell_dict[global_row][column] = cell_text
