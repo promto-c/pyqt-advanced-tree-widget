@@ -16,6 +16,9 @@ class ScalableView(QtWidgets.QGraphicsView):
         max_zoom_level (float): The maximum zoom level allowed for the view.
         current_zoom_level (float): The current zoom level of the view.
     """
+
+    # Initialization and Setup
+    # ------------------------
     def __init__(self, parent: Optional[QtWidgets.QWidget] = None, 
                        widget: Optional[QtWidgets.QWidget] = None):
         # Call the parent class constructor
@@ -73,6 +76,14 @@ class ScalableView(QtWidgets.QGraphicsView):
         self.viewport().installEventFilter(self)
         self.viewport().wheelEvent = self.wheelEvent
 
+        # Key Binds
+        # ---------
+        # Create a QShortcut for the F key to reset the scaling of the view.
+        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F), self)
+        shortcut.activated.connect(self.reset_scale)
+
+    # Extended Methods
+    # ----------------
     def set_scale(self, zoom_level: float = 1.0) -> None:
         """Set scale of the view to specified zoom level.
         """
@@ -98,6 +109,8 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Update the size of the widget to fit the view window
         self.resizeEvent(None)
 
+    # Event Handling or Override Methods
+    # ----------------------------------
     def resizeEvent(self, event: QtGui.QResizeEvent) -> None:
         """Handle resize events to resize the widget to the full size of the view, reserved for scaling.
         """
@@ -135,16 +148,6 @@ class ScalableView(QtWidgets.QGraphicsView):
         # If the Ctrl key is not pressed, pass the event on to the parent class
         else:
             self.widget.wheelEvent(event)
-
-    def keyPressEvent(self, event: QtGui.QKeyEvent) -> None:
-        """Handle key press events to allow the user to reset the scaling of the view.
-        """
-        # Check if the F key is pressed
-        if event.key() == QtCore.Qt.Key_F:
-            # Reset the scaling of the view
-            self.reset_scale()
-            
-        super().keyPressEvent(event)
 
 def main():
     # Create the Qt application
