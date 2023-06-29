@@ -681,6 +681,12 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.itemExpanded.connect(self.toggle_expansion_for_selected)
         self.itemCollapsed.connect(self.toggle_expansion_for_selected)
 
+        # Key Binds
+        # ---------
+        # Create a shortcut for the copy action and connect its activated signal
+        copy_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence.Copy, self)
+        copy_shortcut.activated.connect(self.copy_selected_cells)
+
     # Private Methods
     # ---------------
     def _on_header_context_menu(self, pos: QtCore.QPoint) -> None:
@@ -1246,13 +1252,6 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
     def clear(self):
         self.id_to_tree_item.clear()
         super().clear()
-
-    def keyPressEvent(self, event: QtGui.QKeyEvent):
-        # Override the key press event to handle copy shortcut
-        if event.matches(QtGui.QKeySequence.Copy):
-            self.copy_selected_cells()
-        else:
-            super().keyPressEvent(event)
 
     def mousePressEvent(self, event: QtGui.QMouseEvent):
         """Handles mouse press event.
