@@ -678,8 +678,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Connect signal of header
         self.header().customContextMenuRequested.connect(self._on_header_context_menu)
         
-        self.itemExpanded.connect(self.item_expand_or_collapse)
-        self.itemCollapsed.connect(self.item_expand_or_collapse)
+        self.itemExpanded.connect(self.toggle_expansion_for_selected)
+        self.itemCollapsed.connect(self.toggle_expansion_for_selected)
 
     # Private Methods
     # ---------------
