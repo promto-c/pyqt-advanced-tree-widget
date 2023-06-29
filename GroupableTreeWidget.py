@@ -647,6 +647,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Timestamp of the last mouse move event
         self._mouse_move_timestamp = float()
 
+        self._row_height = 24
+
     def _setup_ui(self):
         """Set up the UI for the widget, including creating widgets and layouts.
         """
@@ -665,12 +667,13 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Enable sorting in the tree widget
         self.setSortingEnabled(True)
 
-        # Enable uniform row heights
-        self.setUniformRowHeights(True)
+        self.setWordWrap(True)
 
         # Enable ExtendedSelection mode for multi-select and set the selection behavior to SelectItems
         self.setSelectionMode(QtWidgets.QTreeWidget.ExtendedSelection)
         self.setSelectionBehavior(QtWidgets.QTreeWidget.SelectItems)
+
+        self.set_row_height(self._row_height)
 
     def _setup_signal_connections(self):
         """Set up signal connections between widgets and slots.
@@ -680,6 +683,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         
         self.itemExpanded.connect(self.toggle_expansion_for_selected)
         self.itemCollapsed.connect(self.toggle_expansion_for_selected)
+
+        self.header().sortIndicatorChanged.connect(lambda _: self.set_row_height(self._row_height))
 
         # Key Binds
         # ---------
@@ -846,6 +851,20 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
     # Extended Methods
     # ----------------
+    def set_row_height(self, height):
+
+        self.setUniformRowHeights(True)
+
+        for column_index in range(self.columnCount()):
+            size_hint = self.sizeHintForColumn(column_index)
+            self.topLevelItem(0).setSizeHint(column_index, QtCore.QSize(size_hint, height))
+
+    def reset_row_height(self):
+
+        self.setUniformRowHeights(False)
+
+        self.set_row_height(-1)
+
     def toggle_expansion_for_selected(self, item):
         """Toggles the expansion state of selected items.
 
