@@ -677,6 +677,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         """
         # Connect signal of header
         self.header().customContextMenuRequested.connect(self._on_header_context_menu)
+        
+        self.itemExpanded.connect(self.item_expand_or_collapse)
+        self.itemCollapsed.connect(self.item_expand_or_collapse)
 
     # Private Methods
     # ---------------
@@ -837,6 +840,26 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
     # Extended Methods
     # ----------------
+    def toggle_expansion_for_selected(self, item):
+        """Toggles the expansion state of selected items.
+
+        Args:
+            item: The clicked item whose expansion state will be used as a reference.
+
+        Returns:
+            None.
+        """
+        # Get the currently selected items
+        selected_items = self.selectedItems()
+
+        # If no items are selected, return early
+        if not selected_items:
+            return
+
+        # Set the expanded state of all selected items to match the expanded state of the clicked item
+        for i in selected_items:
+            i.setExpanded(item.isExpanded())
+
     def get_column_value_range(self, column: int, child_level: int = 0) -> Tuple[Optional[Number], Optional[Number]]:
         """Get the value range of a specific column at a given child level.
 
