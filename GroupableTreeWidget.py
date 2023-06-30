@@ -851,6 +851,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
     # Extended Methods
     # ----------------
+    # NOTE: for refactoring
     def set_row_height(self, height):
 
         if not self.topLevelItem(0):
@@ -864,9 +865,14 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
     def reset_row_height(self):
 
+        if not self.topLevelItem(0):
+            return
+
         self.setUniformRowHeights(False)
 
-        self.set_row_height(-1)
+        for column_index in range(self.columnCount()):
+            size_hint = self.sizeHintForColumn(column_index)
+            self.topLevelItem(0).setSizeHint(column_index, QtCore.QSize(size_hint, -1))
 
     def toggle_expansion_for_selected(self, item):
         """Toggles the expansion state of selected items.
