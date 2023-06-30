@@ -853,6 +853,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
     # ----------------
     def set_row_height(self, height):
 
+        if not self.topLevelItem(0):
+            return
+
         self.setUniformRowHeights(True)
 
         for column_index in range(self.columnCount()):
