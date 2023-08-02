@@ -5,7 +5,9 @@ from typing import Any, List, Callable, Union
 
 from theme.theme import set_theme
 
-from TablerQIcon import TablerQIcon
+import tabler_qicon
+tabler_qicon.set_backend("PyQt5")
+from tabler_qicon import TablerQIcon
 
 from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 from ScalableView import ScalableView
@@ -373,7 +375,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         self._add_action_on_keyword_line_edit()
         
         # Set the icon for the add filter button
-        self.add_filter_button.setIcon(self.tabler_button_qicon.filter_add)
+        self.add_filter_button.setIcon(self.tabler_button_qicon.filter_plus)
         self.show_filter_button.setIcon(self.tabler_button_qicon.box_multiple)
 
     def _setup_signal_connections(self):
