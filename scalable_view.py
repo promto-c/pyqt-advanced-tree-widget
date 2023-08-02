@@ -8,7 +8,8 @@ from theme.theme import set_theme
 from groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
 class ScalableView(QtWidgets.QGraphicsView):
-    """A QGraphicsView subclass that allows the user to scale the contents of the view using the mouse wheel and keyboard.
+    """A QGraphicsView subclass that allows the user to scale the contents of the view 
+    using the mouse wheel and keyboard.
 
     Attributes:
         widget (QtWidgets.QWidget): The widget to be displayed in the view.
@@ -19,7 +20,7 @@ class ScalableView(QtWidgets.QGraphicsView):
 
     # Initialization and Setup
     # ------------------------
-    def __init__(self, parent: Optional[QtWidgets.QWidget] = None, 
+    def __init__(self, parent: Optional[QtWidgets.QWidget] = None,
                        widget: Optional[QtWidgets.QWidget] = None):
         # Call the parent class constructor
         super().__init__(parent)
@@ -91,7 +92,7 @@ class ScalableView(QtWidgets.QGraphicsView):
         zoom_level = max(self.min_zoom_level, min(zoom_level, self.max_zoom_level))
 
         # Set the new zoom level
-        self.setTransform( QtGui.QTransform().scale(zoom_level, zoom_level) )
+        self.setTransform(QtGui.QTransform().scale(zoom_level, zoom_level))
         # Update current zoom level
         self.current_zoom_level = zoom_level
 
@@ -105,7 +106,7 @@ class ScalableView(QtWidgets.QGraphicsView):
         self.resetTransform()
         # Reset the current zoom level to 1.0 (no zoom)
         self.current_zoom_level = 1.0
-        
+
         # Update the size of the widget to fit the view window
         self.resizeEvent(None)
 
@@ -121,8 +122,8 @@ class ScalableView(QtWidgets.QGraphicsView):
 
         # Create a QRectF object with the size of the view reserved for scaling
         rect = QtCore.QRectF(
-            0, 0, 
-            view_size.width() / self.current_zoom_level-2, 
+            0, 0,
+            view_size.width() / self.current_zoom_level-2,
             view_size.height() / self.current_zoom_level-2)
 
         # Set the size of the widget to the size of the view
@@ -171,4 +172,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    

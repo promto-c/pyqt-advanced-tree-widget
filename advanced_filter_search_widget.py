@@ -14,7 +14,7 @@ from scalable_view import ScalableView
 from popup_widget import PopupWidget
 
 # Define the path to the UI file
-ADVANCED_FILTER_SEARCH_UI_FILE = os.path.split(__file__)[0] + "/ui/advanced_filter_search_widget.ui"
+ADVANCED_FILTER_SEARCH_UI_FILE = os.path.join(os.path.dirname(__file__), 'ui/advanced_filter_search_widget.ui')
 
 def intersection(item_list_1: List[Any], item_list_2: List[Any]) -> List[Any]:
     """Calculates the intersection of two lists.
@@ -37,7 +37,7 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
     
     def __init__(self, parent=None, color: QtGui.QColor = QtGui.QColor(165, 165, 144, 65)):
         """Initialize the highlight item delegate.
-        
+
         Args:
             parent (QtWidgets.QWidget, optional): The parent widget. Defaults to None.
             color (QtGui.QColor, optional): The color to use for highlighting. Defaults to a light grayish-yellow.
@@ -100,19 +100,13 @@ class FilterTreeWidget(QtWidgets.QTreeWidget):
     def _setup_initial_values(self):
         """Set up the initial values for the widget.
         """
-        # Get reference to the current application instance
-        app = QtWidgets.QApplication.instance()
-        # Get the palette of the application
-        palette = app.palette()
-        # Get the color of the text from the palette
-        icon_color = palette.color(QtGui.QPalette.Text)
 
         # Initialize an empty list to store the filter criteria
         self.filter_criteria_list = list()
 
         # Initialize the QIcon objects for use in the UI with specified color and opacity
-        self.tabler_action_qicon = TablerQIcon(color=icon_color, opacity=0.6)
-        self.tabler_button_qicon = TablerQIcon(color=icon_color)
+        self.tabler_action_qicon = TablerQIcon(opacity=0.6)
+        self.tabler_button_qicon = TablerQIcon()
 
     def _setup_ui(self):
         """Set up the filter tree widget, including header columns and adding a clear button to the header.
