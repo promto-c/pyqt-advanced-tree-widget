@@ -9,9 +9,9 @@ import tabler_qicon
 tabler_qicon.set_backend("PyQt5")
 from tabler_qicon import TablerQIcon
 
-from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
-from ScalableView import ScalableView
-from PopupWidget import PopupWidget
+from groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
+from scalable_view import ScalableView
+from popup_widget import PopupWidget
 
 # Define the path to the UI file
 ui_file = os.path.split(__file__)[0] + "/ui/AdvancedFilterSearch.ui"

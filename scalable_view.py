@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 from theme.theme import set_theme
 
-from GroupableTreeWidget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
+from groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
 class ScalableView(QtWidgets.QGraphicsView):
     """A QGraphicsView subclass that allows the user to scale the contents of the view using the mouse wheel and keyboard.
