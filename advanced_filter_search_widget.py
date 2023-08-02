@@ -14,7 +14,7 @@ from scalable_view import ScalableView
 from popup_widget import PopupWidget
 
 # Define the path to the UI file
-ui_file = os.path.split(__file__)[0] + "/ui/AdvancedFilterSearch.ui"
+ADVANCED_FILTER_SEARCH_UI_FILE = os.path.split(__file__)[0] + "/ui/advanced_filter_search_widget.ui"
 
 def intersection(item_list_1: List[Any], item_list_2: List[Any]) -> List[Any]:
     """Calculates the intersection of two lists.
@@ -325,7 +325,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         super().__init__(parent)
 
         # Load the .ui file using the uic module
-        uic.loadUi(ui_file, self)
+        uic.loadUi(ADVANCED_FILTER_SEARCH_UI_FILE, self)
 
         # Store the tree widget
         self.tree_widget = tree_widget
