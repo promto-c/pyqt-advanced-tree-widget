@@ -52,13 +52,13 @@ class PopupWidget(QtWidgets.QWidget):
         self.widget = widget
 
         # Set up the initial values
-        self._setup_initial_values()
+        self._setup_attributes()
         # Set up the UI
         self._setup_ui()
         # Set up signal connections
         self._setup_signal_connections()
 
-    def _setup_initial_values(self):
+    def _setup_attributes(self):
         """Set up the initial values for the popup widget.
         """
         # Initialize _is_dragging state

@@ -91,13 +91,13 @@ class FilterTreeWidget(QtWidgets.QTreeWidget):
         super().__init__(parent)
 
         # Set up the initial values
-        self._setup_initial_values()
+        self._setup_attributes()
         # Set up the UI
         self._setup_ui()
         # Set up signal connections
         # self._setup_signal_connections()
 
-    def _setup_initial_values(self):
+    def _setup_attributes(self):
         """Set up the initial values for the widget.
         """
 
@@ -325,13 +325,13 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         self.tree_widget = tree_widget
 
         # Set up the initial values
-        self._setup_initial_values()
+        self._setup_attributes()
         # Set up the UI
         self._setup_ui()
         # Set up signal connections
         self._setup_signal_connections()
 
-    def _setup_initial_values(self):
+    def _setup_attributes(self):
         """Set up the initial values for the widget.
         """
         # Get reference to the current application instance
