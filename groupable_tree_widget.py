@@ -514,9 +514,9 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
 
         # Get the UserRole data for the column
-        value = self.data(column_index, QtCore.Qt.UserRole)
+        value = self.data(column_index, QtCore.Qt.ItemDataRole.UserRole)
         # Fallback to the DisplayRole data if UserRole data is None
-        value = self.data(column_index, QtCore.Qt.DisplayRole) if value is None else value
+        value = self.data(column_index, QtCore.Qt.ItemDataRole.DisplayRole) if value is None else value
 
         return value
 
@@ -531,7 +531,7 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
 
         # Set the value for the column in the UserRole data
-        self.setData(column_index, QtCore.Qt.UserRole, value)
+        self.setData(column_index, QtCore.Qt.ItemDataRole.UserRole, value)
 
     # Special Methods
     # ---------------
@@ -657,7 +657,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setHorizontalScrollMode(QtWidgets.QTreeWidget.ScrollMode.ScrollPerPixel)
 
         # Set up the context menu for the header
-        self.header().setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.header().setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
 
         # Set up the columns
         self.set_column_name_list(self.column_name_list)
@@ -670,8 +670,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setWordWrap(True)
 
         # Enable ExtendedSelection mode for multi-select and set the selection behavior to SelectItems
-        self.setSelectionMode(QtWidgets.QTreeWidget.ExtendedSelection)
-        self.setSelectionBehavior(QtWidgets.QTreeWidget.SelectItems)
+        self.setSelectionMode(QtWidgets.QTreeWidget.SelectionMode.ExtendedSelection)
+        self.setSelectionBehavior(QtWidgets.QTreeWidget.SelectionBehavior.SelectItems)
 
         self.set_row_height(self._row_height)
 
@@ -689,7 +689,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Key Binds
         # ---------
         # Create a shortcut for the copy action and connect its activated signal
-        copy_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence.Copy, self)
+        copy_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence.StandardKey.Copy, self)
         copy_shortcut.activated.connect(self.copy_selected_cells)
 
     # Private Methods
@@ -1377,7 +1377,7 @@ def main():
     tree_widget.show()
 
     # Run the application
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == '__main__':
     main()
