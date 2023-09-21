@@ -64,7 +64,7 @@ class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
 
         # If the current model index is in the target list, set the background color and style
         option.backgroundBrush.setColor(self.color)
-        option.backgroundBrush.setStyle(QtCore.Qt.SolidPattern)
+        option.backgroundBrush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
 
         # Fill the rect with the background brush
         painter.fillRect(option.rect, option.backgroundBrush)
@@ -128,7 +128,7 @@ class FilterTreeWidget(QtWidgets.QTreeWidget):
         # Add clear button on header
         self._add_clear_button_on_header()
 
-        self.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+        self.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.NoSelection)
         self.setRootIsDecorated(False)
         self.setItemsExpandable(False)
         self.setAllColumnsShowFocus(True)
@@ -142,7 +142,7 @@ class FilterTreeWidget(QtWidgets.QTreeWidget):
         # Resize header sections, with the first three (Column, Condition, Keyword) stretched and the rest fixed
         for column_index, _ in enumerate(header_labels):
             stretch = column_index in (0, 1, 2) # stretch the first three columns (Column, Condition, Keyword)
-            header.setSectionResizeMode(column_index, QtWidgets.QHeaderView.Stretch if stretch else QtWidgets.QHeaderView.Fixed)
+            header.setSectionResizeMode(column_index, QtWidgets.QHeaderView.ResizeMode.Stretch if stretch else QtWidgets.QHeaderView.ResizeMode.Fixed)
 
     # Private Methods
     # ---------------
@@ -161,7 +161,7 @@ class FilterTreeWidget(QtWidgets.QTreeWidget):
         viewport.setLayout(layout)
 
         # Add a horizontal spacer to the layout
-        horizontal_spacer = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Maximum)
+        horizontal_spacer = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Maximum)
         layout.addItem(horizontal_spacer)
 
         # Create a clear buttons
@@ -463,14 +463,14 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         """Add two actions to the keyword line edit widget: match case and negate match.
         """
         # Add the match case action to the keyword line edit widget
-        self.match_case_action = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.TrailingPosition)
+        self.match_case_action = self.keyword_line_edit.addAction(self.tabler_action_qicon.letter_case, QtWidgets.QLineEdit.ActionPosition.TrailingPosition)
         # Set the tool tip to "Match Case"
         self.match_case_action.setToolTip('Match Case')
         # Set the action to be checkable
         self.match_case_action.setCheckable(True)
 
         # Add the negate match action to the keyword line edit widget
-        self.negate_action = self.keyword_line_edit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.TrailingPosition)
+        self.negate_action = self.keyword_line_edit.addAction(self.tabler_action_qicon.a_b_off, QtWidgets.QLineEdit.ActionPosition.TrailingPosition)
         # Set the tool tip to "Negate Match"
         self.negate_action.setToolTip('Negate Match')
         # Set the action to be checkable
