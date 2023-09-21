@@ -22,7 +22,7 @@ class MoveEventFilter(QtCore.QObject):
         Returns:
             bool: True if the event was handled, False otherwise.
         """
-        if event.type() == QtCore.QEvent.Move:
+        if event.type() == QtCore.QEvent.Type.Move:
             self.method()
             return True
         return super().eventFilter(obj, event)
@@ -78,7 +78,7 @@ class PopupWidget(QtWidgets.QWidget):
         """Set up the UI for the popup widget, including creating widgets and layouts.
         """
         # Window properties
-        self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
+        self.setWindowFlags(QtCore.Qt.WindowType.SplashScreen)
         self.setMinimumSize(400, 200)
         self.setMouseTracking(True)
 
@@ -207,7 +207,7 @@ class PopupWidget(QtWidgets.QWidget):
             event (QtCore.QEvent): The mouse press event.
         """
         # If the middle mouse button is pressed, stores the initial drag position and sets the _is_dragging flag to True.
-        if event.button() == QtCore.Qt.MiddleButton:
+        if event.button() == QtCore.Qt.MouseButton.MiddleButton:
             # Store the initial drag position
             self._drag_start_position = event.globalPos()
 
@@ -245,7 +245,7 @@ class PopupWidget(QtWidgets.QWidget):
             event (QtCore.QEvent): The mouse release event.
         """
         # If the middle mouse button is released, dragging is stopped and the relative offset is updated.
-        if event.button() == QtCore.Qt.MiddleButton:
+        if event.button() == QtCore.Qt.MouseButton.MiddleButton:
             # Stop dragging by setting the _is_dragging flag to False
             self._is_dragging = False
 

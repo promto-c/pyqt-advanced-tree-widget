@@ -1,6 +1,7 @@
 import sys
 import time
 import datetime
+from PyQt5.QtWidgets import QWidget
 import dateutil.parser as date_parser
 
 from typing import Any, Dict, List, Union, Tuple, Type, Callable, Optional
@@ -371,7 +372,7 @@ class AdaptiveColorMappingDelegate(QtWidgets.QStyledItemDelegate):
             model_index (QtCore.QModelIndex): The model index of the item to be painted.
         """
         # Retrieve the value from the model using UserRole
-        value = model_index.data(QtCore.Qt.UserRole)
+        value = model_index.data(QtCore.Qt.ItemDataRole.UserRole)
 
         if isinstance(value, Number):
             # If the value is numerical, use _interpolate_color
@@ -390,7 +391,7 @@ class AdaptiveColorMappingDelegate(QtWidgets.QStyledItemDelegate):
 
         # If the current model index is in the target list, set the background color and style
         option.backgroundBrush.setColor(color)
-        option.backgroundBrush.setStyle(QtCore.Qt.SolidPattern)
+        option.backgroundBrush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
 
         # Fill the rect with the background brush
         painter.fillRect(option.rect, option.backgroundBrush)
@@ -514,9 +515,9 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
 
         # Get the UserRole data for the column
-        value = self.data(column_index, QtCore.Qt.UserRole)
+        value = self.data(column_index, QtCore.Qt.ItemDataRole.UserRole)
         # Fallback to the DisplayRole data if UserRole data is None
-        value = self.data(column_index, QtCore.Qt.DisplayRole) if value is None else value
+        value = self.data(column_index, QtCore.Qt.ItemDataRole.DisplayRole) if value is None else value
 
         return value
 
@@ -531,7 +532,7 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         column_index = self.treeWidget().get_column_index(column) if isinstance(column, str) else column
 
         # Set the value for the column in the UserRole data
-        self.setData(column_index, QtCore.Qt.UserRole, value)
+        self.setData(column_index, QtCore.Qt.ItemDataRole.UserRole, value)
 
     # Special Methods
     # ---------------
@@ -586,6 +587,63 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         except TypeError:
             # If the comparison fails, compare their string representations
             return str(self_data) < str(other_data)
+
+class ColumnListWidget(QtWidgets.QListWidget):
+    def __init__(self, parent: QWidget | None = ...) -> None:
+        super().__init__(parent)
+
+        self.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
+
+        self.tree_widget = parent
+        self.name_to_item = dict()
+
+        self.tree_widget.header().sectionMoved.connect(self.update_list)
+        self.model().rowsMoved.connect(self.update_tree_widget)
+        self.itemChanged.connect(self.set_column_visibility)
+
+        self.update_list()
+
+    def update_tree_widget(self):
+        item_texts = [self.item(i).text() for i in range(self.tree_widget.columnCount())]
+
+        for i, item_text in enumerate(item_texts):
+            column_index = self.tree_widget.get_column_index(item_text)
+            self.tree_widget.header().moveSection(self.tree_widget.header().visualIndex(column_index), i)
+
+    def set_column_visibility(self, item):
+        column_name = item.text()
+        is_hidden = item.checkState() == QtCore.Qt.CheckState.Unchecked
+        column_index = self.tree_widget.get_column_index(column_name)
+        
+        self.tree_widget.setColumnHidden(column_index, is_hidden)
+
+    def update_list(self):
+        self.clear()
+        logical_indexes = [self.get_logical_index(i) for i in range(self.tree_widget.columnCount())]
+        header_names = [self.tree_widget.column_name_list[i] for i in logical_indexes]
+
+        self.addItems(header_names)
+
+    def get_logical_index(self, index):
+        return self.tree_widget.header().logicalIndex(index)
+    
+    def addItems(self, items):
+        for column_index, item in enumerate(items):
+            if not isinstance(item, str):
+                continue
+
+            list_item = QtWidgets.QListWidgetItem(item)
+            list_item.setFlags(list_item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+
+            check_state = QtCore.Qt.CheckState.Unchecked if self.tree_widget.isColumnHidden(self.get_logical_index(column_index)) else QtCore.Qt.CheckState.Checked
+
+            list_item.setCheckState(check_state)
+            self.addItem(list_item)
+
+            self.name_to_item[item] = list_item
+
+    def get_item(self, item_name: str) -> QtWidgets.QListWidgetItem:
+        return self.name_to_item.get(item_name, None)
 
 class GroupableTreeWidget(QtWidgets.QTreeWidget):
     """A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
@@ -657,7 +715,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setHorizontalScrollMode(QtWidgets.QTreeWidget.ScrollMode.ScrollPerPixel)
 
         # Set up the context menu for the header
-        self.header().setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.header().setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
 
         # Set up the columns
         self.set_column_name_list(self.column_name_list)
@@ -670,8 +728,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setWordWrap(True)
 
         # Enable ExtendedSelection mode for multi-select and set the selection behavior to SelectItems
-        self.setSelectionMode(QtWidgets.QTreeWidget.ExtendedSelection)
-        self.setSelectionBehavior(QtWidgets.QTreeWidget.SelectItems)
+        self.setSelectionMode(QtWidgets.QTreeWidget.SelectionMode.ExtendedSelection)
+        self.setSelectionBehavior(QtWidgets.QTreeWidget.SelectionBehavior.SelectItems)
 
         self.set_row_height(self._row_height)
 
@@ -689,7 +747,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Key Binds
         # ---------
         # Create a shortcut for the copy action and connect its activated signal
-        copy_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence.Copy, self)
+        copy_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence.StandardKey.Copy, self)
         copy_shortcut.activated.connect(self.copy_selected_cells)
 
     # Private Methods
@@ -699,13 +757,19 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         Context Menu:
             +-------------------------------+
-            | Group by this column          |
-            | Ungroup all                   |
+            | Grouping                      |
+            | - Group by this column        |
+            | - Ungroup all                 |
             | ----------------------------- |
-            | Set Color Adaptive            |
-            | Reset All Color Adaptive      |
+            | Visualization                 |
+            | - Set Color Adaptive          |
+            | - Reset All Color Adaptive    |
             | ----------------------------- |
-            | Fit in View                   |
+            | - Fit in View                 |
+            | ----------------------------- |
+            | Manage Columns                |
+            | - Show/Hide Columns >         |
+            | - Hide This Column            |
             +-------------------------------+
 
         Args:
@@ -724,6 +788,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         else:
             menu = QtWidgets.QMenu(self)
 
+        self.add_label_action(menu, 'Grouping')
+
         # Create the 'Group by this column' action and connect it to the 'group_by_column' method. Pass in the selected column as an argument.
         group_by_action = menu.addAction('Group by this column')
         group_by_action.triggered.connect(lambda: self.group_by_column(column))
@@ -734,6 +800,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         # Add a separator
         menu.addSeparator()
+
+        self.add_label_action(menu, 'Visualization')
 
         # Create the 'Set Color Adaptive' action and connect it to the 'apply_column_color_adaptive' method
         apply_color_adaptive_action = menu.addAction('Set Color Adaptive')
@@ -750,12 +818,45 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         fit_column_in_view_action = menu.addAction('Fit in View')
         fit_column_in_view_action.triggered.connect(self.fit_column_in_view)
 
+        # Add a separator
+        menu.addSeparator()
+
+        self.add_label_action(menu, 'Manage Columns')
+        show_hide_column = menu.addMenu('Show/Hide Columns')
+        menu.addMenu(show_hide_column)
+
+        self.column_list_widget = ColumnListWidget(self)
+        action = QtWidgets.QWidgetAction(self)
+        action.setDefaultWidget(self.column_list_widget)
+        show_hide_column.addAction(action)
+
+        hide_this_column = menu.addAction('Hide This Column')
+        hide_this_column.triggered.connect(lambda: self.hideColumn(column))
+
         # Disable 'Group by this column' on the first column
         if not column:
             group_by_action.setDisabled(True)
 
         # Show the context menu
         menu.popup(QtGui.QCursor.pos())
+
+    def add_label_action(self, parent_menu: QtWidgets.QMenu, text: str):
+        label = QtWidgets.QLabel(text, parent_menu)
+        label.setDisabled(True)
+        label.setStyleSheet(
+            'color: rgb(144, 144, 144); padding: 0px;'
+        )
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(label)
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+
+        action = QtWidgets.QWidgetAction(parent_menu)
+        action.setDefaultWidget(widget)
+
+        parent_menu.addAction(action)
 
     def _create_item_groups(self, data: List[str]) -> Dict[str, List[TreeWidgetItem]]:
         """Group the data into a dictionary mapping group names to lists of tree items.
@@ -1377,7 +1478,7 @@ def main():
     tree_widget.show()
 
     # Run the application
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == '__main__':
     main()

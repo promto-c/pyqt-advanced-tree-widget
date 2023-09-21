@@ -58,17 +58,17 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Set the widget as the central widget of the scene
         self.scene().addWidget(self.widget)
         # Set the alignment of the widget to the top left corner
-        self.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
+        self.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignLeft)
 
         # Set the viewport update mode to full viewport update to ensure that the entire view is updated when scaling
-        self.setViewportUpdateMode(QtWidgets.QGraphicsView.FullViewportUpdate)
+        self.setViewportUpdateMode(QtWidgets.QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
         # Set the rendering hints to smooth pixels to improve the quality of the rendering
-        self.setRenderHints(QtGui.QPainter.SmoothPixmapTransform)
+        self.setRenderHints(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
 
         # Set the horizontal scroll bar policy to always off
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         # Set the vertical scroll bar policy to always off
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
     def _setup_signal_connections(self):
         """Set up signal connections between widgets and slots.
@@ -80,7 +80,7 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Key Binds
         # ---------
         # Create a QShortcut for the F key to reset the scaling of the view.
-        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_F), self)
+        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key.Key_F), self)
         shortcut.activated.connect(self.reset_scale)
 
     # Extended Methods
@@ -128,12 +128,13 @@ class ScalableView(QtWidgets.QGraphicsView):
 
         # Set the size of the widget to the size of the view
         graphic_item.setGeometry(rect)
+        self.scene().setSceneRect(rect)
 
     def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
         """Handle wheel events to allow the user to scale the contents of the view.
         """
         # Check if the Ctrl key is pressed
-        if event.modifiers() == QtCore.Qt.ControlModifier:
+        if event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier:
             # Get the scroll delta
             scroll_delta = event.angleDelta().y()
             # Calculate the scaling factor based on the wheel delta
@@ -148,7 +149,7 @@ class ScalableView(QtWidgets.QGraphicsView):
 
         # If the Ctrl key is not pressed, pass the event on to the parent class
         else:
-            self.widget.wheelEvent(event)
+            super().wheelEvent(event)
 
 def main():
     # Create the Qt application
@@ -168,7 +169,7 @@ def main():
     scalable_tree_widget_view.show()
 
     # Run the application loop
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == '__main__':
     main()

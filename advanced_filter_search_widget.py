@@ -1,13 +1,10 @@
 import sys, os
-from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from typing import Any, List, Union
 
-from typing import Any, List, Callable, Union
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
+from tablerqicon import TablerQIcon
 
 from theme.theme import set_theme
-
-import tabler_qicon
-tabler_qicon.set_backend("PyQt5")
-from tabler_qicon import TablerQIcon
 
 from groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 from scalable_view import ScalableView
@@ -304,7 +301,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         'ends_with': QtCore.Qt.MatchFlag.MatchEndsWith,
         'exact_match': QtCore.Qt.MatchFlag.MatchExactly,
         'wild_card': QtCore.Qt.MatchFlag.MatchWildcard,
-        'reg_exp': QtCore.Qt.MatchFlag.MatchRegExp,
+        'reg_exp': QtCore.Qt.MatchFlag.MatchRegularExpression,
     }
 
     # Initialization and Setup
@@ -334,17 +331,10 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
     def _setup_attributes(self):
         """Set up the initial values for the widget.
         """
-        # Get reference to the current application instance
-        app = QtWidgets.QApplication.instance()
-        # Get the palette of the application
-        palette = app.palette()
-        # Get the color of the text from the palette
-        icon_color = palette.color(QtGui.QPalette.Text)
-
         # Initialize the QIcon objects for use in the UI with specified color and opacity
-        self.tabler_action_qicon = TablerQIcon(color=icon_color, opacity=0.6)
-        self.tabler_action_checked_qicon = TablerQIcon(color=icon_color)
-        self.tabler_button_qicon = TablerQIcon(color=icon_color)
+        self.tabler_action_qicon = TablerQIcon(opacity=0.6)
+        self.tabler_action_checked_qicon = TablerQIcon()
+        self.tabler_button_qicon = TablerQIcon()
 
         # Initialize the HighlightItemDelegate object to highlight items in the tree widget.
         self.highlight_item_delegate = HighlightItemDelegate()
@@ -727,7 +717,7 @@ def main():
     window.show()
 
     # Run the application
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == '__main__':
     main()
