@@ -128,6 +128,7 @@ class ScalableView(QtWidgets.QGraphicsView):
 
         # Set the size of the widget to the size of the view
         graphic_item.setGeometry(rect)
+        self.scene().setSceneRect(rect)
 
     def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
         """Handle wheel events to allow the user to scale the contents of the view.
@@ -148,7 +149,7 @@ class ScalableView(QtWidgets.QGraphicsView):
 
         # If the Ctrl key is not pressed, pass the event on to the parent class
         else:
-            self.widget.wheelEvent(event)
+            super().wheelEvent(event)
 
 def main():
     # Create the Qt application
