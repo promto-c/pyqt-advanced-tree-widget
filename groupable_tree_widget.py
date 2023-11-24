@@ -1,6 +1,7 @@
 import sys
 import time
 import datetime
+from PyQt5.QtWidgets import QWidget
 import dateutil.parser as date_parser
 
 from typing import Any, Dict, List, Union, Tuple, Type, Callable, Optional
@@ -371,7 +372,7 @@ class AdaptiveColorMappingDelegate(QtWidgets.QStyledItemDelegate):
             model_index (QtCore.QModelIndex): The model index of the item to be painted.
         """
         # Retrieve the value from the model using UserRole
-        value = model_index.data(QtCore.Qt.UserRole)
+        value = model_index.data(QtCore.Qt.ItemDataRole.UserRole)
 
         if isinstance(value, Number):
             # If the value is numerical, use _interpolate_color
@@ -390,7 +391,7 @@ class AdaptiveColorMappingDelegate(QtWidgets.QStyledItemDelegate):
 
         # If the current model index is in the target list, set the background color and style
         option.backgroundBrush.setColor(color)
-        option.backgroundBrush.setStyle(QtCore.Qt.SolidPattern)
+        option.backgroundBrush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
 
         # Fill the rect with the background brush
         painter.fillRect(option.rect, option.backgroundBrush)
@@ -587,6 +588,63 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
             # If the comparison fails, compare their string representations
             return str(self_data) < str(other_data)
 
+class ColumnListWidget(QtWidgets.QListWidget):
+    def __init__(self, parent: QWidget | None = ...) -> None:
+        super().__init__(parent)
+
+        self.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
+
+        self.tree_widget = parent
+        self.name_to_item = dict()
+
+        self.tree_widget.header().sectionMoved.connect(self.update_list)
+        self.model().rowsMoved.connect(self.update_tree_widget)
+        self.itemChanged.connect(self.set_column_visibility)
+
+        self.update_list()
+
+    def update_tree_widget(self):
+        item_texts = [self.item(i).text() for i in range(self.tree_widget.columnCount())]
+
+        for i, item_text in enumerate(item_texts):
+            column_index = self.tree_widget.get_column_index(item_text)
+            self.tree_widget.header().moveSection(self.tree_widget.header().visualIndex(column_index), i)
+
+    def set_column_visibility(self, item):
+        column_name = item.text()
+        is_hidden = item.checkState() == QtCore.Qt.CheckState.Unchecked
+        column_index = self.tree_widget.get_column_index(column_name)
+        
+        self.tree_widget.setColumnHidden(column_index, is_hidden)
+
+    def update_list(self):
+        self.clear()
+        logical_indexes = [self.get_logical_index(i) for i in range(self.tree_widget.columnCount())]
+        header_names = [self.tree_widget.column_name_list[i] for i in logical_indexes]
+
+        self.addItems(header_names)
+
+    def get_logical_index(self, index):
+        return self.tree_widget.header().logicalIndex(index)
+    
+    def addItems(self, items):
+        for column_index, item in enumerate(items):
+            if not isinstance(item, str):
+                continue
+
+            list_item = QtWidgets.QListWidgetItem(item)
+            list_item.setFlags(list_item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+
+            check_state = QtCore.Qt.CheckState.Unchecked if self.tree_widget.isColumnHidden(self.get_logical_index(column_index)) else QtCore.Qt.CheckState.Checked
+
+            list_item.setCheckState(check_state)
+            self.addItem(list_item)
+
+            self.name_to_item[item] = list_item
+
+    def get_item(self, item_name: str) -> QtWidgets.QListWidgetItem:
+        return self.name_to_item.get(item_name, None)
+
 class GroupableTreeWidget(QtWidgets.QTreeWidget):
     """A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
 
@@ -764,6 +822,16 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         menu.addSeparator()
 
         self.add_label_action(menu, 'Manage Columns')
+        show_hide_column = menu.addMenu('Show/Hide Columns')
+        menu.addMenu(show_hide_column)
+
+        self.column_list_widget = ColumnListWidget(self)
+        action = QtWidgets.QWidgetAction(self)
+        action.setDefaultWidget(self.column_list_widget)
+        show_hide_column.addAction(action)
+
+        hide_this_column = menu.addAction('Hide This Column')
+        hide_this_column.triggered.connect(lambda: self.hideColumn(column))
 
         # Disable 'Group by this column' on the first column
         if not column:
