@@ -699,13 +699,19 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         Context Menu:
             +-------------------------------+
-            | Group by this column          |
-            | Ungroup all                   |
+            | Grouping                      |
+            | - Group by this column        |
+            | - Ungroup all                 |
             | ----------------------------- |
-            | Set Color Adaptive            |
-            | Reset All Color Adaptive      |
+            | Visualization                 |
+            | - Set Color Adaptive          |
+            | - Reset All Color Adaptive    |
             | ----------------------------- |
-            | Fit in View                   |
+            | - Fit in View                 |
+            | ----------------------------- |
+            | Manage Columns                |
+            | - Show/Hide Columns >         |
+            | - Hide This Column            |
             +-------------------------------+
 
         Args:
@@ -724,6 +730,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         else:
             menu = QtWidgets.QMenu(self)
 
+        self.add_label_action(menu, 'Grouping')
+
         # Create the 'Group by this column' action and connect it to the 'group_by_column' method. Pass in the selected column as an argument.
         group_by_action = menu.addAction('Group by this column')
         group_by_action.triggered.connect(lambda: self.group_by_column(column))
@@ -734,6 +742,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         # Add a separator
         menu.addSeparator()
+
+        self.add_label_action(menu, 'Visualization')
 
         # Create the 'Set Color Adaptive' action and connect it to the 'apply_column_color_adaptive' method
         apply_color_adaptive_action = menu.addAction('Set Color Adaptive')
@@ -750,12 +760,35 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         fit_column_in_view_action = menu.addAction('Fit in View')
         fit_column_in_view_action.triggered.connect(self.fit_column_in_view)
 
+        # Add a separator
+        menu.addSeparator()
+
+        self.add_label_action(menu, 'Manage Columns')
+
         # Disable 'Group by this column' on the first column
         if not column:
             group_by_action.setDisabled(True)
 
         # Show the context menu
         menu.popup(QtGui.QCursor.pos())
+
+    def add_label_action(self, parent_menu: QtWidgets.QMenu, text: str):
+        label = QtWidgets.QLabel(text, parent_menu)
+        label.setDisabled(True)
+        label.setStyleSheet(
+            'color: rgb(144, 144, 144); padding: 0px;'
+        )
+
+        layout = QtWidgets.QVBoxLayout()
+        layout.addWidget(label)
+
+        widget = QtWidgets.QWidget()
+        widget.setLayout(layout)
+
+        action = QtWidgets.QWidgetAction(parent_menu)
+        action.setDefaultWidget(widget)
+
+        parent_menu.addAction(action)
 
     def _create_item_groups(self, data: List[str]) -> Dict[str, List[TreeWidgetItem]]:
         """Group the data into a dictionary mapping group names to lists of tree items.
