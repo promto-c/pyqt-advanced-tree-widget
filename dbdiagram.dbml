@@ -1,0 +1,52 @@
+// File: dbdiagram.dbml
+Table Project {
+  id Integer [pk, increment]
+  name Text
+  description Text
+  start_date Date
+  due_date Date
+}
+
+Table Artist {
+  id Integer [pk, increment]
+  name Text
+  email Text
+}
+
+Enum status {
+  "Not Started"
+  "Pending"
+  "In Progress"
+  "Completed"
+  "On Hold"
+  "Cancelled"
+  "Approved"
+}
+
+Enum asset_type {
+  "Modeling"
+  "Texturing"
+  "Rigging"
+  "Animation"
+  "Lighting"
+  "Rendering"
+  "Compositing"
+}
+
+Table Asset {
+  id Integer [pk, increment]
+  name Text
+  description Text
+  project_id Integer [ref: > Project.id]
+  status status
+  type asset_type
+}
+
+Table Assignment {
+  id Integer [pk, increment]
+  asset_id Integer [ref: > Asset.id]
+  artist_id Integer [ref: > Artist.id]
+  assigned_date Date
+  deadline Date
+  status status
+}
