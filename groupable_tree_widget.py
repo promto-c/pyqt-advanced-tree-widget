@@ -589,7 +589,7 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
             return str(self_data) < str(other_data)
 
 class ColumnListWidget(QtWidgets.QListWidget):
-    def __init__(self, parent: QWidget | None = ...) -> None:
+    def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
 
         self.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
