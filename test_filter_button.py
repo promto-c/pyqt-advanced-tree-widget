@@ -13,15 +13,19 @@ def get_date_list(
         date_format: str = '%Y-%m-%d'
     ) -> List[str]:
     """Generates a list of dates within a specified range, or relative to the current date.
+
     Args:
         start_date: Start date in 'YYYY-MM-DD' format or None. Used if days_relative is None.
         end_date: End date in 'YYYY-MM-DD' format or None. Used if days_relative is None.
         days_relative: Number of days relative to today. Positive for future, negative for past.
         date_format: Desired format of the date strings.
+
     Returns:
         A list of date strings in the specified range.
+
     Raises:
         ValueError: If neither days_relative nor both start_date and end_date are specified.
+
     Examples:
         >>> get_date_list(start_date='2023-01-01', end_date='2023-01-03')
         ['2023-01-01', '2023-01-02', '2023-01-03']
@@ -242,7 +246,7 @@ class FilterWidget(QtWidgets.QWidget):
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
         # Title bar with remove icon
-        self.title_widget = QtWidgets.QWidget()
+        self.title_widget = QtWidgets.QWidget(self)
         self.title_layout = QtWidgets.QHBoxLayout()
         self.title_widget.setLayout(self.title_layout)
 
@@ -251,14 +255,32 @@ class FilterWidget(QtWidgets.QWidget):
 
         self.condition_selector = QtWidgets.QComboBox()  # Dropdown for selecting condition
         self.title_widget.setStyleSheet('''
-            QWidget {
+            QComboBox {
+                padding: 0 0;
                 border: None;
+                text-align: left;
                 font-size: 12px;
             }
+            QComboBox:hover {
+                color: rgb(210, 210, 210);
+            }
                                               ''')
+
         self.condition_selector.addItems(['Condition1', 'Condition2'])
-        self.clear_button = QtWidgets.QPushButton(self.tabler_icon.rotate_clockwise_2, "")
-        self.remove_button = QtWidgets.QPushButton(self.tabler_icon.trash, "")
+        self.clear_button = QtWidgets.QToolButton(self.title_widget)
+        self.clear_button.setIcon(self.tabler_icon.clear_all)
+        self.clear_button.setToolTip("Clear all")
+
+        self.remove_button = QtWidgets.QToolButton(self.title_widget)
+        self.remove_button.setIcon(self.tabler_icon.trash)
+        self.remove_button.setToolTip("Remove this filter from Quick Access")
+
+        # Set the style for the hover state
+        self.remove_button.setStyleSheet("""
+            QToolButton:hover {
+                background-color: #8B0000;  /* Dark Red */
+            }
+        """)
         self.title_layout.addWidget(self.condition_selector)  # Filter name label
         self.title_layout.addStretch()  # Pushes the remove button to the right
         self.title_layout.addWidget(self.clear_button)
@@ -271,13 +293,44 @@ class FilterWidget(QtWidgets.QWidget):
         self.main_layout.addLayout(self.widget_layout)
 
         # Add Confirm and Cancel buttons
+        self.buttons_widget = QtWidgets.QWidget(self)
         self.buttons_layout = QtWidgets.QHBoxLayout()
+        self.buttons_layout.setContentsMargins(0, 0, 0, 0)
+        self.buttons_widget.setLayout(self.buttons_layout)
         self.cancel_button = QtWidgets.QPushButton("Cancel")
         self.apply_button = QtWidgets.QPushButton("Apply Filter")  # Renamed Confirm to Apply Filter
         self.buttons_layout.addStretch()
         self.buttons_layout.addWidget(self.cancel_button)
         self.buttons_layout.addWidget(self.apply_button)
-        self.main_layout.addLayout(self.buttons_layout)
+        self.main_layout.addWidget(self.buttons_widget)
+
+
+        self.buttons_widget.setStyleSheet('''
+
+            QPushButton {
+                border: 0px solid;
+                border-radius: 4px;  /* Rounded corners */
+                padding: 4px 8;  /* Padding around text */
+                background-color: #333;  /* Dark background for buttons */
+                color: #ddd;  /* Light text */
+            }
+            QPushButton:hover {
+                background-color: #555;  /* Slightly lighter background on hover */
+            }
+            QPushButton:pressed {
+                background-color: #444;  /* Darker background when pressed */
+            }
+            QPushButton#ApplyButton {
+                background-color: #4CAF50;  /* A green background for the apply button */
+                color: white;  /* White text for contrast */
+            }
+            QPushButton#ApplyButton:hover {
+                background-color: #5DBF60;  /* Slightly lighter on hover */
+            }
+        ''')
+
+        self.apply_button.setObjectName("ApplyButton")  # Set object name for styling
+
 
     def __setup_signal_connections(self):
         """Set up signal connections between widgets and slots.
@@ -334,6 +387,8 @@ class DateRangeFilterWidget(FilterWidget):
         }
 
         self.filter_label = str()
+        self.current_index = int()
+        self.start_date, self.end_date = None, None
         # self.relative_date_selector.currentText()
 
         # Private Attributes
