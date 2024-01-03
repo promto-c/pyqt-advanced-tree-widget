@@ -605,36 +605,81 @@ class HeaderColumnWidget(QtWidgets.QWidget):
         line_edit.setPlaceholderText(f"Header")
 
 class SearchableHeaderView(QtWidgets.QHeaderView):
-    def __init__(self, parent, orientation: QtCore.Qt.Orientation = QtCore.Qt.Orientation.Horizontal, *args, **kwargs):
+
+    # Initialization and Setup
+    # ------------------------
+    def __init__(self, parent: QtWidgets.QTreeWidget, orientation: QtCore.Qt.Orientation = QtCore.Qt.Orientation.Horizontal, *args, **kwargs):
         super().__init__(orientation, parent, *args, **kwargs)
+
+        # Initialize setup
+        self._setup_attributes()
+        self._setup_ui()
+        self._setup_icons()
+        self._setup_signal_connections()
+
+    def _setup_attributes(self):
+        """Set up the initial values for the widget.
+        """
+        # Attributes
+        # ------------------
         self.line_edits = []
 
+        # Private Attributes
+        # ------------------
+        ...
+
+    def _setup_ui(self):
+        """Set up the UI for the widget, including creating widgets and layouts.
+        """
+        # Create widgets and layouts
         self.setFixedHeight(int(self.height()*1.5))
+        self.setDefaultAlignment(QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         self.set_line_edits()
 
+        if self.parent():
+            self.parent().setHeader(self)
+            self.update_positions()
+
+    def _setup_signal_connections(self):
+        """Set up signal connections between widgets and slots.
+        """
+        # Connect signals to slots
         self.sectionResized.connect(self.update_positions)
         self.parent().horizontalScrollBar().valueChanged.connect(self.update_positions)
 
-        self.setDefaultAlignment(QtCore.Qt.AlignmentFlag.AlignTop | QtCore.Qt.AlignmentFlag.AlignHCenter)
+    def _setup_icons(self):
+        """Set the icons for the widgets.
+        """
+        # Set the icons for the widgets
+        pass
 
-    def set_line_edits(self):
-        for i in range(self.parent().model().columnCount()):
-            widget = HeaderColumnWidget(self)
-            self.line_edits.append(widget)
+    # Private Methods
+    # ---------------
 
-    def mousePressEvent(self, event):
-        for line_edit in self.line_edits:
-            if line_edit.geometry().contains(event.pos()):
-                line_edit.setFocus()
-                return
-        super().mousePressEvent(event)
-
+    # Extended Methods
+    # ----------------
     def update_positions(self):
         for i, line_edit in enumerate(self.line_edits):
             section_rect = self.sectionViewportPosition(i)
             rect = QtCore.QRect(section_rect+4, 11, self.sectionSize(i)-8, self.height())
             line_edit.setGeometry(rect)
+
+    def set_line_edits(self):
+        for _ in range(self.parent().model().columnCount()):
+            widget = HeaderColumnWidget(self)
+            self.line_edits.append(widget)
+
+    # Event Handling or Override Methods
+    # ----------------------------------
+    def mousePressEvent(self, event):
+        for line_edit in self.line_edits:
+            if line_edit.geometry().contains(event.pos()):
+                line_edit.setFocus()
+                return
+
+        super().mousePressEvent(event)
+
 
 class GroupableTreeWidget(QtWidgets.QTreeWidget):
     """A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
@@ -722,9 +767,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setSelectionMode(QtWidgets.QTreeWidget.SelectionMode.ExtendedSelection)
         self.setSelectionBehavior(QtWidgets.QTreeWidget.SelectionBehavior.SelectItems)
 
-        custom_header = SearchableHeaderView(self)
-        self.setHeader(custom_header)
-        custom_header.update_positions()
+        # NOTE: Test
+        self.searchable_header = SearchableHeaderView(self)
 
         self.set_row_height(self._row_height)
 
