@@ -60,11 +60,27 @@ class RangeSelectionCalendar(QtWidgets.QCalendarWidget):
         """
         super().__init__(parent)
 
+        # Initialize setup
+        self._setup_attributes()
+        self._setup_ui()
+        self._setup_signal_connections()
+
+    def _setup_attributes(self):
+        """Set up the initial values for the widget.
+        """
+        # Attributes
+        # ----------
         self.start_date = None
         self.end_date = None
-        self.is_shift_pressed = False
-        self.clicked.connect(self.handle_date_clicked)
-        self.range_selected.connect(self.select_date_range)
+
+        # Private Attributes
+        # ------------------
+        self._is_shift_pressed = False
+
+    def _setup_ui(self):
+        """Set up the UI for the widget, including creating widgets and layouts.
+        """
+        # Create widgets and layouts
         self.tabler_icon = TablerQIcon(opacity=0.6)
 
         self.qt_calendar_prevmonth_button = self.findChild(QtWidgets.QToolButton, 'qt_calendar_prevmonth')
@@ -75,6 +91,13 @@ class RangeSelectionCalendar(QtWidgets.QCalendarWidget):
         self.qt_calendar_monthbutton = self.findChild(QtWidgets.QToolButton, 'qt_calendar_monthbutton')
         self.qt_calendar_yearbutton = self.findChild(QtWidgets.QToolButton, 'qt_calendar_yearbutton')
 
+    def _setup_signal_connections(self):
+        """Set up signal connections between widgets and slots.
+        """
+        # Connect signals to slots
+        self.clicked.connect(self.handle_date_clicked)
+        self.range_selected.connect(self.select_date_range)
+
     def handle_date_clicked(self, date):
         """Handles the logic when a date is clicked on the calendar.
 
@@ -84,7 +107,7 @@ class RangeSelectionCalendar(QtWidgets.QCalendarWidget):
         Args:
             date (QtCore.QDate): The date that was clicked.
         """
-        if self.is_shift_pressed and self.start_date:
+        if self._is_shift_pressed and self.start_date:
             self.end_date = date
 
             # Swap dates if start date is greater than end date using a more Pythonic approach
@@ -101,21 +124,6 @@ class RangeSelectionCalendar(QtWidgets.QCalendarWidget):
         # Update the calendar display to reflect the new selection
         self.updateCells()
 
-    def paintCell(self, painter, rect, date):
-        
-        super().paintCell(painter, rect, date)
-        if self.start_date and self.start_date <= date:
-            if self.end_date and date <= self.end_date:
-                painter.fillRect(rect, QtGui.QColor(0, 150, 255, 50))
-
-    def keyPressEvent(self, event: QtGui.QKeyEvent):
-        super().keyPressEvent(event)
-        self.update_shift_state(event)
-
-    def keyReleaseEvent(self, event: QtGui.QKeyEvent):
-        super().keyReleaseEvent(event)
-        self.update_shift_state(event)
-
     def clear(self):
         # Clear any selections made in the calendar
         self.start_date, self.end_date = None, None
@@ -127,9 +135,6 @@ class RangeSelectionCalendar(QtWidgets.QCalendarWidget):
 
         # Reset the calendar to the current month
         self.setCurrentPage(QtCore.QDate.currentDate().year(), QtCore.QDate.currentDate().month())
-
-    def update_shift_state(self, event: QtGui.QKeyEvent):
-        self.is_shift_pressed = event.modifiers() & QtCore.Qt.KeyboardModifier.ShiftModifier
 
     def get_date_range(self) -> Tuple[QtCore.QDate, QtCore.QDate]:
         return self.start_date, self.end_date
@@ -147,6 +152,26 @@ class RangeSelectionCalendar(QtWidgets.QCalendarWidget):
         # Refresh the calendar display
         self.updateCells()
 
+    # Private Methods
+    # ---------------
+    def _update_shift_state(self, event: QtGui.QKeyEvent):
+        self._is_shift_pressed = event.modifiers() & QtCore.Qt.KeyboardModifier.ShiftModifier
+
+    # Event Handling or Override Methods
+    # ----------------------------------
+    def paintCell(self, painter, rect, date):
+        super().paintCell(painter, rect, date)
+        if self.start_date and self.start_date <= date:
+            if self.end_date and date <= self.end_date:
+                painter.fillRect(rect, QtGui.QColor(0, 150, 255, 50))
+
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        super().keyPressEvent(event)
+        self._update_shift_state(event)
+
+    def keyReleaseEvent(self, event: QtGui.QKeyEvent):
+        super().keyReleaseEvent(event)
+        self._update_shift_state(event)
 class FilterPopupButton(QtWidgets.QComboBox):
 
     MINIMUM_WIDTH, MINIMUM_HEIGHT  = 42, 24
@@ -159,11 +184,10 @@ class FilterPopupButton(QtWidgets.QComboBox):
 
         # Initialize setup
         self.__setup_ui()
-        self.tabler_icon = TablerQIcon()
 
         if self.filter_widget:
             self.update_button_text()
-            self.icon = QtGui.QIcon(self.filter_widget.windowIcon())
+            self.setIcon(self.filter_widget.windowIcon())
         # self.__setup_signal_connections()
             
         self.is_active = False
@@ -244,8 +268,8 @@ class FilterPopupButton(QtWidgets.QComboBox):
 
         icon_size = self.iconSize()
         rect = self.rect()
-        iconRect = QtCore.QRect(self.LEFT_PADDING, (rect.height() - icon_size.height()) // 2, icon_size.width()-2, icon_size.height())
-        self.icon.paint(painter, iconRect)
+        icon_rect = QtCore.QRect(self.LEFT_PADDING, (rect.height() - icon_size.height()) // 2, icon_size.width()-2, icon_size.height())
+        self.icon.paint(painter, icon_rect)
 
 class FilterWidget(QtWidgets.QWidget):
     close_requested = QtCore.pyqtSignal(bool)
@@ -449,7 +473,7 @@ class DateRangeFilterWidget(FilterWidget):
     def __setup_ui(self):
         """Set up the UI for the widget, including creating widgets and layouts.
         """
-        self.setWindowIcon(self.tabler_icon.calendar)
+        self.setWindowIcon(TablerQIcon.calendar)
 
         # Create widgets and layouts here
         self.calendar = RangeSelectionCalendar(self)
@@ -554,7 +578,7 @@ class MultiSelectFilter(FilterWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.setWindowIcon(self.tabler_icon.list_check)
+        self.setWindowIcon(TablerQIcon.list_check)
 
         self.line_edit = QtWidgets.QLineEdit(self)
 
@@ -615,15 +639,19 @@ class MultiSelectFilter(FilterWidget):
             child.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
             self.unchecked_all(child)
 
-    def add_items(self, sequence, shots):
-        """Adds items to the tree widget.
+    def add_items(self, parent_name: str, child_names: List[str]):
+        """Adds items to the tree widget with a parent and its children.
+
+        Args:
+            parent_name (str): The name of the parent item to be added.
+            child_names (List[str]): The list of names for the child items under the parent.
         """
-        parent_item = QtWidgets.QTreeWidgetItem(self.tree_widget, [sequence])
+        parent_item = QtWidgets.QTreeWidgetItem(self.tree_widget, [parent_name])
         parent_item.setFlags(parent_item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsAutoTristate)
         parent_item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
 
-        for shot in shots:
-            child_item = QtWidgets.QTreeWidgetItem(parent_item, [shot])
+        for child_name in child_names:
+            child_item = QtWidgets.QTreeWidgetItem(parent_item, [child_name])
             child_item.setFlags(child_item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsAutoTristate)
             child_item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
 
@@ -665,7 +693,7 @@ class FileTypeFilter(FilterWidget):
     def __setup_ui(self):
         """Set up the UI for the widget, including creating widgets and layouts.
         """
-        self.setWindowIcon(self.tabler_icon.file)
+        self.setWindowIcon(TablerQIcon.file)
 
         # Preset file type groups with tooltips and extensions
         self.file_type_groups = {
@@ -714,7 +742,6 @@ class FileTypeFilter(FilterWidget):
 
         # If none of the above conditions are met, return False
         return False
-
 
     def get_selected_extensions(self):
         selected_extensions = list()
