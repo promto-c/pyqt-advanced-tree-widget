@@ -171,6 +171,38 @@ def parse_date(date_string: str) -> Optional[datetime.datetime]:
     except ValueError:
         return None
 
+def extract_all_items_from_tree(tree_widget: QtWidgets.QTreeWidget) -> List[QtWidgets.QTreeWidgetItem]:
+    """This function returns all the items in the tree widget as a list.
+
+    The items are sorted based on their order in the tree structure, 
+    with children appearing after their parent items for each grouping.
+
+    Returns:
+        List[TreeWidgetItem]: A list containing all the items in the tree widget.
+    """
+    def traverse_items(item: QtWidgets.QTreeWidgetItem):
+        # Recursively traverse the children of the current item
+        for child_index in range(item.childCount()):
+            # Get the child item at the current index
+            child = item.child(child_index)
+
+            # Add the current child item to the list
+            items.append(child)
+
+            # Recursively traverse the children of the current child item
+            traverse_items(child)
+
+    # Get the root item of the tree widget
+    root = tree_widget.invisibleRootItem()
+
+    # Traverse the items in a depth-first manner and collect them in a list
+    items = list()
+    traverse_items(root)
+
+    # Return the list of items
+    return items
+
+
 class AdaptiveColorMappingDelegate(QtWidgets.QStyledItemDelegate):
     """A delegate class for adaptive color mapping in Qt items.
 
@@ -1263,7 +1295,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         # Emit signal for ungrouped all
         self.ungrouped_all.emit()
-    
+
     def get_all_items(self) -> List[TreeWidgetItem]:
         """This function returns all the items in the tree widget as a list.
 
@@ -1273,27 +1305,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         Returns:
             List[TreeWidgetItem]: A list containing all the items in the tree widget.
         """
-        def traverse_items(item: TreeWidgetItem):
-            # Recursively traverse the children of the current item
-            for child_index in range(item.childCount()):
-                # Get the child item at the current index
-                child = item.child(child_index)
-
-                # Add the current child item to the list
-                items.append(child)
-
-                # Recursively traverse the children of the current child item
-                traverse_items(child)
-
-        # Get the root item of the tree widget
-        root = self.invisibleRootItem()
-
-        # Traverse the items in a depth-first manner and collect them in a list
-        items = list()
-        traverse_items(root)
-
-        # Return the list of items
-        return items
+        return extract_all_items_from_tree(self)
 
     def copy_selected_cells(self):
         # NOTE: For refactoring
