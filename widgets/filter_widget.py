@@ -1,441 +1,149 @@
+
+# Type Checking Imports
+# ---------------------
+from typing import Any, Optional, List
+
+# Standard Library Imports
+# ------------------------
+import re
+
+# Third Party Imports
+# -------------------
 from PyQt5 import QtWidgets, QtCore, QtGui
-
-from typing import Any, Optional, List, Tuple
-import re, time
-from datetime import datetime, timedelta
-
-from groupable_tree_widget import extract_all_items_from_tree
-
 from tablerqicon import TablerQIcon
+
+# Local Imports
+# -------------
+from utils.tree_utils import extract_all_items_from_tree
+from utils.date_utils import get_date_list
+
+from widgets.calendar_widget import RangeCalendarWidget
+from widgets.tag_widget import TagWidget
+
 from theme import set_theme
 
-def get_date_list(
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        days_relative: Optional[int] = None,
-        date_format: str = '%Y-%m-%d'
-    ) -> List[str]:
-    """Generates a list of dates within a specified range, or relative to the current date.
-
-    Args:
-        start_date: Start date in 'YYYY-MM-DD' format or None. Used if days_relative is None.
-        end_date: End date in 'YYYY-MM-DD' format or None. Used if days_relative is None.
-        days_relative: Number of days relative to today. Positive for future, negative for past.
-        date_format: Desired format of the date strings.
-
-    Returns:
-        A list of date strings in the specified range.
-
-    Raises:
-        ValueError: If neither days_relative nor both start_date and end_date are specified.
-
-    Examples:
-        >>> get_date_list(start_date='2023-01-01', end_date='2023-01-03')
-        ['2023-01-01', '2023-01-02', '2023-01-03']
-    """
-    if days_relative is not None:
-        # Calculate date range based on days relative to today
-        reference_date = datetime.now()
-        start_date, end_date = sorted([reference_date, reference_date + timedelta(days=days_relative)])
-
-    elif start_date and end_date:
-        # Parse given start and end dates based on date_format
-        start_date = datetime.strptime(start_date, date_format)
-        end_date = datetime.strptime(end_date, date_format)
-
-    else:
-        # Ensure valid input is provided
-        raise ValueError("Either specify days_relative or both start_date and end_date")
-
-    # Generate list of formatted date strings in the range
-    return [(start_date + timedelta(days=i)).strftime(date_format) for i in range((end_date - start_date).days + 1)]
-
-
-class RangeSelectionCalendar(QtWidgets.QCalendarWidget):
-    """Custom PyQt5 Calendar Widget for selecting a range of dates.
-    """
-    range_selected = QtCore.pyqtSignal(QtCore.QDate, QtCore.QDate)
-
-    # Initialization and Setup
-    # ------------------------
+class CustomMenu(QtWidgets.QMenu):
     def __init__(self, parent=None):
-        """Initialize the custom calendar widget.
-        """
         super().__init__(parent)
-
-        # Initialize setup
-        self._setup_attributes()
-        self._setup_ui()
-        self._setup_signal_connections()
-
-    def _setup_attributes(self):
-        """Set up the initial values for the widget.
-        """
-        # Attributes
-        # ----------
-        self.start_date = None
-        self.end_date = None
-
-        # Private Attributes
-        # ------------------
-        self._is_shift_pressed = False
-
-    def _setup_ui(self):
-        """Set up the UI for the widget, including creating widgets and layouts.
-        """
-        # Create widgets and layouts
-        self.tabler_icon = TablerQIcon(opacity=0.6)
-
-        self.qt_calendar_prevmonth_button = self.findChild(QtWidgets.QToolButton, 'qt_calendar_prevmonth')
-        self.qt_calendar_prevmonth_button.setIcon(self.tabler_icon.chevron_left)
-        self.qt_calendar_nextmonth_button = self.findChild(QtWidgets.QToolButton, 'qt_calendar_nextmonth')
-        self.qt_calendar_nextmonth_button.setIcon(self.tabler_icon.chevron_right)
-
-        self.qt_calendar_monthbutton = self.findChild(QtWidgets.QToolButton, 'qt_calendar_monthbutton')
-        self.qt_calendar_yearbutton = self.findChild(QtWidgets.QToolButton, 'qt_calendar_yearbutton')
-
-    def _setup_signal_connections(self):
-        """Set up signal connections between widgets and slots.
-        """
-        # Connect signals to slots
-        self.clicked.connect(self.handle_date_clicked)
-        self.range_selected.connect(self.select_date_range)
-
-    def handle_date_clicked(self, date):
-        """Handles the logic when a date is clicked on the calendar.
-
-        If shift is pressed and a start date exists, it selects an end date to form a range.
-        Otherwise, it resets to a new start date.
-
-        Args:
-            date (QtCore.QDate): The date that was clicked.
-        """
-        if self._is_shift_pressed and self.start_date:
-            self.end_date = date
-
-            # Swap dates if start date is greater than end date using a more Pythonic approach
-            if self.start_date > self.end_date:
-                self.start_date, self.end_date = self.end_date, self.start_date
-
-        else:
-            # Set or reset the start date and end date to the clicked date
-            self.start_date = self.end_date = date
-
-        # ...
-        self.range_selected.emit(self.start_date, self.end_date)
-
-        # Update the calendar display to reflect the new selection
-        self.updateCells()
-
-    def clear(self):
-        # Clear any selections made in the calendar
-        self.start_date, self.end_date = None, None
-
-        # Set the calendar's selected date to today
-        today = QtCore.QDate.currentDate()
-        self.setSelectedDate(today)
-        self.updateCells()
-
-        # Reset the calendar to the current month
-        self.setCurrentPage(QtCore.QDate.currentDate().year(), QtCore.QDate.currentDate().month())
-
-    def get_date_range(self) -> Tuple[QtCore.QDate, QtCore.QDate]:
-        return self.start_date, self.end_date
-
-    def select_date_range(self, start_date, end_date):
-        self.start_date, self.end_date = start_date, end_date
-
-        if end_date:
-            # Update the calendar's selection
-            self.setSelectedDate(end_date)
-        elif start_date:
-            self.setSelectedDate(start_date)
-        else:
-            self.setSelectedDate(QtCore.QDate.currentDate())
-        # Refresh the calendar display
-        self.updateCells()
-
-    # Private Methods
-    # ---------------
-    def _update_shift_state(self, event: QtGui.QKeyEvent):
-        self._is_shift_pressed = event.modifiers() & QtCore.Qt.KeyboardModifier.ShiftModifier
-
-    # Event Handling or Override Methods
-    # ----------------------------------
-    def paintCell(self, painter, rect, date):
-        super().paintCell(painter, rect, date)
-        if self.start_date and self.start_date <= date:
-            if self.end_date and date <= self.end_date:
-                painter.fillRect(rect, QtGui.QColor(0, 150, 255, 50))
 
     def keyPressEvent(self, event: QtGui.QKeyEvent):
-        super().keyPressEvent(event)
-        self._update_shift_state(event)
-
-    def keyReleaseEvent(self, event: QtGui.QKeyEvent):
-        super().keyReleaseEvent(event)
-        self._update_shift_state(event)
-
-class TagButton(QtWidgets.QPushButton):
-    tag_removed = QtCore.pyqtSignal(str)
-
-    def __init__(self, text, parent=None):
-        super().__init__(text, parent)
-
-        self.setStyleSheet('''
-            QPushButton {
-                background-color: #355;
-                border-radius: 10px;
-                border: transparent;
-                padding: 2px 5px;
-                color: #DDD;
-            }
-            QPushButton:hover {
-                background-color: #466;
-            }
-            QPushButton:pressed {
-                background-color: #244;
-            }
-        ''')
-
-        self.clicked.connect(self.emit_remove)
-        self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-
-    def emit_remove(self):
-        self.tag_removed.emit(self.text())
-
-class TagWidget(QtWidgets.QWidget):
-    tag_removed = QtCore.pyqtSignal(str)
-    tag_changed = QtCore.pyqtSignal()
-
-    def __init__(self, parent=None):
-        super(TagWidget, self).__init__(parent)
-
-        self.widget = QtWidgets.QWidget(self)
-        self.tag_layout = QtWidgets.QHBoxLayout()
-        self.tag_layout.setContentsMargins(0, 0, 0, 0)
-        self.tag_layout.addStretch()
-        self.widget.setLayout(self.tag_layout)
-        self.tags = set()
-
-        # Replace QScrollArea with InertiaScrollArea
-        self.scroll_area = InertiaScrollArea(self)
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setWidget(self.widget)
-        self.scroll_area.setFixedHeight(26)
-        self.scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-
-        self.main_layout = QtWidgets.QHBoxLayout(self)
-        self.main_layout.setContentsMargins(0, 0, 0, 0)
-        self.main_layout.addWidget(self.scroll_area)
-        copy_icon = TablerQIcon(opacity=0.6).copy
-        self.copy_button = QtWidgets.QPushButton(copy_icon, '', self)
-        self.main_layout.addWidget(self.copy_button)
-
-        self.copy_button.clicked.connect(self.copy_data_to_clipboard)
-        self.update_copy_button_state()
-        self.tag_changed.connect(self.update_copy_button_state)
-
-    def update_copy_button_state(self):
-        self.copy_button.setEnabled(bool(self.tags))
-
-    def copy_data_to_clipboard(self):
-        full_text = ', '.join(self.tags)
-
-        clipboard = QtWidgets.QApplication.clipboard()
-        clipboard.setText(full_text)
-
-        # Show tooltip message
-        self.show_tool_tip(f'Copied:\n{full_text}', 5000)
-
-    def show_tool_tip(self, text: str, msc_show_time: int = 1000):
-        QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), text, self, QtCore.QRect(), msc_show_time)
-
-    def add_tag(self, text):
-        if text not in self.tags:
-            self.tags.add(text)
-            tag_label = TagButton(text)
-            tag_label.tag_removed.connect(self.emit_remove_tag)
-            tag_label.tag_removed.connect(self.remove_tag)
-            self.tag_layout.insertWidget(self.tag_layout.count() - 1, tag_label)
-
-        self.tag_changed.emit()
-
-    def emit_remove_tag(self, tag_name):
-        self.tag_removed.emit(tag_name)
-
-    def remove_tag(self, text):
-        if text in self.tags:
-            self.tags.remove(text)
-        for i in reversed(range(self.tag_layout.count())):
-            widget = self.tag_layout.itemAt(i).widget()
-            if widget is not None and isinstance(widget, TagButton) and widget.text() == text:
-                widget.deleteLater()
-
-        self.tag_changed.emit()
-
-    def resizeEvent(self, event):
-        super(TagWidget, self).resizeEvent(event)
-
-class InertiaScrollArea(QtWidgets.QScrollArea):
-    def __init__(self, parent=None, max_velocity=15, deceleration_rate=0.9, timer_interval=10):
-        super().__init__(parent)
-        self.maxVelocity = max_velocity
-        self.decelerationRate = deceleration_rate
-        self.timerInterval = timer_interval
-
-        self.velocity = 0
-        self.lastTime = 0
-        self.dragging = False
-
-        self.inertiaTimer = QtCore.QTimer()
-        self.inertiaTimer.timeout.connect(self.handleInertia)
-
-    def mousePressEvent(self, event: QtGui.QMouseEvent):
-        if event.button() == QtCore.Qt.MouseButton.MiddleButton:
-            self.dragging = True
-            self.lastPos = event.pos()
-            self.lastTime = time.time()
-            self.velocity = 0
-            self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
-            event.accept()
-
-    def mouseMoveEvent(self, event: QtGui.QMouseEvent):
-        if self.dragging:
-            currentTime = time.time()
-            newPos = event.pos()
-            delta = newPos - self.lastPos
-            deltaTime = currentTime - self.lastTime
-            if deltaTime > 0:
-                newVelocity = delta.x() / deltaTime
-                self.velocity = max(min(newVelocity, self.maxVelocity), -self.maxVelocity)
-            self.horizontalScrollBar().setValue(
-                self.horizontalScrollBar().value() - delta.x())
-            self.lastPos = newPos
-            self.lastTime = currentTime
-            event.accept()
-
-    def mouseReleaseEvent(self, event: QtGui.QMouseEvent):
-        if event.button() == QtCore.Qt.MouseButton.MiddleButton:
-            self.dragging = False
-            self.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
-            self.inertiaTimer.start(self.timerInterval)
-
-    def handleInertia(self):
-        self.velocity *= self.decelerationRate
-        if abs(self.velocity) < 0.5:
-            self.inertiaTimer.stop()
-            return
-
-        self.horizontalScrollBar().setValue(
-            self.horizontalScrollBar().value() - int(self.velocity))
-        if self.horizontalScrollBar().value() == self.horizontalScrollBar().maximum() or \
-           self.horizontalScrollBar().value() == self.horizontalScrollBar().minimum():
-            self.inertiaTimer.stop()
+        if event.key() in (QtCore.Qt.Key.Key_Return, QtCore.Qt.Key.Key_Enter):
+            # Do nothing, preventing the popup from closing
+            pass  
+        else:
+            super().keyPressEvent(event)
 
 class FilterPopupButton(QtWidgets.QComboBox):
 
     MINIMUM_WIDTH, MINIMUM_HEIGHT  = 42, 24
     LEFT_PADDING = 8
+    ICON_PADDING = 16
 
-    def __init__(self, filter_widget: 'FilterWidget' = None, parent = None, *args, **kwargs):
+    def __init__(self, parent = None, *args, **kwargs):
         super().__init__(parent, *args, **kwargs)
 
-        self.filter_widget = filter_widget
-
         # Initialize setup
+        self.__setup_attributes()
         self.__setup_ui()
+        self.__setup_accessibility()
 
-        if self.filter_widget:
-            self.update_button_text()
-            self.setIcon(self.filter_widget.windowIcon())
-        # self.__setup_signal_connections()
-            
+    def __setup_attributes(self):
+        """Set up the initial values for the widget.
+        """
         self.is_active = False
+        self.icon = None
 
     def __setup_ui(self):
-        self.popup_menu = QtWidgets.QMenu(self)
+        """Set up the UI for the widget, including creating widgets, layouts, and setting the icons for the widgets."""
+        self.__setup_popup_menu()
+        self.__setup_ui_properties()
+        self.__setup_style()
 
-        self.set_filter_widget(self.filter_widget)
+    def __setup_popup_menu(self):
+        """Setup the popup menu of the widget."""
+        self.popup_menu = CustomMenu(self.parent())
 
+    def __setup_ui_properties(self):
+        """Setup UI properties like size, cursor, etc."""
         self.setCursor(QtCore.Qt.CursorShape.PointingHandCursor)
-
         self.setMinimumSize(self.MINIMUM_WIDTH, self.MINIMUM_HEIGHT)
         self.setFixedHeight(self.MINIMUM_HEIGHT)
+        self.setSizeAdjustPolicy(QtWidgets.QComboBox.SizeAdjustPolicy.AdjustToContents)
 
+    def __setup_style(self):
+        """Setup the style of the widget."""
         self.setProperty('widget-style', 'round')
         self.setStyleSheet(f'''
             QComboBox[widget-style="round"] {{
-                padding: 0 0 0 {self.LEFT_PADDING+16};
+                padding: 0 0 0 {self.LEFT_PADDING + self.ICON_PADDING};
             }}
         ''')
 
+    def __setup_accessibility(self):
+        """Setup accessibility features like keyboard navigation and screen reader support."""
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+
     def set_active(self, state: bool = True):
+        """Set the active state of the button.
+        """
         self.is_active = state
         self.setProperty('active', self.is_active)
         self.update_style()
-        
+
     def update_style(self):
+        """ Update the button's style based on its state.
+        """
         self.style().unpolish(self)
         self.style().polish(self)
 
-    def set_filter_widget(self, widget: 'FilterWidget'):
-
-        if not widget:
-            return
-
-        # ...
-        self.filter_widget = widget
-        # Connect signals
-        self.filter_widget.close_requested.connect(self.popup_menu.hide)
-        self.filter_widget.label_changed.connect(self.update_button_text)
-        self.filter_widget.activated.connect(self.update_active_state)
-
-        self.popup_menu.clear()
-
-        action = QtWidgets.QWidgetAction(self.popup_menu)
-        action.setDefaultWidget(self.filter_widget)
-        self.popup_menu.addAction(action)
-        
-    def update_active_state(self):
-        self.set_active(self.filter_widget.is_active)
-
-    def update_button_text(self, text: str = str(), use_format: bool = True):
-        
-        if use_format:
-            text = f"{self.filter_widget.filter_name} • {text}"
-
-        # Update the button's text
-        self.setCurrentText(text)
+    def set_icon(self, icon: QtGui.QIcon):
+        """Set the icon of the button.
+        """
+        self.icon = icon
 
     # Event Handling or Override Methods
     # ----------------------------------
-    def setCurrentText(self, text):
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        """Handle key press events."""
+        if event.key() in (QtCore.Qt.Key.Key_Return, QtCore.Qt.Key.Key_Enter):
+            self.showPopup()
+        else:
+            super().keyPressEvent(event)
+
+    def setCurrentText(self, text: str):
+        """Set the current text of the button.
+        """
         self.clear()
         self.addItem(text)
         super().setCurrentText(text)
 
     def showPopup(self):
+        """Show the popup menu.
+        """
         self.popup_menu.popup(self.mapToGlobal(QtCore.QPoint(0, self.height())))
 
-    def setIcon(self, icon: QtGui.QIcon):
-        self.icon = icon
-
-    def paintEvent(self, event):
+    def paintEvent(self, event: QtGui.QPaintEvent):
+        """Handles the painting of the button, including its icon and opacity."""
         super().paintEvent(event)
-        painter = QtGui.QPainter(self)
 
-        # Set the opacity based on the active state
-        opacity = 1.0 if self.is_active else 0.6
-        painter.setOpacity(opacity)
+        if not self.icon:
+            return
 
-        icon_size = self.iconSize()
-        rect = self.rect()
-        icon_rect = QtCore.QRect(self.LEFT_PADDING, (rect.height() - icon_size.height()) // 2, icon_size.width()-2, icon_size.height())
-        self.icon.paint(painter, icon_rect)
+        with QtGui.QPainter(self) as painter:
+            # Adjust opacity based on active state
+            painter.setOpacity(1.0 if self.is_active else 0.6)
+
+            # Calculate position and size for the icon
+            icon_size = self.iconSize()
+            rect = self.rect()
+            icon_x = self.LEFT_PADDING
+            icon_y = (rect.height() - icon_size.height()) // 2
+            icon_rect = QtCore.QRect(icon_x, icon_y, icon_size.width() - 2, icon_size.height())
+
+            # Paint the icon
+            self.icon.paint(painter, icon_rect)
 
 class FilterWidget(QtWidgets.QWidget):
-    close_requested = QtCore.pyqtSignal(bool)
     label_changed = QtCore.pyqtSignal(str)
     activated = QtCore.pyqtSignal(list)
 
@@ -458,10 +166,11 @@ class FilterWidget(QtWidgets.QWidget):
         """
         # Attributes
         # ------------------
-        self._initial_focus_widget = None
+        self.filtered_list = list()
 
         # Private Attributes
         # ------------------
+        self._initial_focus_widget: QtWidgets.QWidget = None
         self._saved_state = dict()
 
     def __setup_ui(self):
@@ -470,6 +179,12 @@ class FilterWidget(QtWidgets.QWidget):
         self.setWindowTitle(self.filter_name)  # Set window title
 
         self.tabler_icon = TablerQIcon(opacity=0.6)
+
+        # Initialize the filter button
+        self._button = FilterPopupButton(self.parent())
+        # self._button.set_filter_widget(self)
+        self.set_button_text()
+        self.__setup_button_popup_menu()
 
         # Main layout
         self.main_layout = QtWidgets.QVBoxLayout(self)
@@ -525,33 +240,76 @@ class FilterWidget(QtWidgets.QWidget):
         """Set up signal connections between widgets and slots.
         """
         # Connect signals to slots
-        self.apply_button.clicked.connect(self.set_filter_applied)
-        self.clear_button.clicked.connect(self.set_filter_applied)
-        self.clear_button.clicked.connect(self.clear_state)
+        self.apply_button.clicked.connect(self.apply_filter)
 
         self.cancel_button.clicked.connect(self.discard_change)
-        self.apply_button.clicked.connect(self.save_change)
+        self.cancel_button.clicked.connect(self.hide_popup)
+        
+        self.clear_button.clicked.connect(self.set_filter_applied)
+        self.clear_button.clicked.connect(self.clear_state)
         self.clear_button.clicked.connect(self.clear_filter)
+        self.clear_button.clicked.connect(self._emit_clear_signals)
+        self.clear_button.clicked.connect(self.hide_popup)
+
         self.remove_button.clicked.connect(self.remove_filter)
 
-        self.apply_button.clicked.connect(lambda: self.close_requested.emit(True))
-        self.cancel_button.clicked.connect(lambda: self.close_requested.emit(False))
-        self.clear_button.clicked.connect(self.emit_clear_signals)
+        self.activated.connect(self._update_filtered_list)
 
-    def set_filter_applied(self):
-        self._is_filter_applied = True
+        # Connect signals with the filter button
+        self.label_changed.connect(self.set_button_text)
+        self.activated.connect(self._update_button_active_state)
 
-    def emit_clear_signals(self):
+    def __setup_button_popup_menu(self):
+        # Update the popup menu with the new filter widget
+        action = QtWidgets.QWidgetAction(self._button.popup_menu)
+        action.setDefaultWidget(self)
+        self._button.popup_menu.addAction(action)
+
+    # Private Methods
+    # ---------------
+    def _update_filtered_list(self, filtered_list: List[Any]):
+        self.filtered_list = filtered_list
+
+    def _update_button_active_state(self):
+        """Update the active state based on the filter widget's state.
+        """
+        self._button.set_active(self.is_active)
+
+    def _format_text(self, text: str) -> str:
+        """Format the text to be displayed on the button.
+        """
+        return f"{self.filter_name} • {text}"
+
+    def _emit_clear_signals(self):
         # Emit the label_changed signal with an empty string to indicate that the condition is cleared
         self.label_changed.emit("")
         # Emit the activated signal with an empty list to indicate no active date range
         self.activated.emit([])
 
-        self.close_requested.emit(True)
+    # Public Methods
+    # --------------
+    def hide_popup(self):
+        self._button.popup_menu.hide()
 
-    @property
-    def is_active(self):
-        raise NotImplementedError('')
+    def apply_filter(self):
+        self.set_filter_applied()
+        self.save_change()
+        self.hide_popup()
+
+    def set_button_text(self, text: str = str(), use_format: bool = True):
+        """Update the button's text. Optionally format the text.
+        """
+        # Format the text based on the 'use_format' flag.
+        text = self._format_text(text) if use_format else text
+        # Update the button's text
+        self._button.setCurrentText(text)
+
+    def set_icon(self, icon: QtGui.QIcon):
+        self.setWindowIcon(icon)
+        self._button.set_icon(icon)
+
+    def set_filter_applied(self):
+        self._is_filter_applied = True
 
     def save_state(self, key, value: Any = None):
         """Saves the given state with the specified key.
@@ -570,6 +328,14 @@ class FilterWidget(QtWidgets.QWidget):
 
     def set_initial_focus_widget(self, widget):
         self._initial_focus_widget = widget
+
+    @property
+    def button(self):
+        return self._button
+
+    @property
+    def is_active(self):
+        raise NotImplementedError('')
 
     # Slot Implementations
     # --------------------
@@ -614,6 +380,10 @@ class FilterWidget(QtWidgets.QWidget):
         
         super().hideEvent(event)
 
+    def mouseReleaseEvent(self, event: QtGui.QMouseEvent) -> None:
+        # Ignore mouse release events to prevent the menu from closing
+        pass
+
 class DateRangeFilterWidget(FilterWidget):
     RELATIVE_DATES = ["Selected Date Range", "Today", "Yesterday", "Last 7 Days", "Last 15 Days"]
 
@@ -649,10 +419,10 @@ class DateRangeFilterWidget(FilterWidget):
     def __setup_ui(self):
         """Set up the UI for the widget, including creating widgets and layouts.
         """
-        self.setWindowIcon(TablerQIcon.calendar)
+        self.set_icon(TablerQIcon.calendar)
 
         # Create widgets and layouts here
-        self.calendar = RangeSelectionCalendar(self)
+        self.calendar = RangeCalendarWidget(self)
         self.relative_date_combo_box = QtWidgets.QComboBox(self)
         self.relative_date_combo_box.addItems(self.RELATIVE_DATES)
 
@@ -692,7 +462,7 @@ class DateRangeFilterWidget(FilterWidget):
         current_index = self.relative_date_combo_box.currentIndex()
         filter_label = self.relative_date_combo_box.currentText()
         
-        date_range = self.get_date_range()
+        date_range = self.calendar.get_date_range()
         self.start_date, self.end_date = date_range
 
         self.save_state('current_index', current_index)
@@ -728,7 +498,7 @@ class DateRangeFilterWidget(FilterWidget):
             self.relative_date_combo_box.setItemText(0, "Selected Date Range")
 
         start_date, end_date = self.date_ranges.get(index, (None, None))
-        self.select_date_range(start_date, end_date)
+        self.calendar.select_date_range(start_date, end_date)
 
     def select_absolute_date_range(self, start_date, end_date):
         # Check if end_date is None (single date selection)
@@ -743,35 +513,46 @@ class DateRangeFilterWidget(FilterWidget):
         # Set the first item as the current item
         self.relative_date_combo_box.setCurrentIndex(0)
 
-    def get_date_range(self):
-        return self.calendar.get_date_range()
-
-    def select_date_range(self, start_date, end_date):
-        self.calendar.select_date_range(start_date, end_date)  # Method to be implemented in RangeSelectionCalendar
-
-class MultiSelectFilter(FilterWidget):
+class MultiSelectFilterWidget(FilterWidget):
     """A widget representing a filter with a checkable tree.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.setWindowIcon(TablerQIcon.list_check)
+        # Initialize setup
+        self.__setup_attributes()
+        self.__setup_ui()
+        self.__setup_signal_connections()
+
+    def __setup_attributes(self):
+        """Set up the initial values for the widget.
+        """
+        # Attributes
+        # ----------
+        ...
+
+        # Private Attributes
+        # ------------------
+        self._custom_tags_parent = None
+
+    def __setup_ui(self):
+        """Set up the UI for the widget, including creating widgets, layouts, and setting the icons for the widgets.
+        """
+        # Setup Widgets 
+        # -------------
+        # Create widgets and layouts
+        self.set_icon(TablerQIcon.list_check)
 
         self.tag_widget = TagWidget(self)
 
-        self.tag_widget.tag_removed.connect(self.uncheck_item)
-
+        #
         self.line_edit = QtWidgets.QLineEdit(self)
         self.line_edit.setProperty('has-placeholder', True)
-        # self.line_edit.setProperty('widget-style', 'round')
-        self.line_edit.editingFinished.connect(self.update_checked_state)
-        self.line_edit.textChanged.connect(self.update_style)
-
         self.line_edit.addAction(self.tabler_icon.layout_grid_add, QtWidgets.QLineEdit.ActionPosition.LeadingPosition)
 
         # Set placeholder text and tooltip for line edit
-        self.line_edit.setPlaceholderText('Press Enter to add filters (separate with a comma, line break, or "|")')
+        self.line_edit.setPlaceholderText("Press 'Enter' to add filters (separate with a comma, line break, or '|')")
         self.line_edit.setToolTip('Enter filter items, separated by a comma, newline, or pipe. Press Enter to apply.')
 
         self.set_initial_focus_widget(self.line_edit)
@@ -780,21 +561,33 @@ class MultiSelectFilter(FilterWidget):
         self.completer = QtWidgets.QCompleter(self)
         self.line_edit.setCompleter(self.completer)
 
-        # Connect completer's activated signal to add tags
-        self.completer.activated.connect(self.update_checked_state)
-
+        # Tree widget
         self.tree_widget = QtWidgets.QTreeWidget(self)
         self.tree_widget.setHeaderHidden(True)
         self.tree_widget.setRootIsDecorated(False)
 
+        # Setup Layouts
+        # -------------
+        # Set the layout for the widget
         self.widget_layout.addWidget(self.tag_widget)
         self.widget_layout.addWidget(self.line_edit)
         self.widget_layout.addWidget(self.tree_widget)
+
+    def __setup_signal_connections(self):
+        """Set up signal connections between widgets and slots.
+        """
+        # Connect signals to slots
+        self.tag_widget.tag_removed.connect(self.uncheck_item)
+        # Input text field
+        self.line_edit.editingFinished.connect(self.update_checked_state)
+        self.line_edit.textChanged.connect(self.update_style)
+        # Connect completer's activated signal to add tags
+        self.completer.activated.connect(self.update_checked_state)
+        # Tree widget
         self.tree_widget.itemChanged.connect(self.update_tag_as_checked)
 
     def uncheck_item(self, tag_name):
         self.set_check_items([tag_name], False)
-
 
     def update_style(self):
         self.line_edit.style().unpolish(self.line_edit)
@@ -807,31 +600,55 @@ class MultiSelectFilter(FilterWidget):
 
     def update_checked_state(self):
         text = self.line_edit.text()
-        tags = [t.strip() for t in re.split('[\t\n,]+', text) if t.strip()]
+        tag_names = [t.strip() for t in re.split('[\t\n,|]+', text) if t.strip()]
         
-        self.set_check_items(tags)
+        self.set_check_items(tag_names)
 
         self.line_edit.clear()
 
-    def set_check_items(self, tag_names: List[str], check_state: bool = True):
-        flags = QtCore.Qt.MatchFlag.MatchFixedString | QtCore.Qt.MatchFlag.MatchRecursive
+    def add_new_tag_to_tree(self, tag_name: str):
+        """Add a new tag to the tree, potentially in a new group."""
+        # Check if a 'Custom Tags' group exists, if not, create it
+        if not self._custom_tags_parent:
+            self._custom_tags_parent = QtWidgets.QTreeWidgetItem(self.tree_widget, ["Custom Tags"])
+            self._custom_tags_parent.setFlags(self._custom_tags_parent.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsAutoTristate)
+            self._custom_tags_parent.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
 
+        # Add the new tag as a child of the 'Custom Tags' group
+        new_tag_item = QtWidgets.QTreeWidgetItem(self._custom_tags_parent, [tag_name])
+        new_tag_item.setFlags(new_tag_item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
+        new_tag_item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
+
+        self.tree_widget.expandAll()
+
+    def set_check_items(self, tag_names: List[str], check_state: bool = True):
+        flags = QtCore.Qt.MatchFlag.MatchWildcard | QtCore.Qt.MatchFlag.MatchRecursive
         check_state = QtCore.Qt.CheckState.Checked if check_state else QtCore.Qt.CheckState.Unchecked
+
         for tag in tag_names:
+            # Check if the tag is a wildcard
+            is_wildcard = '*' in tag
+
             # Find items that match the text in the specified column (0 in this case)
             matching_items = self.tree_widget.findItems(tag, flags, 0)
+            
+            if not matching_items and not is_wildcard:
+                # If no matching items and tag is not a wildcard, add as a new tag
+                self.add_new_tag_to_tree(tag)
+                matching_items = self.tree_widget.findItems(tag, flags, 0)
+
             for item in matching_items:
                 item.setCheckState(0, check_state)
 
         self.line_edit.clear()
 
     def update_line_edit_as_checked(self):
-        self.line_edit.setText(', '.join(self.get_checked_items()))
+        self.line_edit.setText(', '.join(self.get_checked_item_texts()))
 
     def update_tag_as_checked(self):
         current_tag_name_set = self.tag_widget.tags
 
-        tag_names = set(self.get_checked_items())
+        tag_names = set(self.get_checked_item_texts())
 
         # Tags to be added are those in tag_names but not in current_tag_name_set
         tags_to_add = tag_names - current_tag_name_set
@@ -878,12 +695,12 @@ class MultiSelectFilter(FilterWidget):
         """Clears all selections in the tree widget.
         """
         # Uncheck all items in the tree widget
-        self.unchecked_all()
+        self.uncheck_all()
 
         # Clear the line edit
         self.line_edit.clear()
 
-    def unchecked_all(self, parent_item: QtWidgets.QTreeWidgetItem = None):
+    def uncheck_all(self, parent_item: QtWidgets.QTreeWidgetItem = None):
         """Recursively unchecks all child items.
         """
         parent_item = parent_item or self.tree_widget.invisibleRootItem()
@@ -891,7 +708,7 @@ class MultiSelectFilter(FilterWidget):
         for i in range(parent_item.childCount()):
             child = parent_item.child(i)
             child.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
-            self.unchecked_all(child)
+            self.uncheck_all(child)
 
     def add_items(self, parent_name: str, child_names: List[str]):
         """Adds items to the tree widget with a parent and its children.
@@ -911,7 +728,7 @@ class MultiSelectFilter(FilterWidget):
 
         self.tree_widget.expandAll()
 
-    def get_checked_items(self):
+    def get_checked_item_texts(self) -> List[str]:
         """Returns the checked items in the tree.
         """
         checked_items = []
@@ -934,10 +751,12 @@ class MultiSelectFilter(FilterWidget):
         self.save_state('checked_state', checked_state_dict)
         # self.save_state('text_data', self.line_edit.text())
 
-        self.label_changed.emit(self.line_edit.text())
-        self.activated.emit(self.get_checked_items())
+        checked_item_texts = self.get_checked_item_texts()
 
-class FileTypeFilter(FilterWidget):
+        self.label_changed.emit(', '.join(checked_item_texts))
+        self.activated.emit(checked_item_texts)
+
+class FileTypeFilterWidget(FilterWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -947,7 +766,7 @@ class FileTypeFilter(FilterWidget):
     def __setup_ui(self):
         """Set up the UI for the widget, including creating widgets and layouts.
         """
-        self.setWindowIcon(TablerQIcon.file)
+        self.set_icon(TablerQIcon.file)
 
         # Custom file type input
         self.custom_input = QtWidgets.QLineEdit()
@@ -1084,28 +903,33 @@ if __name__ == '__main__':
     # Date Filter Setup
     date_filter_widget = DateRangeFilterWidget(filter_name="Date")
     date_filter_widget.activated.connect(print)
-    date_filter_button = FilterPopupButton(date_filter_widget)
-    date_filter_button.setFixedSize(200, 24)
-
     # Shot Filter Setup
-    shot_filter_widget = MultiSelectFilter(filter_name="Shot")
+    shot_filter_widget = MultiSelectFilterWidget(filter_name="Shot")
     shot_filter_widget.add_items("100", ["100_010_001", "100_020_050"])
     shot_filter_widget.add_items("101", ["101_022_232", "101_023_200"])
     shot_filter_widget.update_completer()
     shot_filter_widget.activated.connect(print)
-    shot_filter_button = FilterPopupButton(shot_filter_widget)
 
     # File Type Filter Setup
-    file_type_filter_widget = FileTypeFilter(filter_name="File Type")
+    file_type_filter_widget = FileTypeFilterWidget(filter_name="File Type")
     file_type_filter_widget.activated.connect(print)
-    file_type_filter_button = FilterPopupButton(file_type_filter_widget)
-    file_type_filter_button.setFixedSize(200, 24)
+
+    search_edit = QtWidgets.QLineEdit()
+    search_edit.setPlaceholderText('Type to Search')
+    search_edit.setProperty('widget-style', 'round')
+    search_edit.setFixedHeight(24)
+    tabler_icon = TablerQIcon(opacity=0.6)
+    search_edit.addAction(tabler_icon.search, QtWidgets.QLineEdit.ActionPosition.LeadingPosition)
+    search_edit.setProperty('has-placeholder', True)
+    search_edit.textChanged.connect(lambda: (search_edit.style().unpolish(search_edit), search_edit.style().polish(search_edit)))
 
     # Adding widgets to the layout
-    main_layout.addWidget(date_filter_button)
-    main_layout.addWidget(shot_filter_button)
-    main_layout.addWidget(file_type_filter_button)
-
+    main_layout.addWidget(date_filter_widget.button)
+    main_layout.addWidget(shot_filter_widget.button)
+    main_layout.addWidget(file_type_filter_widget.button)
+    main_layout.addStretch()
+    main_layout.addWidget(search_edit)
+    
     main_widget = QtWidgets.QWidget()
     main_widget.setLayout(main_layout)
     main_window.setCentralWidget(main_widget)
