@@ -159,3 +159,78 @@ sequenceDiagram
    - Upon selecting items and clicking 'Apply', `MultiSelectFilter` emits an 'activated' signal with the checked items.
    - If the label is changed, it emits a 'label_changed' signal.
 
+
+
+
+
+---
+
+# UI Sketch
+
+Based on your updated code, the UI sketch for the `FilterWidget` and its integration with `FilterPopupButton` can be conceptualized as follows:
+
+### UI Sketch for `FilterWidget` and `FilterPopupButton`
+
+#### Main Window Layout
+```
++------------------------------------------------------------+
+|                                                            |
+|  [Date Filter Button]   [Shot Filter Button]               |
+|                                                            |
+|  +-----------------------------------------------------+   |
+|  |                     Content Area                    |   |
+|  +-----------------------------------------------------+   |
+|                                                            |
++------------------------------------------------------------+
+```
+
+- **Filter Buttons**: Displayed at the top, these buttons (`date_filter_button`, `shot_filter_button`) open the corresponding filter widgets.
+- **Content Area**: The main content of your application.
+
+#### Date Range Filter Widget
+```
++-------------------------------------------------------------------+
+| [Condition Selector]                   [🔄 Clear All] [🗑 Remove] |
++-------------------------------------------------------------------+
+|                                                                   |
+|  [Calendar Widget]                                                |
+|                                                                   |
+|  [Relative Date Selector]                                         |
+|                                                                   |
+|                                                                   |
+|                                           [Cancel] [Apply Filter] |
++-------------------------------------------------------------------+
+```
+
+- **Title Bar**: Includes the filter name ("Date"), a condition selector, and icons for clearing and removing the filter.
+- **Calendar Widget**: Custom calendar for selecting date ranges.
+- **Relative Date Selector**: Dropdown for quick date range selections.
+- **Buttons**: "Cancel" to discard changes, "Apply Filter" to confirm.
+
+#### MultiSelect Filter Widget
+```
++-------------------------------------------------------------------+
+| [Condition Selector]                   [🔄 Clear All] [🗑 Remove] |
++-------------------------------------------------------------------+
+|                                                                   |
+|  [Search/Filter Field]                                            |
+|                                                                   |
+|  [Tree Widget with Checkable Items]                               |
+|                                                                   |
+|                                           [Cancel] [Apply Filter] |
++-------------------------------------------------------------------+
+```
+
+- **Title Bar**: Similar to the Date filter, with the filter name ("Shot") and control buttons.
+- **Search/Filter Field**: A text field for filtering tree items.
+- **Tree Widget**: Displays checkable items for selection.
+- **Buttons**: Similar to the Date filter widget.
+
+### Additional Design Considerations
+
+- **Consistency in Style**: Ensure that both filter widgets have a consistent style in terms of colors, fonts, and button designs.
+- **Icons and Tooltips**: Use clear icons for actions like clearing and removing. Tooltips can provide additional information about button functions.
+- **Responsive Design**: Design the widgets to be responsive to different window sizes.
+- **User Experience**: Focus on making the interface intuitive - for example, the calendar widget should be easy to use, and the tree widget should allow for easy selection and searching of items.
+
+This conceptual UI sketch provides a visual representation based on your code, illustrating how the `FilterWidget` and its specialized versions can be structured within your PyQt application.
