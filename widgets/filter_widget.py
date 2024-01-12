@@ -620,6 +620,7 @@ class MultiSelectFilterWidget(FilterWidget):
         new_tag_item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
 
         self.tree_widget.expandAll()
+        return new_tag_item
 
     def set_check_items(self, tag_names: List[str], check_state: bool = True):
         flags = QtCore.Qt.MatchFlag.MatchWildcard | QtCore.Qt.MatchFlag.MatchRecursive
@@ -634,8 +635,8 @@ class MultiSelectFilterWidget(FilterWidget):
             
             if not matching_items and not is_wildcard:
                 # If no matching items and tag is not a wildcard, add as a new tag
-                self.add_new_tag_to_tree(tag)
-                matching_items = self.tree_widget.findItems(tag, flags, 0)
+                new_tag_item = self.add_new_tag_to_tree(tag)
+                matching_items.append(new_tag_item)
 
             for item in matching_items:
                 item.setCheckState(0, check_state)

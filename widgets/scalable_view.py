@@ -1,11 +1,11 @@
 import sys
-from typing import Optional
+from typing import Callable, Optional
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 from theme.theme import set_theme
 
-from groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
+from widgets.groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
 class ScalableView(QtWidgets.QGraphicsView):
     """A QGraphicsView subclass that allows the user to scale the contents of the view 
@@ -80,8 +80,7 @@ class ScalableView(QtWidgets.QGraphicsView):
         # Key Binds
         # ---------
         # Create a QShortcut for the F key to reset the scaling of the view.
-        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key.Key_F), self)
-        shortcut.activated.connect(self.reset_scale)
+        self.bind_key('F', self.reset_scale)
 
     # Extended Methods
     # ----------------
@@ -109,6 +108,17 @@ class ScalableView(QtWidgets.QGraphicsView):
 
         # Update the size of the widget to fit the view window
         self.resizeEvent(None)
+
+    def bind_key(self, key_sequence: str, function: Callable):
+        """Binds a given key sequence to a function.
+        Args:
+            key_sequence (str): The key sequence as a string, e.g., "Ctrl+C".
+            function (Callable): The function to be called when the key sequence is activated.
+        """
+        # Create a shortcut with the specified key sequence
+        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(key_sequence), self)
+        # Connect the activated signal of the shortcut to the given function
+        shortcut.activated.connect(function)
 
     # Event Handling or Override Methods
     # ----------------------------------

@@ -1,4 +1,5 @@
 import sys, os
+from pathlib import Path
 from typing import Any, List, Union
 
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
@@ -6,12 +7,12 @@ from tablerqicon import TablerQIcon
 
 from theme.theme import set_theme
 
-from groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
-from scalable_view import ScalableView
-from popup_widget import PopupWidget
+from widgets.groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
+from widgets.scalable_view import ScalableView
+from widgets.popup_widget import PopupWidget
 
 # Define the path to the UI file
-ADVANCED_FILTER_SEARCH_UI_FILE = os.path.join(os.path.dirname(__file__), 'ui/advanced_filter_search_widget.ui')
+ADVANCED_FILTER_SEARCH_UI_FILE = Path(__file__).parent / 'ui/advanced_filter_search_widget.ui'
 
 def intersection(item_list_1: List[Any], item_list_2: List[Any]) -> List[Any]:
     """Calculates the intersection of two lists.
