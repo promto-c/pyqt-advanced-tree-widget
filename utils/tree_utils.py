@@ -22,12 +22,12 @@ def extract_all_items_from_tree(tree_widget: 'QtWidgets.QTreeWidget') -> List['Q
             # Add the current child item to the list
             items.append(child_item)
             # Recursively traverse the children of the current child item
-            items.extend(traverse_items(child_item, items))
-        
+            items = traverse_items(child_item, items)
+
         return items
 
     # Get the root item of the tree widget
-    root = tree_widget.invisibleRootItem()
+    root_item = tree_widget.invisibleRootItem()
 
     # Traverse the items in a depth-first manner and collect them in a list
-    return traverse_items(root)
+    return traverse_items(root_item)
