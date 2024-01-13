@@ -571,7 +571,7 @@ class TreeWidgetItem(QtWidgets.QTreeWidgetItem):
         # If the UserRole data is None, fallback to DisplayRole data
         if other_data is None:
             # Get the DisplayRole data for the column of the other item
-            other_data = other_item.data(column, QtCore.Qt.DisplayRole)
+            other_data = other_item.data(column, QtCore.Qt.ItemDataRole.DisplayRole)
 
         # If both UserRole data are None, compare their texts
         if self_data is None and other_data is None:
@@ -736,7 +736,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self.setSelectionBehavior(QtWidgets.QTreeWidget.SelectionBehavior.SelectItems)
 
         # NOTE: Test
-        self.searchable_header = SearchableHeaderView(self)
+        # self.searchable_header = SearchableHeaderView(self)
 
         self.set_row_height(self._row_height)
 

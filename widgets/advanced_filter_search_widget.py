@@ -10,6 +10,7 @@ from theme.theme import set_theme
 from widgets.groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
 from widgets.scalable_view import ScalableView
 from widgets.popup_widget import PopupWidget
+from widgets.item_delegate import HighlightItemDelegate
 
 # Define the path to the UI file
 ADVANCED_FILTER_SEARCH_UI_FILE = Path(__file__).parent / 'ui/advanced_filter_search_widget.ui'
@@ -27,48 +28,6 @@ def intersection(item_list_1: List[Any], item_list_2: List[Any]) -> List[Any]:
     # Return the items that exist in both lists
     return [item for item in item_list_1 if item in item_list_2]
 
-class HighlightItemDelegate(QtWidgets.QStyledItemDelegate):
-    """Custom item delegate class that highlights the rows specified by the `target_model_indexes` list.
-    """
-    # List of target model index for highlighting
-    target_model_indexes: List[QtCore.QModelIndex] = list()
-    
-    def __init__(self, parent=None, color: QtGui.QColor = QtGui.QColor(165, 165, 144, 65)):
-        """Initialize the highlight item delegate.
-
-        Args:
-            parent (QtWidgets.QWidget, optional): The parent widget. Defaults to None.
-            color (QtGui.QColor, optional): The color to use for highlighting. Defaults to a light grayish-yellow.
-        """
-        # Initialize the super class
-        super().__init__(parent)
-
-        # Set the color attribute
-        self.color = color
-    
-    def paint(self, painter: QtGui.QPainter, option: QtWidgets.QStyleOptionViewItem, model_index: QtCore.QModelIndex):
-        """Paint the delegate.
-        
-        Args:
-            painter (QtGui.QPainter): The painter to use for drawing.
-            option (QtWidgets.QStyleOptionViewItem): The style option to use for drawing.
-            model_index (QtCore.QModelIndex): The model index of the item to be painted.
-        """
-        # Check if the current model index is not in the target list
-        if model_index not in self.target_model_indexes:
-            # If not, paint the item normally using the parent implementation
-            super().paint(painter, option, model_index)
-            return
-
-        # If the current model index is in the target list, set the background color and style
-        option.backgroundBrush.setColor(self.color)
-        option.backgroundBrush.setStyle(QtCore.Qt.BrushStyle.SolidPattern)
-
-        # Fill the rect with the background brush
-        painter.fillRect(option.rect, option.backgroundBrush)
-
-        # Paint the item normally using the parent implementation
-        super().paint(painter, option, model_index)
 
 class FilterTreeWidget(QtWidgets.QTreeWidget):
     """A custom tree widget for managing filters.
@@ -467,17 +426,22 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         # Set the action to be checkable
         self.negate_action.setCheckable(True)
 
-    def _highlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem]):
+    def _highlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem], focused_column_index = None):
         """Highlight the specified `tree_items` in the tree widget.
         """
         # Reset the previous target model indexes
-        self.highlight_item_delegate.target_model_indexes = list()
+        self.highlight_item_delegate.clear()
 
         # Loop through the specified tree items
         for tree_item in tree_items:
-
             # Add the model indexes of the current tree item to the target properties
             self.highlight_item_delegate.target_model_indexes.extend(tree_item.get_model_indexes())
+
+            if focused_column_index is None:
+                continue
+
+            focused_model_index = self.tree_widget.indexFromItem(tree_item, focused_column_index)
+            self.highlight_item_delegate.target_focused_model_indexes.append(focused_model_index)
 
         # Set the item delegate for the current row to the highlight item delegate
         self.tree_widget.setItemDelegate(self.highlight_item_delegate)
@@ -489,7 +453,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
             The target model index properties stored in `self.highlight_item_delegate` will also be reset to an empty list.
         """
         # Reset the target model index properties
-        self.highlight_item_delegate.target_model_indexes = list()
+        self.highlight_item_delegate.clear()
 
         # Get all items in the tree widget
         all_items = self.tree_widget.get_all_items()
@@ -557,7 +521,8 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         match_items = self.find_match_items(column, condition, keyword, is_negate, is_case_sensitive)
 
         # Highlight the matched items
-        self._highlight_items(match_items)
+        column_index = self.column_names.index(column)
+        self._highlight_items(match_items, column_index)
 
     # Extended Methods
     # ----------------
