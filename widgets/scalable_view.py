@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 from theme.theme import set_theme
 
-from widgets.groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
+from widgets.groupable_tree_widget import GroupableTreeWidget
 
 class ScalableView(QtWidgets.QGraphicsView):
     """A QGraphicsView subclass that allows the user to scale the contents of the view 
@@ -138,6 +138,7 @@ class ScalableView(QtWidgets.QGraphicsView):
 
         # Set the size of the widget to the size of the view
         graphic_item.setGeometry(rect)
+        self.scene().setSceneRect(rect)
 
     def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
         """Handle wheel events to allow the user to scale the contents of the view.
@@ -158,7 +159,7 @@ class ScalableView(QtWidgets.QGraphicsView):
 
         # If the Ctrl key is not pressed, pass the event on to the parent class
         else:
-            self.widget.wheelEvent(event)
+            super().wheelEvent(event)
 
 def main():
     # Create the Qt application
@@ -166,6 +167,8 @@ def main():
 
     # Set theme of QApplication to the dark theme
     set_theme(app, 'dark')
+
+    from example_data_dict import COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
     # Create the tree widget with example data
     tree_widget = GroupableTreeWidget(column_name_list=COLUMN_NAME_LIST, id_to_data_dict=ID_TO_DATA_DICT)

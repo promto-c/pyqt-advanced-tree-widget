@@ -600,7 +600,7 @@ class MultiSelectFilterWidget(FilterWidget):
 
     def update_checked_state(self):
         text = self.line_edit.text()
-        tag_names = [t.strip() for t in re.split('[\t\n,|]+', text) if t.strip()]
+        tag_names = [t.strip() for t in self.split_keyswords(text) if t.strip()]
         
         self.set_check_items(tag_names)
 
@@ -621,6 +621,10 @@ class MultiSelectFilterWidget(FilterWidget):
 
         self.tree_widget.expandAll()
         return new_tag_item
+
+    @staticmethod
+    def split_keyswords(text):
+        return re.split('[\t\n,|]+', text)
 
     def set_check_items(self, tag_names: List[str], check_state: bool = True):
         flags = QtCore.Qt.MatchFlag.MatchWildcard | QtCore.Qt.MatchFlag.MatchRecursive

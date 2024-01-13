@@ -1,16 +1,16 @@
-import sys, os
+import sys, re
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any, Callable, List, Union
 
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from tablerqicon import TablerQIcon
 
 from theme.theme import set_theme
 
-from widgets.groupable_tree_widget import GroupableTreeWidget, COLUMN_NAME_LIST, ID_TO_DATA_DICT
+from widgets.groupable_tree_widget import GroupableTreeWidget
 from widgets.scalable_view import ScalableView
 from widgets.popup_widget import PopupWidget
-from widgets.item_delegate import HighlightItemDelegate
+
 
 # Define the path to the UI file
 ADVANCED_FILTER_SEARCH_UI_FILE = Path(__file__).parent / 'ui/advanced_filter_search_widget.ui'
@@ -266,7 +266,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
 
     # Initialization and Setup
     # ------------------------
-    def __init__(self, tree_widget: GroupableTreeWidget, parent=None):
+    def __init__(self, tree_widget: 'GroupableTreeWidget', parent=None):
         """Initialize the widget and set up the UI, signal connections, and icon.
             Args:
                 tree_widget (GroupableTreeWidget): The tree widget to be filtered.
@@ -295,9 +295,6 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         self.tabler_action_qicon = TablerQIcon(opacity=0.6)
         self.tabler_action_checked_qicon = TablerQIcon()
         self.tabler_button_qicon = TablerQIcon()
-
-        # Initialize the HighlightItemDelegate object to highlight items in the tree widget.
-        self.highlight_item_delegate = HighlightItemDelegate()
 
     def _setup_ui(self):
         """Set up the UI for the widget, including creating widgets and layouts.
@@ -360,10 +357,8 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         self.show_filter_button.toggled.connect(self.filter_tree_popup.setVisible)
         self.filter_tree_popup.close_button.clicked.connect(self.show_filter_button.setChecked)
 
-        # Create a shortcut for Ctrl+F
-        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+F"), self)
-        # Connect the activated signal of the shortcut to the _set_filter_as_selection slot
-        shortcut.activated.connect(self._set_filter_as_selection)
+        # Bind shortcut for Ctrl+F
+        self.bind_key('Ctrl+F', self._set_filter_as_selection)
 
     # Private Methods
     # ---------------
@@ -392,17 +387,19 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         The column filter and keyword are updated accordingly, and the focus is set to the keyword line edit.
         """
         # Get the currently selected item in the tree widget
-        tree_item = self.tree_widget.currentItem()
+        tree_items = self.tree_widget.selectedItems()
+        referenced_tree_item = self.tree_widget.currentItem()
         # Get the index of the currently selected column
         column = self.tree_widget.currentColumn()
 
         # Determine the search column based on the grouped column and child level
-        search_column = self.tree_widget.grouped_column_name if self.tree_widget.grouped_column_name and tree_item.get_child_level() == 0 else column
+        search_column = self.tree_widget.grouped_column_name if self.tree_widget.grouped_column_name and referenced_tree_item.get_child_level() == 0 else column
         # Set the column filter to the current column or the grouped column if applicable
         self.set_search_column(search_column)
 
         # Retrieve the text value of the selected item in the current column
-        keyword = str(tree_item.get_value(column))
+        keywords = {str(tree_item.get_value(column)) for tree_item in tree_items}
+        keyword = ', '.join(keywords)
         # Set the keyword to the selected item's value
         self.set_keyword(keyword)
 
@@ -426,45 +423,6 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         # Set the action to be checkable
         self.negate_action.setCheckable(True)
 
-    def _highlight_items(self, tree_items: List[QtWidgets.QTreeWidgetItem], focused_column_index = None):
-        """Highlight the specified `tree_items` in the tree widget.
-        """
-        # Reset the previous target model indexes
-        self.highlight_item_delegate.clear()
-
-        # Loop through the specified tree items
-        for tree_item in tree_items:
-            # Add the model indexes of the current tree item to the target properties
-            self.highlight_item_delegate.target_model_indexes.extend(tree_item.get_model_indexes())
-
-            if focused_column_index is None:
-                continue
-
-            focused_model_index = self.tree_widget.indexFromItem(tree_item, focused_column_index)
-            self.highlight_item_delegate.target_focused_model_indexes.append(focused_model_index)
-
-        # Set the item delegate for the current row to the highlight item delegate
-        self.tree_widget.setItemDelegate(self.highlight_item_delegate)
-
-    def _reset_highlight_all_items(self):
-        """Reset the highlight of all items in the tree widget.
-
-            This method resets the highlighting of all items in the tree widget by setting the delegate for each row to `None`.
-            The target model index properties stored in `self.highlight_item_delegate` will also be reset to an empty list.
-        """
-        # Reset the target model index properties
-        self.highlight_item_delegate.clear()
-
-        # Get all items in the tree widget
-        all_items = self.tree_widget.get_all_items()
-
-        # Loop through all items
-        for tree_item in all_items:
-            # Get the row index of the item
-            item_index = self.tree_widget.indexFromItem(tree_item).row()
-            # Set the delegate for the row to None
-            self.tree_widget.setItemDelegateForRow(item_index, None)
-
     def _apply_filters(self):
         """Apply the filters specified by the user to the tree widget.
         """
@@ -487,8 +445,8 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
             intersect_match_items = intersection(match_items, intersect_match_items)
 
         # Show the items that match all filter criteria and their parent and children
-        self.show_matching_items(intersect_match_items)
-        
+        self.tree_widget.show_items(intersect_match_items)
+
     def _update_show_filter_button(self, filter_count: int = 0):
         """Updates the text of the show filter button to reflect the number of active filters.
 
@@ -504,7 +462,7 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         """Highlight the items in the tree widget that match the search criteria.
         """
         # Reset the highlight for all items
-        self._reset_highlight_all_items()
+        self.tree_widget.clear_highlight()
 
         # Get the selected column, condition, and keyword
         column = self.column_combo_box.currentText()
@@ -522,10 +480,26 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
 
         # Highlight the matched items
         column_index = self.column_names.index(column)
-        self._highlight_items(match_items, column_index)
+        self.tree_widget.highlight_items(match_items, column_index)
 
     # Extended Methods
     # ----------------
+    @staticmethod
+    def split_keyswords(text):
+        return re.split('[\t\n,|]+', text)
+
+    def bind_key(self, key_sequence: str, function: Callable):
+        """Binds a given key sequence to a function.
+
+        Args:
+            key_sequence (str): The key sequence as a string, e.g., "Ctrl+C".
+            function (Callable): The function to be called when the key sequence is activated.
+        """
+        # Create a shortcut with the specified key sequence
+        shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(key_sequence), self)
+        # Connect the activated signal of the shortcut to the given function
+        shortcut.activated.connect(function)
+
     def find_match_items(self, column, condition, keyword, is_negate, is_case_sensitive) -> List[QtWidgets.QTreeWidgetItem]:
         """Find the items that match the given criteria.
 
@@ -567,7 +541,12 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         all_items_at_child_level = self.tree_widget.get_all_items_at_child_level(child_level)
 
         # Find all items matching the given keyword in the specified column and child level
-        match_items = self.tree_widget.findItems(keyword, flags, column_index)
+        match_items = list()
+        for split_keyword in self.split_keyswords(keyword):
+            if not split_keyword.strip():
+                continue
+            match_items.extend(self.tree_widget.findItems(split_keyword.strip(), flags, column_index))
+
         match_items_at_child_level = intersection(all_items_at_child_level, match_items)
 
         # Negate the match results if is_negate is set to True
@@ -618,21 +597,6 @@ class AdvancedFilterSearch(QtWidgets.QWidget):
         # Add the filter to the filter_tree_widget
         self.filter_tree_widget.add_filter(column, condition, keyword, is_negate, is_case_sensitive)
 
-    def show_matching_items(self, match_items: List[QtWidgets.QTreeWidgetItem]):
-        """Show the items and their parent and children.
-        """
-        # Show the items that match all filter criteria
-        for item in match_items:
-            item.setHidden(False)
-
-            # Show the parent of the item if it exists
-            if item.parent():
-                item.parent().setHidden(False)
-
-            # Show all children of the item
-            for index in range(item.childCount()):
-                item.child(index).setHidden(False)
-
     def set_search_column(self, column: Union[int, str]):
         """Set the column filter to the specified column.
 
@@ -664,6 +628,8 @@ def main():
 
     # Set theme of QApplication to the dark theme
     set_theme(app, 'dark')
+
+    from example_data_dict import COLUMN_NAME_LIST, ID_TO_DATA_DICT
 
     # Create the tree widget with example data
     tree_widget = GroupableTreeWidget(column_name_list=COLUMN_NAME_LIST, id_to_data_dict=ID_TO_DATA_DICT)
