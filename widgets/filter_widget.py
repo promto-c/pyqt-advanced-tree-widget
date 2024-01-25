@@ -1,7 +1,7 @@
 
 # Type Checking Imports
 # ---------------------
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Union, overload, Dict
 
 # Standard Library Imports
 # ------------------------
@@ -21,6 +21,63 @@ from widgets.calendar_widget import RangeCalendarWidget
 from widgets.tag_widget import TagWidget
 
 from theme import set_theme
+
+class MatchContainsCompleter(QtWidgets.QCompleter):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        
+        # Set the completion mode to match items containing the typed text
+        self.setFilterMode(QtCore.Qt.MatchFlag.MatchContains)
+        self.setCaseSensitivity(QtCore.Qt.CaseSensitivity.CaseInsensitive)
+
+class FilterBarWidget(QtWidgets.QWidget):
+
+    def __init__(self, parent: QtWidgets.QWidget = None):
+        super().__init__(parent)
+
+        # Initialize setup
+        self.__setup_ui()
+
+    def __setup_ui(self):
+        """Set up the UI for the widget, including creating widgets, layouts, and setting the icons for the widgets.
+        
+        UI Wireframe:
+
+            +-------------------------+
+            | [Filter 1][Filter 2][+] |
+            +-------------------------+
+        """
+        self.tabler_icon = TablerQIcon(opacity=0.6)
+
+        # Create Layouts
+        # --------------
+        self.main_layout = QtWidgets.QHBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.filter_area_layout = QtWidgets.QHBoxLayout()
+        self.main_layout.addLayout(self.filter_area_layout)
+
+        # Create Widgets
+        # --------------
+        # Add filter button
+        self.add_filter_button = QtWidgets.QToolButton(self)
+        self.add_filter_button.setIcon(self.tabler_icon.plus)
+        self.add_filter_button.setProperty('widget-style', 'round')
+        self.add_filter_button.setFixedSize(24, 24)
+
+        # Add Widgets to Layouts
+        self.main_layout.addWidget(self.add_filter_button)
+
+        self.update_style()
+
+    def update_style(self):
+        """ Update the button's style based on its state.
+        """
+        self.style().unpolish(self)
+        self.style().polish(self)
+
+    def add_filter_widget(self, filter_widget: 'FilterWidget'):
+        self.filter_area_layout.addWidget(filter_widget.button)
 
 class CustomMenu(QtWidgets.QMenu):
     def __init__(self, parent=None):
@@ -534,7 +591,7 @@ class MultiSelectFilterWidget(FilterWidget):
 
         # Private Attributes
         # ------------------
-        self._custom_tags_parent = None
+        ...
 
     def __setup_ui(self):
         """Set up the UI for the widget, including creating widgets, layouts, and setting the icons for the widgets.
@@ -558,7 +615,7 @@ class MultiSelectFilterWidget(FilterWidget):
         self.set_initial_focus_widget(self.line_edit)
 
         # Completer setup
-        self.completer = QtWidgets.QCompleter(self)
+        self.completer = MatchContainsCompleter(self)
         self.line_edit.setCompleter(self.completer)
 
         # Tree widget
@@ -609,22 +666,26 @@ class MultiSelectFilterWidget(FilterWidget):
     def add_new_tag_to_tree(self, tag_name: str):
         """Add a new tag to the tree, potentially in a new group."""
         # Check if a 'Custom Tags' group exists, if not, create it
-        if not self._custom_tags_parent:
-            self._custom_tags_parent = QtWidgets.QTreeWidgetItem(self.tree_widget, ["Custom Tags"])
-            self._custom_tags_parent.setFlags(self._custom_tags_parent.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsAutoTristate)
-            self._custom_tags_parent.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
+        matched_custom_tags_items = self.find_tree_items('Custom Tags')
+
+        if not matched_custom_tags_items:
+            custom_tags_item = self.add_item('Custom Tags')
+        else:
+            custom_tags_item = matched_custom_tags_items[0]
 
         # Add the new tag as a child of the 'Custom Tags' group
-        new_tag_item = QtWidgets.QTreeWidgetItem(self._custom_tags_parent, [tag_name])
-        new_tag_item.setFlags(new_tag_item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable)
-        new_tag_item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
+        new_tag_item = self.add_item(tag_name, custom_tags_item)
 
         self.tree_widget.expandAll()
         return new_tag_item
 
+    def find_tree_items(self, item_name: str):
+        flags = QtCore.Qt.MatchFlag.MatchExactly | QtCore.Qt.MatchFlag.MatchRecursive
+        return self.tree_widget.findItems(item_name, flags)
+
     @staticmethod
-    def split_keyswords(text):
-        return re.split('[\t\n,|]+', text)
+    def split_keyswords(text, splitter: str = '\t\n,|'):
+        return re.split(f'[{splitter}]+', text)
 
     def set_check_items(self, tag_names: List[str], check_state: bool = True):
         flags = QtCore.Qt.MatchFlag.MatchWildcard | QtCore.Qt.MatchFlag.MatchRecursive
@@ -715,34 +776,68 @@ class MultiSelectFilterWidget(FilterWidget):
             child.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
             self.uncheck_all(child)
 
-    def add_items(self, parent_name: str, child_names: List[str]):
-        """Adds items to the tree widget with a parent and its children.
+    def add_items(self, item_names: Union[Dict[str, List[str]], List[str]]):
+        """Adds items to the tree widget.
 
         Args:
-            parent_name (str): The name of the parent item to be added.
-            child_names (List[str]): The list of names for the child items under the parent.
+            item_names (Union[Dict[str, List[str]], List[str]]): If a dictionary is provided, it represents parent-child relationships where keys are parent item names and values are lists of child item names. If a list is provided, it contains item names to be added at the root level.
         """
-        parent_item = QtWidgets.QTreeWidgetItem(self.tree_widget, [parent_name])
-        parent_item.setFlags(parent_item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsAutoTristate)
-        parent_item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
+        if isinstance(item_names, dict):
+            self._add_items_from_dict(item_names)
+        elif isinstance(item_names, list):
+            self._add_items_from_list(item_names)
+        else:
+            raise ValueError("Invalid type for item_names. Expected a list or a dictionary.")
 
-        for child_name in child_names:
-            child_item = QtWidgets.QTreeWidgetItem(parent_item, [child_name])
-            child_item.setFlags(child_item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsAutoTristate)
-            child_item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
-
+        self.update_completer()
         self.tree_widget.expandAll()
+
+    def add_item(self, item_label: str, parent: Optional[QtWidgets.QTreeWidgetItem] = None):
+        """Adds a single item to the tree widget.
+
+        Args:
+            item_label (str): The label for the tree item.
+            parent (QtWidgets.QTreeWidgetItem, optional): The parent item for this item. Defaults to None, in which case the item is added at the root level.
+
+        Returns:
+            QtWidgets.QTreeWidgetItem: The created tree item.
+        """
+        parent = parent or self.tree_widget.invisibleRootItem()
+        tree_item = QtWidgets.QTreeWidgetItem(parent, [item_label])
+        tree_item.setFlags(tree_item.flags() | QtCore.Qt.ItemFlag.ItemIsUserCheckable | QtCore.Qt.ItemFlag.ItemIsAutoTristate)
+        tree_item.setCheckState(0, QtCore.Qt.CheckState.Unchecked)
+
+        return tree_item
+
+    def _add_items_from_dict(self, item_dict: Dict[str, List[str]]):
+        """Adds items to the tree widget based on a dictionary of parent-child relationships.
+
+        Args:
+            item_dict (Dict[str, List[str]]): A dictionary where keys are parent item names and values are lists of child item names.
+        """
+        for parent_name, child_names in item_dict.items():
+            parent_item = self.add_item(parent_name)
+            self._add_items_from_list(child_names, parent_item)
+
+    def _add_items_from_list(self, item_list: List[str], parent: Optional[QtWidgets.QTreeWidgetItem] = None):
+        """Adds items to the tree widget at the root level from a list of item names.
+
+        Args:
+            item_list (List[str]): A list of item names to be added at the root level.
+        """
+        for item_name in item_list:
+            self.add_item(item_name, parent)
 
     def get_checked_item_texts(self) -> List[str]:
         """Returns the checked items in the tree.
         """
+        all_items = extract_all_items_from_tree(self.tree_widget)
         checked_items = []
-        for i in range(self.tree_widget.topLevelItemCount()):
-            parent_item = self.tree_widget.topLevelItem(i)
-            for j in range(parent_item.childCount()):
-                child_item = parent_item.child(j)
-                if child_item.checkState(0) == QtCore.Qt.CheckState.Checked:
-                    checked_items.append(child_item.text(0))
+        for tree_item in all_items:
+            if tree_item.childCount() or tree_item.checkState(0) == QtCore.Qt.CheckState.Unchecked:
+                continue
+            checked_items.append(tree_item.text(0))
+
         return checked_items
 
     # Slot Implementations
@@ -754,7 +849,6 @@ class MultiSelectFilterWidget(FilterWidget):
     def save_change(self):
         checked_state_dict = self.get_checked_state_dict()
         self.save_state('checked_state', checked_state_dict)
-        # self.save_state('text_data', self.line_edit.text())
 
         checked_item_texts = self.get_checked_item_texts()
 
@@ -910,8 +1004,17 @@ if __name__ == '__main__':
     date_filter_widget.activated.connect(print)
     # Shot Filter Setup
     shot_filter_widget = MultiSelectFilterWidget(filter_name="Shot")
-    shot_filter_widget.add_items("100", ["100_010_001", "100_020_050"])
-    shot_filter_widget.add_items("101", ["101_022_232", "101_023_200"])
+    sequence_to_shot = {
+        "100": [
+            "100_010_001", "100_020_050"
+        ],
+        "101": [
+            "101_022_232", "101_023_200"
+        ],
+    }
+    shot_filter_widget.add_items(sequence_to_shot)
+    shots = ['102_212_010', '103_202_110']
+    shot_filter_widget.add_items(shots)
     shot_filter_widget.update_completer()
     shot_filter_widget.activated.connect(print)
 
@@ -919,6 +1022,7 @@ if __name__ == '__main__':
     file_type_filter_widget = FileTypeFilterWidget(filter_name="File Type")
     file_type_filter_widget.activated.connect(print)
 
+    # Search edit
     search_edit = QtWidgets.QLineEdit()
     search_edit.setPlaceholderText('Type to Search')
     search_edit.setProperty('widget-style', 'round')
@@ -928,10 +1032,14 @@ if __name__ == '__main__':
     search_edit.setProperty('has-placeholder', True)
     search_edit.textChanged.connect(lambda: (search_edit.style().unpolish(search_edit), search_edit.style().polish(search_edit)))
 
+    # Filter bar
+    filter_bar_widget = FilterBarWidget()
+    filter_bar_widget.add_filter_widget(date_filter_widget)
+    filter_bar_widget.add_filter_widget(shot_filter_widget)
+    filter_bar_widget.add_filter_widget(file_type_filter_widget)
+
     # Adding widgets to the layout
-    main_layout.addWidget(date_filter_widget.button)
-    main_layout.addWidget(shot_filter_widget.button)
-    main_layout.addWidget(file_type_filter_widget.button)
+    main_layout.addWidget(filter_bar_widget)
     main_layout.addStretch()
     main_layout.addWidget(search_edit)
     

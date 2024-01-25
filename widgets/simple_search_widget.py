@@ -69,6 +69,7 @@ class SimpleSearchEdit(QtWidgets.QComboBox):
         self.lineEdit().textChanged.connect(self.update_style)
 
         self.__setup_match_count_action()
+        self.update_style()
 
     def __setup_match_count_action(self):
         # Create and add the label for showing the total match count

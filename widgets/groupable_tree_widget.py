@@ -1084,6 +1084,10 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
     # Event Handling or Override Methods
     # ----------------------------------
+    def hideColumn(self, column: Union[int, str]):
+        column_index = self.get_column_index(column) if isinstance(column, str) else column
+        super().hideColumn(column_index)
+
     def startDrag(self, supported_actions):
         """Handles drag event of tree widget
         """
