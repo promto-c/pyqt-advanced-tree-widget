@@ -287,6 +287,9 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         _middle_button_start_pos (QtCore.QPoint): The initial position of the mouse when the middle button was pressed.
         _mouse_move_timestamp (float): The timestamp of the last mouse movement.
     """
+    # Set default to index 1, cause of first column willl be "id"
+    DEFAULT_DRAG_DATA_COLUMN = 1
+
     # Signals emitted by the GroupableTreeWidget
     ungrouped_all = QtCore.pyqtSignal()
     grouped_by_column = QtCore.pyqtSignal(str)
@@ -318,6 +321,8 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         # Store the current grouped column name
         self.grouped_column_name = str()
 
+        self._drag_data_column = self.DEFAULT_DRAG_DATA_COLUMN
+
         #
         self.id_to_tree_item = dict()
         # self.color_adaptive_columns = list()
@@ -343,9 +348,14 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
     def _setup_ui(self):
         """Set up the UI for the widget, including creating widgets and layouts.
         """
+        self.setColumnWidth(0, 10)
+        self.sortByColumn(1, QtCore.Qt.SortOrder.AscendingOrder)
+
         # Initializes scroll modes for the widget.
         self.setVerticalScrollMode(QtWidgets.QTreeWidget.ScrollMode.ScrollPerPixel)
         self.setHorizontalScrollMode(QtWidgets.QTreeWidget.ScrollMode.ScrollPerPixel)
+
+        self.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.DragOnly)
 
         # Set up the context menu for the header
         self.header().setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
@@ -1067,8 +1077,31 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
         print('Not implement')
 
+    def set_drag_data_column(self, column: Union[int, str]):
+        # Get the column index from the column name if necessary
+        column_index = self.get_column_index(column) if isinstance(column, str) else column
+        self._drag_data_column = column_index
+
     # Event Handling or Override Methods
     # ----------------------------------
+    def startDrag(self, supported_actions):
+        """Handles drag event of tree widget
+        """
+        items = self.selectedItems()
+
+        if not items:
+            return
+        
+        urls = [item.text(self._drag_data_column) for item in items]
+        text = '\n'.join(urls)
+
+        mime_data = QtCore.QMimeData()
+        mime_data.setText(text)
+
+        drag = QtGui.QDrag(self)
+        drag.setMimeData(mime_data)
+        drag.exec_(QtCore.Qt.DropAction.CopyAction)
+
     def clear(self):
         self.id_to_tree_item.clear()
         super().clear()
