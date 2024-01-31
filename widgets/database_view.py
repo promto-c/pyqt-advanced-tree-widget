@@ -19,6 +19,7 @@ from widgets.filter_widget import (
     DateRangeFilterWidget,
     MultiSelectFilterWidget,
     FileTypeFilterWidget,
+    BooleanFilterWidget
 )
 from widgets.simple_search_widget import SimpleSearchEdit
 from widgets.groupable_tree_widget import GroupableTreeWidget
@@ -116,7 +117,17 @@ class DatabaseViewWidget(QtWidgets.QWidget):
 
     def add_filter_widget(self, filter_widget: 'FilterWidget'):
         self.filter_bar_widget.add_filter_widget(filter_widget)
-        filter_widget.activated.connect(self.populate)
+        filter_widget.activated.connect(self.activate_filter)
+
+    def save_state(self, settings: QtCore.QSettings, group_name: str = 'database_view'):
+        self.tree_widget.save_state(settings, group_name)
+    
+    def load_state(self, settings: QtCore.QSettings, group_name: str = 'database_view'):
+        self.tree_widget.load_state(settings, group_name)
+
+    def activate_filter(self):
+        # Logic to filter data then populate
+        ...
 
     def populate(self, id_to_data_dict: Dict[Iterable, Dict[str, Any]]):
         # Clear old items
@@ -164,20 +175,14 @@ def main():
     file_type_filter_widget = FileTypeFilterWidget(filter_name="File Type")
     file_type_filter_widget.activated.connect(print)
 
-    # Search edit
-    search_edit = QtWidgets.QLineEdit()
-    search_edit.setPlaceholderText('Type to Search')
-    search_edit.setProperty('widget-style', 'round')
-    search_edit.setFixedHeight(24)
-    tabler_icon = TablerQIcon(opacity=0.6)
-    search_edit.addAction(tabler_icon.search, QtWidgets.QLineEdit.ActionPosition.LeadingPosition)
-    search_edit.setProperty('has-placeholder', True)
-    search_edit.textChanged.connect(lambda: (search_edit.style().unpolish(search_edit), search_edit.style().polish(search_edit)))
+    show_hidden_filter_widget = BooleanFilterWidget(filter_name='Show Hidden')
+    show_hidden_filter_widget.activated.connect(print)
 
     # Filter bar
-    database_view_widget.filter_bar_widget.add_filter_widget(date_filter_widget)
-    database_view_widget.filter_bar_widget.add_filter_widget(shot_filter_widget)
-    database_view_widget.filter_bar_widget.add_filter_widget(file_type_filter_widget)
+    database_view_widget.add_filter_widget(date_filter_widget)
+    database_view_widget.add_filter_widget(shot_filter_widget)
+    database_view_widget.add_filter_widget(file_type_filter_widget)
+    database_view_widget.add_filter_widget(show_hidden_filter_widget)
 
     # Create the scalable view and set the tree widget as its central widget
     scalable_view = ScalableView(widget=database_view_widget)

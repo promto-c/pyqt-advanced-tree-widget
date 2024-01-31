@@ -224,6 +224,7 @@ class FilterWidget(QtWidgets.QWidget):
         # Attributes
         # ------------------
         self.filtered_list = list()
+        self.tabler_icon = TablerQIcon(opacity=0.6)
 
         # Private Attributes
         # ------------------
@@ -232,66 +233,78 @@ class FilterWidget(QtWidgets.QWidget):
 
     def __setup_ui(self):
         """Set up the UI for the widget, including creating widgets and layouts.
+
+        UI Wireframe:
+
+            ( FilterPopupButton ⏷)
+            +---------------------------------------------+
+            | Condition ⏷               [Clear] [Remove] |
+            | ------------------------------------------- |
+            |                                             |
+            |        Widget-specific content area         |
+            |                                             |
+            | ------------------------------------------- |
+            |                     [Cancel] [Apply Filter] |
+            +---------------------------------------------+
+
         """
         self.setWindowTitle(self.filter_name)  # Set window title
 
-        self.tabler_icon = TablerQIcon(opacity=0.6)
+        # Create Layouts
+        # --------------
+        # Main layout
+        self.main_layout = QtWidgets.QVBoxLayout(self)
 
+        # Title bar with remove icon
+        self.title_layout = QtWidgets.QHBoxLayout()
+        self.title_layout.setSpacing(3)
+        self.main_layout.addLayout(self.title_layout)
+
+        # Widget-specific content area
+        self.widget_layout = QtWidgets.QVBoxLayout()
+        self.main_layout.addLayout(self.widget_layout)
+
+        # 
+        self.buttons_layout = QtWidgets.QHBoxLayout()
+        self.main_layout.addLayout(self.buttons_layout)
+
+        # Create Widgets
+        # --------------
         # Initialize the filter button
         self._button = FilterPopupButton(self.parent())
         # self._button.set_filter_widget(self)
         self.set_button_text()
         self.__setup_button_popup_menu()
 
-        # Main layout
-        self.main_layout = QtWidgets.QVBoxLayout(self)
-
-        # Title bar with remove icon
-        self.title_widget = QtWidgets.QWidget(self)
-        self.title_layout = QtWidgets.QHBoxLayout()
-        self.title_widget.setLayout(self.title_layout)
-
-        self.title_layout.setContentsMargins(0, 0, 0, 0)
-        self.title_layout.setSpacing(3)
-
         self.condition_combo_box = QtWidgets.QComboBox()
         self.condition_combo_box.setProperty('widget-style', 'clean')
         self.condition_combo_box.addItems(['Condition1', 'Condition2'])
 
-        self.clear_button = QtWidgets.QToolButton(self.title_widget)
+        self.clear_button = QtWidgets.QToolButton(self)
         self.clear_button.setIcon(self.tabler_icon.clear_all)
         self.clear_button.setToolTip("Clear all")
 
-        self.remove_button = QtWidgets.QToolButton(self.title_widget)
+        self.remove_button = QtWidgets.QToolButton(self)
+        self.remove_button.setProperty('color', 'red')
         self.remove_button.setIcon(self.tabler_icon.trash)
         self.remove_button.setToolTip("Remove this filter from Quick Access")
 
-        # Set the style for the hover state
-        self.remove_button.setProperty('color', 'red')
-        self.title_layout.addWidget(self.condition_combo_box)  # Filter name label
-        self.title_layout.addStretch()  # Pushes the remove button to the right
+        # Add Confirm and Cancel buttons
+        self.cancel_button = QtWidgets.QPushButton("Cancel")
+        self.apply_button = QtWidgets.QPushButton("Apply Filter")
+        self.apply_button.setProperty('color', 'blue')
+
+        # Add Widgets to Layouts
+        # ----------------------
+        self.title_layout.addWidget(self.condition_combo_box)
+        self.title_layout.addStretch()
         self.title_layout.addWidget(self.clear_button)
         self.title_layout.addWidget(self.remove_button)
-        
-        self.main_layout.addWidget(self.title_widget)
-
-        # Widget-specific content area
-        self.widget_layout = QtWidgets.QVBoxLayout()
-        self.main_layout.addLayout(self.widget_layout)
 
         # Add Confirm and Cancel buttons
-        self.buttons_widget = QtWidgets.QWidget(self)
-        self.buttons_layout = QtWidgets.QHBoxLayout()
-        self.buttons_layout.setContentsMargins(0, 0, 0, 0)
-        self.buttons_widget.setLayout(self.buttons_layout)
-        self.cancel_button = QtWidgets.QPushButton("Cancel")
-        self.apply_button = QtWidgets.QPushButton("Apply Filter")  # Renamed Confirm to Apply Filter
         self.buttons_layout.addStretch()
         self.buttons_layout.addWidget(self.cancel_button)
         self.buttons_layout.addWidget(self.apply_button)
-        self.main_layout.addWidget(self.buttons_widget)
-
-        self.apply_button.setProperty('color', 'blue')  # Set object name for styling
 
     def __setup_signal_connections(self):
         """Set up signal connections between widgets and slots.
@@ -642,6 +655,8 @@ class MultiSelectFilterWidget(FilterWidget):
         self.completer.activated.connect(self.update_checked_state)
         # Tree widget
         self.tree_widget.itemChanged.connect(self.update_tag_as_checked)
+        self.tree_widget.model().rowsInserted.connect(self.update_completer)
+        self.tree_widget.model().rowsRemoved.connect(self.update_completer)
 
     def uncheck_item(self, tag_name):
         self.set_check_items([tag_name], False)
@@ -789,7 +804,6 @@ class MultiSelectFilterWidget(FilterWidget):
         else:
             raise ValueError("Invalid type for item_names. Expected a list or a dictionary.")
 
-        self.update_completer()
         self.tree_widget.expandAll()
 
     def add_item(self, item_label: str, parent: Optional[QtWidgets.QTreeWidgetItem] = None):
@@ -1005,9 +1019,10 @@ class BooleanFilterWidget(FilterWidget):
         self.button.showPopup = self.toggle_active
 
     def toggle_active(self):
-        self._is_active = not self._is_active
+        self.set_active(not self._is_active)
 
-        # self.label_changed.emit("")
+    def set_active(self, state: bool = True):
+        self._is_active = state
         self.activated.emit([self._is_active])
 
     @property
@@ -1047,18 +1062,7 @@ if __name__ == '__main__':
     file_type_filter_widget.activated.connect(print)
 
     show_hidden_filter_widget = BooleanFilterWidget(filter_name='Show Hidden')
-    # bbb.button.showPopup = bbb.button.set_active
     show_hidden_filter_widget.activated.connect(print)
-
-    # Search edit
-    search_edit = QtWidgets.QLineEdit()
-    search_edit.setPlaceholderText('Type to Search')
-    search_edit.setProperty('widget-style', 'round')
-    search_edit.setFixedHeight(24)
-    tabler_icon = TablerQIcon(opacity=0.6)
-    search_edit.addAction(tabler_icon.search, QtWidgets.QLineEdit.ActionPosition.LeadingPosition)
-    search_edit.setProperty('has-placeholder', True)
-    search_edit.textChanged.connect(lambda: (search_edit.style().unpolish(search_edit), search_edit.style().polish(search_edit)))
 
     # Filter bar
     filter_bar_widget = FilterBarWidget()
@@ -1069,8 +1073,6 @@ if __name__ == '__main__':
 
     # Adding widgets to the layout
     main_layout.addWidget(filter_bar_widget)
-    main_layout.addStretch()
-    main_layout.addWidget(search_edit)
     
     main_widget = QtWidgets.QWidget()
     main_widget.setLayout(main_layout)

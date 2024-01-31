@@ -1187,6 +1187,35 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
             # If middle button is not pressed, call the parent class method to handle the event
             super().mouseMoveEvent(event)
 
+    def save_state(self, settings: QtCore.QSettings, group_name='tree_widget'):
+        settings.beginGroup(group_name)
+        settings.setValue('header_state', self.header().saveState())
+        # TODO: Store self.color_adaptive_columns when apply color adaptive
+        settings.setValue('color_adaptive_columns', self.color_adaptive_columns)
+        settings.setValue('group_column_name', self.grouped_column_name)
+        settings.endGroup()
+
+    def load_state(self, settings: QtCore.QSettings, group_name='tree_widget'):
+        settings.beginGroup(group_name)
+        header_state = settings.value('header_state', QtCore.QByteArray)
+        color_adaptive_columns = settings.value('color_adaptive_columns', list())
+        grouped_column_name = settings.value('grouped_column_name', str())
+        settings.endGroup()
+
+        if not header_state:
+            return
+
+        self.header().restoreState(header_state)
+        self._restore_color_adaptive_column(color_adaptive_columns)
+        # TODO: Add support to get input as str
+        self.group_by_column(grouped_column_name)
+    
+    def _restore_color_adaptive_column(self, columns):
+        self.reset_all_color_adaptive_column()
+
+        for column in columns:
+            self.apply_column_color_adaptive(column)
+
 
 # Main Function
 # -------------

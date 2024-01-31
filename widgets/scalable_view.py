@@ -17,6 +17,9 @@ class ScalableView(QtWidgets.QGraphicsView):
         max_zoom_level (float): The maximum zoom level allowed for the view.
         current_zoom_level (float): The current zoom level of the view.
     """
+    DEFAULT_MIN_ZOOM_LEVEL = 0.5
+    DEFAULT_MAX_ZOOM_LEVEL = 4.0
+    DEFAULT_ZOOM_LEVEL = 1.0
 
     # Initialization and Setup
     # ------------------------
@@ -44,11 +47,11 @@ class ScalableView(QtWidgets.QGraphicsView):
         self.widget.scalable_view = self
 
         # Set the minimum and maximum scale values
-        self.min_zoom_level = 0.5
-        self.max_zoom_level = 4.0
+        self.min_zoom_level = self.DEFAULT_MIN_ZOOM_LEVEL
+        self.max_zoom_level = self.DEFAULT_MAX_ZOOM_LEVEL
 
         # Set the current zoom level to 1.0 (no zoom)
-        self.current_zoom_level = 1.0
+        self.current_zoom_level = self.DEFAULT_ZOOM_LEVEL
 
     def _setup_ui(self):
         """Set up the UI for the widget, including creating widgets and layouts.
@@ -119,6 +122,18 @@ class ScalableView(QtWidgets.QGraphicsView):
         shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(key_sequence), self)
         # Connect the activated signal of the shortcut to the given function
         shortcut.activated.connect(function)
+
+    def save_state(self, settings: QtCore.QSettings, group_name='scalable_view'):
+        settings.beginGroup(group_name)
+        settings.setValue('zoom_level', self.current_zoom_level)
+        settings.endGroup()
+
+    def load_state(self, settings: QtCore.QSettings, group_name='scalable_view'):
+        settings.beginGroup(group_name)
+        zoom_level = float(settings.value('zoom_level', self.DEFAULT_ZOOM_LEVEL))
+        settings.endGroup()
+
+        self.set_scale(zoom_level)
 
     # Event Handling or Override Methods
     # ----------------------------------
