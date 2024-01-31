@@ -990,6 +990,31 @@ class FileTypeFilterWidget(FilterWidget):
         custom_input_text = ', '.join(custom_input)
         self.custom_input.setText(custom_input_text)
 
+class BooleanFilterWidget(FilterWidget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._is_active = False
+
+        self.__setup_ui()
+
+    def __setup_ui(self):
+        """Set up the UI for the widget, including creating widgets and layouts.
+        """
+        self.set_icon(TablerQIcon.checkbox)
+        self.button.showPopup = self.toggle_active
+
+    def toggle_active(self):
+        self._is_active = not self._is_active
+
+        # self.label_changed.emit("")
+        self.activated.emit([self._is_active])
+
+    @property
+    def is_active(self):
+        """
+        """
+        return self._is_active
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication([])
@@ -1015,12 +1040,15 @@ if __name__ == '__main__':
     shot_filter_widget.add_items(sequence_to_shot)
     shots = ['102_212_010', '103_202_110']
     shot_filter_widget.add_items(shots)
-    shot_filter_widget.update_completer()
     shot_filter_widget.activated.connect(print)
 
     # File Type Filter Setup
     file_type_filter_widget = FileTypeFilterWidget(filter_name="File Type")
     file_type_filter_widget.activated.connect(print)
+
+    show_hidden_filter_widget = BooleanFilterWidget(filter_name='Show Hidden')
+    # bbb.button.showPopup = bbb.button.set_active
+    show_hidden_filter_widget.activated.connect(print)
 
     # Search edit
     search_edit = QtWidgets.QLineEdit()
@@ -1037,6 +1065,7 @@ if __name__ == '__main__':
     filter_bar_widget.add_filter_widget(date_filter_widget)
     filter_bar_widget.add_filter_widget(shot_filter_widget)
     filter_bar_widget.add_filter_widget(file_type_filter_widget)
+    filter_bar_widget.add_filter_widget(show_hidden_filter_widget)
 
     # Adding widgets to the layout
     main_layout.addWidget(filter_bar_widget)
