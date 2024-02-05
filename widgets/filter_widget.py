@@ -291,7 +291,9 @@ class FilterWidget(QtWidgets.QWidget):
 
         # Add Confirm and Cancel buttons
         self.cancel_button = QtWidgets.QPushButton("Cancel")
+        self.cancel_button.setProperty('widget-style', 'borderless')
         self.apply_button = QtWidgets.QPushButton("Apply Filter")
+        self.apply_button.setProperty('widget-style', 'borderless')
         self.apply_button.setProperty('color', 'blue')
 
         # Add Widgets to Layouts
