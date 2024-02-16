@@ -160,6 +160,7 @@ class DatabaseViewWidget(QtWidgets.QWidget):
             +---------------------------------------------------+ -+
             | [Filter 1][Filter 2][+]       [[W2]: search_edit] |  | -> [L1]: top_bar_area_layout
             +---------------------------------------------------+ -+
+            | - - - - - - - - - - - |[W4]: tree_utility_tool_bar|  |
             |                                                   |  |
             |                                                   |  |
             |               [[W3]: tree_widget]                 |  | -> [L2]: main_tree_layout
@@ -204,7 +205,7 @@ class DatabaseViewWidget(QtWidgets.QWidget):
         self.top_bar_area_layout.addStretch()
         self.top_bar_area_layout.addWidget(self.search_edit)
 
-        # Add [W3] to [L2]
+        # Add [W3], [W4] to [L2]
         # Add tree widget to main tree widget
         self.main_tree_layout.addWidget(self.tree_utility_tool_bar)
         self.main_tree_layout.addWidget(self.tree_widget)
