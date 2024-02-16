@@ -41,8 +41,8 @@ class CustomShortcut(QtWidgets.QShortcut):
         if focused_widget == self.target_widget:
             self.callback()
 # ----------------
-            
-class TreeUtilityWidget(QtWidgets.QToolBar):
+
+class TreeUtilityToolBar(QtWidgets.QToolBar):
     def __init__(self, tree_widget: GroupableTreeWidget):
         # Initialize the super class
         # QtWidgets.QToolBar().setLayoutDirection()
@@ -73,11 +73,9 @@ class TreeUtilityWidget(QtWidgets.QToolBar):
         self.setFixedHeight(24)
         # Create Layouts
         # --------------
-        # self.layout().addStretch()
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(0)
-        # self.layout().setAl
-        # self.main_layout = QtWidgets.QHBoxLayout(self)
+
         # Add a stretchable spacer to the toolbar to align items to the left
         spacer = QtWidgets.QWidget(self)
         spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
@@ -187,7 +185,7 @@ class DatabaseViewWidget(QtWidgets.QWidget):
         # [W3]: Create asset tree widget
         self.tree_widget = GroupableTreeWidget(parent=self)
 
-        self.tree_utility_widget = TreeUtilityWidget(self.tree_widget)
+        self.tree_utility_tool_bar = TreeUtilityToolBar(self.tree_widget)
 
         # [W2]: Search field
         self.search_edit = SimpleSearchEdit(tree_widget=self.tree_widget, parent=self)
@@ -203,7 +201,7 @@ class DatabaseViewWidget(QtWidgets.QWidget):
 
         # Add [W3] to [L2]
         # Add tree widget to main tree widget
-        self.main_tree_layout.addWidget(self.tree_utility_widget)
+        self.main_tree_layout.addWidget(self.tree_utility_tool_bar)
         self.main_tree_layout.addWidget(self.tree_widget)
 
     def __setup_signal_connections(self):
