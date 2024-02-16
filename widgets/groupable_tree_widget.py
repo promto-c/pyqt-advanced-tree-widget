@@ -11,6 +11,7 @@ from numbers import Number
 # Third Party Imports
 # -------------------
 from PyQt5 import QtWidgets, QtCore, QtGui
+from tablerqicon import TablerQIcon
 
 # Local Imports
 # -------------
@@ -273,6 +274,98 @@ class ColumnListWidget(QtWidgets.QListWidget):
 
     def get_item(self, item_name: str) -> QtWidgets.QListWidgetItem:
         return self.name_to_item.get(item_name, None)
+
+class TreeUtilityToolBar(QtWidgets.QToolBar):
+    def __init__(self, tree_widget: 'GroupableTreeWidget'):
+        # Initialize the super class
+        # QtWidgets.QToolBar().setLayoutDirection()
+        super().__init__(parent=tree_widget)
+
+        # Store the arguments
+        self.tree_widget = tree_widget
+
+        # Initialize setup
+        self.__setup_attributes()
+        self.__setup_ui()
+        self.__setup_signal_connections()
+
+    def __setup_attributes(self):
+        """Set up the initial values for the widget.
+        """
+        # Attributes
+        # ----------
+        self.tabler_icon = TablerQIcon()
+
+        # Private Attributes
+        # ------------------
+        ...
+
+    def __setup_ui(self):
+        """Set up the UI for the widget, including creating widgets, layouts, and setting the icons for the widgets.
+        """
+        self.setFixedHeight(24)
+        # Create Layouts
+        # --------------
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(0)
+
+        # Add a stretchable spacer to the toolbar to align items to the left
+        spacer = QtWidgets.QWidget(self)
+        spacer.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
+        self.addWidget(spacer)
+
+        # Create Widgets
+        # --------------
+        self.fit_in_view_button = QtWidgets.QToolButton(self)
+        self.fit_in_view_button.setIcon(self.tabler_icon.arrow_autofit_content)
+        self.fit_in_view_button.setFixedSize(22, 22)
+        self.fit_in_view_button.setToolTip("Fit columns in view")  # Tooltip added
+
+        self.word_wrap_button = QtWidgets.QToolButton(self)
+        self.word_wrap_button.setCheckable(True)
+        self.word_wrap_button.setIcon(self.tabler_icon.text_wrap)
+        self.word_wrap_button.setFixedSize(22, 22)
+        self.word_wrap_button.setToolTip("Toggle word wrap")  # Tooltip added
+
+        self.set_uniform_row_height_button = QtWidgets.QToolButton(self)
+        self.set_uniform_row_height_button.setCheckable(True)
+        self.set_uniform_row_height_button.setIcon(self.tabler_icon.arrow_autofit_height)
+        self.set_uniform_row_height_button.setFixedSize(22, 22)
+        self.set_uniform_row_height_button.setToolTip("Toggle uniform row height")  # Tooltip added
+
+        self.uniform_row_height_spin_box = QtWidgets.QSpinBox(self)
+        self.uniform_row_height_spin_box.setFixedHeight(20)
+        self.uniform_row_height_spin_box.setSingleStep(4)
+        self.uniform_row_height_spin_box.setValue(24)
+        self.uniform_row_height_spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
+        self.uniform_row_height_spin_box.setToolTip("Set uniform row height")  # Tooltip added
+
+        self.refresh_button = QtWidgets.QToolButton(self)
+        self.refresh_button.setIcon(self.tabler_icon.refresh)
+        self.refresh_button.setFixedSize(22, 22)
+        self.refresh_button.setToolTip("Refresh tree")
+
+        # Add Widgets to Layouts
+        # ----------------------
+        self.addWidget(self.fit_in_view_button)
+        self.addWidget(self.word_wrap_button)
+        self.addWidget(self.set_uniform_row_height_button)
+        self.addWidget(self.uniform_row_height_spin_box)
+        self.addWidget(self.refresh_button)
+
+    def __setup_signal_connections(self):
+        """Set up signal connections between widgets and slots.
+        """
+        # Connect signals to slots
+        self.fit_in_view_button.clicked.connect(self.tree_widget.fit_column_in_view)
+        self.word_wrap_button.toggled.connect(self.tree_widget.setWordWrap)
+        self.set_uniform_row_height_button.toggled.connect(self.toggle_uniform_row_height)
+        self.uniform_row_height_spin_box.valueChanged.connect(self.tree_widget.set_row_height)
+        # self.refresh_button.clicked.connect(self.tree_widget)
+
+    def toggle_uniform_row_height(self, state: bool):
+        height = self.uniform_row_height_spin_box.value() if state else -1
+        self.tree_widget.set_row_height(height)
 
 class GroupableTreeWidget(QtWidgets.QTreeWidget):
     """A QTreeWidget subclass that displays data in a tree structure with the ability to group data by a specific column.
