@@ -675,6 +675,11 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
 
     # NOTE: for refactoring
     def set_row_height(self, height):
+        self._row_height = height
+
+        if height == -1:
+            self.reset_row_height()
+            return
 
         if not self.topLevelItem(0):
             return
@@ -1209,7 +1214,7 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         self._restore_color_adaptive_column(color_adaptive_columns)
         # TODO: Add support to get input as str
         self.group_by_column(grouped_column_name)
-    
+
     def _restore_color_adaptive_column(self, columns):
         self.reset_all_color_adaptive_column()
 
