@@ -78,7 +78,7 @@ class TreeUtilityToolBar(QtWidgets.QToolBar):
 
         # Add a stretchable spacer to the toolbar to align items to the left
         spacer = QtWidgets.QWidget(self)
-        spacer.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        spacer.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Preferred)
         self.addWidget(spacer)
 
         # Create Widgets
@@ -86,23 +86,31 @@ class TreeUtilityToolBar(QtWidgets.QToolBar):
         self.fit_in_view_button = QtWidgets.QToolButton(self)
         self.fit_in_view_button.setIcon(self.tabler_icon.arrow_autofit_content)
         self.fit_in_view_button.setFixedSize(22, 22)
+        self.fit_in_view_button.setToolTip("Fit columns in view")  # Tooltip added
 
         self.word_wrap_button = QtWidgets.QToolButton(self)
         self.word_wrap_button.setCheckable(True)
         self.word_wrap_button.setIcon(self.tabler_icon.text_wrap)
         self.word_wrap_button.setFixedSize(22, 22)
+        self.word_wrap_button.setToolTip("Toggle word wrap")  # Tooltip added
 
         self.set_uniform_row_height_button = QtWidgets.QToolButton(self)
         self.set_uniform_row_height_button.setCheckable(True)
         self.set_uniform_row_height_button.setIcon(self.tabler_icon.arrow_autofit_height)
         self.set_uniform_row_height_button.setFixedSize(22, 22)
+        self.set_uniform_row_height_button.setToolTip("Toggle uniform row height")  # Tooltip added
 
         self.uniform_row_height_spin_box = QtWidgets.QSpinBox(self)
+        self.uniform_row_height_spin_box.setFixedHeight(20)
+        self.uniform_row_height_spin_box.setSingleStep(4)
         self.uniform_row_height_spin_box.setValue(24)
+        self.uniform_row_height_spin_box.setButtonSymbols(QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons)
+        self.uniform_row_height_spin_box.setToolTip("Set uniform row height")  # Tooltip added
 
         self.refresh_button = QtWidgets.QToolButton(self)
         self.refresh_button.setIcon(self.tabler_icon.refresh)
         self.refresh_button.setFixedSize(22, 22)
+        self.refresh_button.setToolTip("Refresh tree")
 
         # Add Widgets to Layouts
         # ----------------------
@@ -180,11 +188,8 @@ class DatabaseViewWidget(QtWidgets.QWidget):
         # [W1]: Create top left filter bar
         self.filter_bar_widget = FilterBarWidget(self)
 
-        
-
         # [W3]: Create asset tree widget
         self.tree_widget = GroupableTreeWidget(parent=self)
-
         self.tree_utility_tool_bar = TreeUtilityToolBar(self.tree_widget)
 
         # [W2]: Search field
