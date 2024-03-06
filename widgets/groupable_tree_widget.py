@@ -1180,13 +1180,49 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         column_index = self.get_column_index(column) if isinstance(column, str) else column
         self._drag_data_column = column_index
 
+    def create_drag_pixmap(self, items_count, opacity: float = 0.8, badge_radius: int = 10, badge_margin: int = 0):
+        # Get the application icon and create a pixmap from it
+        icon = QtWidgets.QApplication.instance().windowIcon()
+        if icon.isNull():
+            icon_pixmap = QtGui.QPixmap(24, 16)
+            icon_pixmap.fill(QtCore.Qt.GlobalColor.transparent)
+        else:
+            icon_pixmap = icon.pixmap(64, 64)
+
+        # Create a transparent pixmap
+        pixmap = QtGui.QPixmap(icon_pixmap.width() + badge_margin, icon_pixmap.height() + badge_margin)
+        pixmap.fill(QtCore.Qt.GlobalColor.transparent)
+
+        painter = QtGui.QPainter(pixmap)
+        painter.setOpacity(opacity)
+        painter.drawPixmap(QtCore.QPoint(0, badge_margin), icon_pixmap)
+
+        # Draw badge logic
+        items_count_text = "99+" if items_count > 99 else str(items_count)
+
+        # Calculate the optimal badge radius and diameter
+        metrics = QtGui.QFontMetrics(painter.font())
+        text_width = metrics.width(items_count_text)
+        badge_radius = max(badge_radius, int(text_width / 2))
+        badge_diameter = badge_radius * 2
+
+        painter.setBrush(QtGui.QBrush(QtGui.QColor('red')))
+        painter.setPen(QtGui.QColor('white'))
+        painter.drawEllipse(pixmap.width() - badge_diameter - 2, 0, badge_diameter, badge_diameter)
+        painter.drawText(pixmap.width() - badge_diameter - 2, 0, badge_diameter, badge_diameter, 
+                         QtCore.Qt.AlignmentFlag.AlignCenter, items_count_text)
+
+        painter.end()
+
+        return pixmap
+
     # Event Handling or Override Methods
     # ----------------------------------
     def hideColumn(self, column: Union[int, str]):
         column_index = self.get_column_index(column) if isinstance(column, str) else column
         super().hideColumn(column_index)
 
-    def startDrag(self, supported_actions):
+    def startDrag(self, supported_actions: QtCore.Qt.DropActions):
         """Handles drag event of tree widget
         """
         items = self.selectedItems()
@@ -1194,15 +1230,25 @@ class GroupableTreeWidget(QtWidgets.QTreeWidget):
         if not items:
             return
         
-        urls = [item.text(self._drag_data_column) for item in items]
-        text = '\n'.join(urls)
-
         mime_data = QtCore.QMimeData()
+
+        # Set mime data in format 'text/plain'
+        texts = [item.text(self._drag_data_column) for item in items]
+        text = '\n'.join(texts)
         mime_data.setText(text)
 
+        # Set mime data in format 'text/uri-list'
+        urls = [QtCore.QUrl.fromLocalFile(text) for text in texts]
+        mime_data.setUrls(urls)
+
+        # Create drag icon pixmap with badge
+        drag_pixmap = self.create_drag_pixmap(len(items))
+
+        # Set up the drag operation with the semi-transparent pixmap
         drag = QtGui.QDrag(self)
         drag.setMimeData(mime_data)
-        drag.exec_(QtCore.Qt.DropAction.CopyAction)
+        drag.setPixmap(drag_pixmap)
+        drag.exec_(supported_actions)
 
     def clear(self):
         self.id_to_tree_item.clear()
@@ -1322,6 +1368,8 @@ def main():
     """
     # Create the application and the main window
     app = QtWidgets.QApplication(sys.argv)
+    # NOTE: Test window icon
+    app.setWindowIcon(QtGui.QIcon('image_not_available_placeholder.png'))
 
     # Set theme of QApplication to the dark theme
     set_theme(app, 'dark')
