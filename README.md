@@ -1,3 +1,5 @@
+> This repository is part of the ongoing development of components that are integrated into the [Blackboard project](https://github.com/promto-c/blackboard) using PyQt, PySide, and qtpy. Check out the project for more advanced features.
+
 # pyqt-advanced-tree-widget
 
 <p align="center">
